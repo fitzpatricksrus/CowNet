@@ -1,0 +1,43 @@
+cownet:
+  enable: true
+
+starve:
+  enable: true
+  radius: 5
+  damage: 20
+
+bounce:
+  enable: true
+  velocity: 1
+  radius: 5
+
+noswearing:
+  enable: true
+  fireTicks: 5
+  mobsToSpawn: 5
+  launchVelocity: 2
+  lightningDamage: 3
+  bannedPhrases: badwords.txt
+
+tntsheep:
+  enable: true
+  chanceToExplode: 25
+  explosionRadius: 3
+  explosionDamage: 3
+  sheepExplode: true
+  cowsExplode: true
+  allowedWords: guest,guestworld,d74g0n,funky
+
+logins:
+  enable: true
+  savegamemode: true
+
+dragonsbgone:
+  enable: true
+
+FlingPortal:
+  enable: true
+
+savegamemode:
+  enabled: true
+

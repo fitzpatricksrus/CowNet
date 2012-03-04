@@ -1,0 +1,41 @@
+name: CowNetPlugin
+main: us.fitzpatricksr.cownet.CowNetMod
+version: 1.0.0
+commands:
+  starve:
+      description: Starve mobs and players around you
+      usage: starve [radius] [damage]
+  bounce:
+      description: Bounce mobs and players around you
+      usage: bounce [radius] [velocity]
+  tntsheep:
+      description: Some sheep go boom!
+      usage: tntsheep
+  logins:
+      description: show who has logged in recently
+      usage: logins [-in | -out | -inout] [number of results]
+  dragonsbgone:
+      description: kill all the ender dragons in a radius of 100
+      usage: dragonsbgone
+  flingportal:
+      description: place a redstone torch under a glass block and step on the block.
+      usage: flingportal
+permissions:
+    cownet.starve:
+        description: Starve creatures around you
+        default: true
+    cownet.bounce:
+        description: Bounce creatures around you
+        default: true
+    cownet.noswearing.allowed:
+        description: You are allowed to use bad words
+        default: false      
+    cownet.tntsheep:
+        description: are you allowed to call apon the sheep
+        default: true
+    cownet.tntsheep.immune:
+        description: are you immune to the sheep
+        default: false
+    cownet.flingportal:
+        description: do you fling?
+        default: true
