@@ -12,8 +12,10 @@ import java.util.logging.Logger;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChatEvent;
-import org.bukkit.event.player.PlayerListener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -22,7 +24,7 @@ import us.fitzpatricksr.cownet.noswearing.Launch;
 import us.fitzpatricksr.cownet.noswearing.Lightning;
 import us.fitzpatricksr.cownet.noswearing.SetOnFire;
 
-public class NoSwearing extends PlayerListener {
+public class NoSwearing implements Listener {
 	Random rand = new Random();
     private Logger logger = Logger.getLogger("Minecraft");
 	private String permissionNode;
@@ -42,13 +44,14 @@ public class NoSwearing extends PlayerListener {
             		new Lightning(plugin, trigger)
             };
        		PluginManager pm = plugin.getServer().getPluginManager();
-    		pm.registerEvent(Event.Type.PLAYER_CHAT, this, Event.Priority.Normal, plugin);
+    		pm.registerEvents(this, plugin);
             logger.info(trigger+" enable");
         } else {
             logger.info("CowNet - "+trigger+".enable: false");
         }
     }
 
+    @EventHandler(priority= EventPriority.NORMAL)
 	public void onPlayerChat(PlayerChatEvent event) {
 		Player player = event.getPlayer();
 		if (player.hasPermission(permissionNode)) {

@@ -5,9 +5,10 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityListener;
-import org.bukkit.event.player.PlayerListener;
+import org.bukkit.event.Listener;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
@@ -15,7 +16,7 @@ import org.bukkit.util.Vector;
 import java.util.HashMap;
 
 
-public class FlingPortal extends CowNetThingy {
+public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listener {
     private static final Vector LAUNCH_VECTOR = new Vector(0, 5, 0);
     private HashMap<Player, Long> playersInFlight = new HashMap<Player, Long>();
 
@@ -23,15 +24,11 @@ public class FlingPortal extends CowNetThingy {
         super(plugin, permissionRoot, trigger);
         if (isEnabled()) {
             logInfo("adding listeners...");
-            plugin.getServer().getPluginManager().registerEvent(
-                    Event.Type.PLAYER_MOVE,
-                    new FlingListener(),
-                    Event.Priority.Normal,
+            plugin.getServer().getPluginManager().registerEvents(
+                    this,
                     plugin);
-            plugin.getServer().getPluginManager().registerEvent(
-                    Event.Type.ENTITY_DAMAGE,
-                    new LandingEntityListener(),
-                    Event.Priority.High,
+            plugin.getServer().getPluginManager().registerEvents(
+                    this,
                     plugin);
         }
     }
@@ -41,6 +38,7 @@ public class FlingPortal extends CowNetThingy {
         return "usage: put a redstone torch below a glass block and stand on it.";
     }
 
+    @EventHandler(priority= EventPriority.NORMAL)
     private void onPlayerMove(PlayerMoveEvent event) {
         // if we moved over a fling portal then here we go...
         if (shouldFlingPlayer(event.getPlayer())) {
@@ -48,6 +46,7 @@ public class FlingPortal extends CowNetThingy {
         }
     }
 
+    @EventHandler(priority=EventPriority.HIGH)
     public void onEntityDamage(EntityDamageEvent event) {
         if (event.getEntity() instanceof Player) {
             Player player = (Player)event.getEntity();
@@ -154,19 +153,4 @@ public class FlingPortal extends CowNetThingy {
                 loc.getPitch());
         return result;
     }
-
-    //------- Listeners
-    
-    private class FlingListener extends PlayerListener {
-        public void onPlayerMove(PlayerMoveEvent event) {
-            FlingPortal.this.onPlayerMove(event);
-        }
-    }
-
-    private class LandingEntityListener extends EntityListener {
-        public void onEntityDamage(EntityDamageEvent event) {
-            FlingPortal.this.onEntityDamage(event);
-        }
-    }
-
 }

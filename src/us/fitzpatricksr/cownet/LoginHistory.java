@@ -8,18 +8,20 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import com.google.common.io.Files;
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class LoginHistory extends CowNetThingy {
+public class LoginHistory extends CowNetThingy implements Listener {
     enum Filter {
         IN,
         OUT,
@@ -41,8 +43,8 @@ public class LoginHistory extends CowNetThingy {
         this.plugin = plugin;
         if (isEnabled()) {
             PluginManager pm = plugin.getServer().getPluginManager();
-            pm.registerEvent(Event.Type.PLAYER_LOGIN, new PlayerListenerStub(), Event.Priority.Normal, plugin);
-            pm.registerEvent(Event.Type.PLAYER_QUIT, new PlayerListenerStub(), Event.Priority.Normal, plugin);
+            pm.registerEvents(this, plugin);
+            pm.registerEvents(this, plugin);
             getLogFile(plugin);
         }
     }
@@ -126,6 +128,7 @@ public class LoginHistory extends CowNetThingy {
         return true;
     }
 
+    @EventHandler(priority= EventPriority.NORMAL)
     public void onPlayerLogin(PlayerLoginEvent event) {
         File logFile = getLogFile(plugin);
         if (logFile != null) {
@@ -135,7 +138,6 @@ public class LoginHistory extends CowNetThingy {
                 PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFile, true)));
                 out.println(dateFormat.format(date) + " login:" + getPlayerInfoString(event.getPlayer()));
                 out.close();
-                logInfo(dateFormat.format(date) + " login:" + event.getPlayer().getPlayerListName());
                 setGameMode(event.getPlayer());
             } catch (FileNotFoundException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -145,6 +147,7 @@ public class LoginHistory extends CowNetThingy {
         }
     }
 
+    @EventHandler(priority= EventPriority.NORMAL)
     public void onPlayerQuit(PlayerQuitEvent event) {
         File logFile = getLogFile(plugin);
         if (logFile != null) {
@@ -155,7 +158,6 @@ public class LoginHistory extends CowNetThingy {
                 out.println(dateFormat.format(date) + " quit:" + getPlayerInfoString(event.getPlayer()));
                 out.close();
                 saveGameMode(event.getPlayer());
-                logInfo(dateFormat.format(date) + " quit:" + event.getPlayer().getPlayerListName());
             } catch (FileNotFoundException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             } catch (IOException e) {
@@ -175,18 +177,6 @@ public class LoginHistory extends CowNetThingy {
     
     private void saveGameMode(Player player) {
         gameModeSave.put(player.getPlayerListName(), player.getGameMode());
-    }
-
-    //--------------------------------------------------
-    private class PlayerListenerStub extends org.bukkit.event.player.PlayerListener {
-        @Override
-        public void onPlayerLogin(PlayerLoginEvent event) {
-            LoginHistory.this.onPlayerLogin(event);
-        }
-        @Override
-        public void onPlayerQuit(PlayerQuitEvent event) {
-            LoginHistory.this.onPlayerQuit(event);
-        }
     }
 
     //--------------------------------------------------
@@ -214,9 +204,8 @@ public class LoginHistory extends CowNetThingy {
     
     private String[] lastNLogins(File file, Filter filter, int count) {
         LinkedList<String> results = new LinkedList<String>();
-        Charset charset = Charset.forName("US-ASCII");
         try {
-            BufferedReader reader = Files.newReader(file, charset);
+            BufferedReader reader = new BufferedReader(new FileReader(file));
             String line = null;
             while ((line = reader.readLine()) != null) {
                 if (filter.shouldDisplayLine(line)) {

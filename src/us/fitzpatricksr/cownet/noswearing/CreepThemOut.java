@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.CreatureType;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -17,12 +17,13 @@ import us.fitzpatricksr.cownet.NoSwearing;
 
 public class CreepThemOut implements NoSwearing.Consequence, Runnable {
 	// spawn random mobs in front of them for a while
-	private static CreatureType[] creatureTypes = {
-		CreatureType.SKELETON,
-		CreatureType.CREEPER,
-		CreatureType.SPIDER,
-		CreatureType.ZOMBIE,
-	};
+    private static EntityType[] creatureTypes = {
+            EntityType.SKELETON,
+            EntityType.CREEPER,
+            EntityType.SPIDER,
+            EntityType.ZOMBIE,
+    };
+
 	/**
 	 * 
 	 */
@@ -57,7 +58,7 @@ public class CreepThemOut implements NoSwearing.Consequence, Runnable {
 	        		remainingCreepers.put(p,  remaining - 1);
 	        	}
 	        	//then spawn a mob at loc
-	        	CreatureType type = creatureTypes[rand.nextInt(creatureTypes.length)];
+	        	EntityType type = creatureTypes[rand.nextInt(creatureTypes.length)];
 				World world = p.getWorld();
 				world.spawnCreature(loc, type);
         	}

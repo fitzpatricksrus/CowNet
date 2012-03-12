@@ -21,6 +21,10 @@ public class CowNetThingy implements CommandExecutor {
         this.trigger = trigger;
         this.permissionNode = permissionRoot+"."+trigger;
         this.isEnabled = plugin.getConfig().getBoolean(trigger + ".enable");
+        if (!this.isEnabled()){
+            //allow this common alias
+            this.isEnabled = plugin.getConfig().getBoolean(trigger + ".enabled");
+        }
         if (isEnabled) {
             plugin.getCommand(trigger).setExecutor(this);
             logger.info(trigger+" enabled");
@@ -56,28 +60,28 @@ public class CowNetThingy implements CommandExecutor {
         }
     }
 
-    protected final int getConfigInt(String key, int def) {
+    public final int getConfigInt(String key, int def) {
         return plugin.getConfig().getInt(trigger+key, def);
     }
-    protected final boolean getConfigBoolean(String key, boolean def) {
+    public final boolean getConfigBoolean(String key, boolean def) {
         return plugin.getConfig().getBoolean(trigger+key, def);
     }
-    protected final String getConfigString(String key, String def) {
+    public final String getConfigString(String key, String def) {
         return plugin.getConfig().getString(trigger + key, def);
     }
-    protected final boolean hasPermissions(Player player) {
+    public final boolean hasPermissions(Player player) {
         return player.isOp() || player.hasPermission(permissionNode);
     }
-    protected final boolean hasPermissions(Player player, String perm) {
+    public final boolean hasPermissions(Player player, String perm) {
         return player.isOp() || player.hasPermission(permissionNode+"."+perm);
     }
-    protected final Plugin getPlugin() {
+    public final Plugin getPlugin() {
         return plugin;
     }
-    protected final void logInfo(String msg) {
+    public final void logInfo(String msg) {
         logger.info(permissionNode+": "+msg);
     }
-    protected final boolean isEnabled() {
+    public final boolean isEnabled() {
         return isEnabled;
     }
     protected void reload() {

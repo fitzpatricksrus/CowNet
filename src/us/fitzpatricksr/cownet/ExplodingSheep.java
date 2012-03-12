@@ -5,9 +5,11 @@ import java.util.Random;
 import org.bukkit.command.Command;
 import org.bukkit.entity.*;
 import org.bukkit.event.Event;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityListener;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class ExplodingSheep extends CowNetThingy {
@@ -29,10 +31,8 @@ public class ExplodingSheep extends CowNetThingy {
             this.sheepExplode = getConfigBoolean("sheepExplode", this.sheepExplode);
             this.cowsExplode = getConfigBoolean("cowsExplode", this.cowsExplode);
 
-    		plugin.getServer().getPluginManager().registerEvent(
-    				Event.Type.ENTITY_DAMAGE, 
-    				new ExplodingSheepListener(), 
-    				Event.Priority.High, 
+    		plugin.getServer().getPluginManager().registerEvents(
+    				new ExplodingSheepListener(),
     				plugin);
             logInfo("(chanceToExplode="+chanceToExplode+",explosionRadius="+explosionRadius+",explosionDamage="+explosionDamage+",allowedWorlds="+allowedWorlds+")");
         }
@@ -75,7 +75,8 @@ public class ExplodingSheep extends CowNetThingy {
 		return explosionRadius;
 	}
 	
-	private class ExplodingSheepListener extends EntityListener {	    
+	private class ExplodingSheepListener implements Listener {
+        @EventHandler(priority=EventPriority.HIGH)
 	    public void onEntityDamage(EntityDamageEvent event) {
             // Oh please be a sheep
             if ((sheepExplode && event.getEntity() instanceof org.bukkit.entity.Sheep) ||

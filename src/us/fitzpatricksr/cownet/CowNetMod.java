@@ -24,7 +24,8 @@ public class CowNetMod extends JavaPlugin {
             new NoSwearing(this, COWNET, "noswearing");
             new ExplodingSheep(this, COWNET, "tntsheep");
             new LoginHistory(this, COWNET, "logins");
-            new FlingPortal(this, COWNET, "flingportal");
+            new Plots(this, COWNET, "plot");
+//            new FlingPortal(this, COWNET, "flingportal");
         } else {
             logger.info("CowNetMod disabled");
             getPluginLoader().disablePlugin(this);
