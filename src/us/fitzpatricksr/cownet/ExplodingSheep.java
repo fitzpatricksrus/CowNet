@@ -1,15 +1,15 @@
 package us.fitzpatricksr.cownet;
 
-import java.util.Random;
-
 import org.bukkit.command.Command;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.Random;
 
 public class ExplodingSheep extends CowNetThingy {
     private Random rand = new Random();
@@ -20,22 +20,22 @@ public class ExplodingSheep extends CowNetThingy {
     private boolean sheepExplode = false;
     private boolean cowsExplode = false;
 
-	public ExplodingSheep(JavaPlugin plugin, String permissionRoot, String trigger) {
+    public ExplodingSheep(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
         if (isEnabled()) {
             this.chanceToExplode = getConfigInt("chanceToExplode", this.chanceToExplode);
-            this.explosionRadius = getConfigInt("explosionRadius", (int)this.explosionRadius);
+            this.explosionRadius = getConfigInt("explosionRadius", (int) this.explosionRadius);
             this.explosionDamage = getConfigInt("explosionDamage", this.explosionDamage);
             this.allowedWorlds = getConfigString("allowedWords", this.allowedWorlds);
             this.sheepExplode = getConfigBoolean("sheepExplode", this.sheepExplode);
             this.cowsExplode = getConfigBoolean("cowsExplode", this.cowsExplode);
 
-    		plugin.getServer().getPluginManager().registerEvents(
-    				new ExplodingSheepListener(),
-    				plugin);
-            logInfo("(chanceToExplode="+chanceToExplode+",explosionRadius="+explosionRadius+",explosionDamage="+explosionDamage+",allowedWorlds="+allowedWorlds+")");
+            plugin.getServer().getPluginManager().registerEvents(
+                    new ExplodingSheepListener(),
+                    plugin);
+            logInfo("(chanceToExplode=" + chanceToExplode + ",explosionRadius=" + explosionRadius + ",explosionDamage=" + explosionDamage + ",allowedWorlds=" + allowedWorlds + ")");
         }
-	}
+    }
 
     @Override
     protected String getHelpString(Player player) {
@@ -50,22 +50,22 @@ public class ExplodingSheep extends CowNetThingy {
         } else {
             player.sendMessage("Huh?  Srsly?  Commands for sheep?");
             return false;
-		}
-	}
-	
-	private boolean sheepShouldExplode(Entity sheep) {
-		return (rand.nextInt(100) <= chanceToExplode) &&
-				(allowedWorlds.contains(sheep.getWorld().getName()) ||
-                    allowedWorlds.equalsIgnoreCase("ALL"));
-	}
-	
-	public float getExplosionRadius() {
-		return explosionRadius;
-	}
-	
-	private class ExplodingSheepListener implements Listener {
-        @EventHandler(priority=EventPriority.HIGH)
-	    public void onEntityDamage(EntityDamageEvent event) {
+        }
+    }
+
+    private boolean sheepShouldExplode(Entity sheep) {
+        return (rand.nextInt(100) <= chanceToExplode) &&
+                (allowedWorlds.contains(sheep.getWorld().getName()) ||
+                        allowedWorlds.equalsIgnoreCase("ALL"));
+    }
+
+    public float getExplosionRadius() {
+        return explosionRadius;
+    }
+
+    private class ExplodingSheepListener implements Listener {
+        @EventHandler(priority = EventPriority.HIGH)
+        public void onEntityDamage(EntityDamageEvent event) {
             // Oh please be a sheep
             if ((sheepExplode && event.getEntity() instanceof org.bukkit.entity.Sheep) ||
                     (cowsExplode && event.getEntity() instanceof org.bukkit.entity.Cow)) {
@@ -78,7 +78,7 @@ public class ExplodingSheep extends CowNetThingy {
                     logInfo("Killer was a " + killer.getClass().getName());
                     // We don't want this to hurt the chances of someone getting an explosion in their face
                     try {
-                        if (hasPermissions(((Player)killer), "immune")) return;
+                        if (hasPermissions(((Player) killer), "immune")) return;
                     } catch (Exception e) {
                         //class cast?  What can happen here?
                     }
@@ -87,41 +87,42 @@ public class ExplodingSheep extends CowNetThingy {
                     if (sheepShouldExplode(victim)) {
                         victim.getWorld().createExplosion(victim.getLocation(), getExplosionRadius(), false);
 
-                       // Damage the killer
-                       killer.damage(explosionDamage, victim);
+                        // Damage the killer
+                        killer.damage(explosionDamage, victim);
 
                         // Make sure the sheep goes away in the explosion.
-                       victim.remove();
+                        victim.remove();
                     }
-                } else if (killer != null){
+                } else if (killer != null) {
 //	                	logger.info("killer of type "+killer.getClass().getName());
                 }
             }
-	    }
+        }
 
-	    /**
-	     * Pulled from http://forums.bukkit.org/threads/work-around-for-lack-of-entitydamagebyprojectileevent.31727/#post-581023
-	     * @return The killer of the sheep.
-	     */
-	    private LivingEntity GetKiller(EntityDamageEvent event) {
-	        //check for damage by entity (and arrow)
-	        if (event instanceof EntityDamageByEntityEvent) {
-	            EntityDamageByEntityEvent nEvent = (EntityDamageByEntityEvent) event;
-	            if ((nEvent.getDamager() instanceof Arrow)) {
-		            //This will retrieve the arrow object
-		            Arrow a = (Arrow) nEvent.getDamager();
-		            //This will retrieve the person who shot the arrow
-		            return a.getShooter();
-	            } else {
-	                if (nEvent.getDamager() instanceof LivingEntity) {
-	                    return (LivingEntity)nEvent.getDamager();
-	                } else {
-	                    return null;
-	                }
-	            }
-	            
-	        }
-	        return null;
-	    }
-	}
+        /**
+         * Pulled from http://forums.bukkit.org/threads/work-around-for-lack-of-entitydamagebyprojectileevent.31727/#post-581023
+         *
+         * @return The killer of the sheep.
+         */
+        private LivingEntity GetKiller(EntityDamageEvent event) {
+            //check for damage by entity (and arrow)
+            if (event instanceof EntityDamageByEntityEvent) {
+                EntityDamageByEntityEvent nEvent = (EntityDamageByEntityEvent) event;
+                if ((nEvent.getDamager() instanceof Arrow)) {
+                    //This will retrieve the arrow object
+                    Arrow a = (Arrow) nEvent.getDamager();
+                    //This will retrieve the person who shot the arrow
+                    return a.getShooter();
+                } else {
+                    if (nEvent.getDamager() instanceof LivingEntity) {
+                        return (LivingEntity) nEvent.getDamager();
+                    } else {
+                        return null;
+                    }
+                }
+
+            }
+            return null;
+        }
+    }
 }

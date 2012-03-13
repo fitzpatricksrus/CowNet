@@ -5,6 +5,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+
 import java.util.List;
 
 public class StarveCommand extends CowNetThingy {
@@ -15,12 +16,12 @@ public class StarveCommand extends CowNetThingy {
     private int standardRadius;
     private int standardDamage;
 
-	public StarveCommand(JavaPlugin plugin, String permissionRoot, String trigger) {
+    public StarveCommand(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
         if (isEnabled()) {
             this.standardRadius = getConfigInt("radius", DEFAULT_RADIUS);
             this.standardDamage = getConfigInt("damage", DEFAULT_DAMAGE);
-            logInfo("radius="+standardRadius+", damage="+standardDamage);
+            logInfo("radius=" + standardRadius + ", damage=" + standardDamage);
         }
     }
 
@@ -31,7 +32,7 @@ public class StarveCommand extends CowNetThingy {
         }
 
         if (args.length > 2) {
-            player.sendMessage("usage: /"+cmd.getName()+" [standardRadius:"+ standardRadius +"] [standardDamage:"+ standardDamage +"]");
+            player.sendMessage("usage: /" + cmd.getName() + " [standardRadius:" + standardRadius + "] [standardDamage:" + standardDamage + "]");
             return false;
         }
         int range = standardRadius;
@@ -39,11 +40,11 @@ public class StarveCommand extends CowNetThingy {
             try {
                 range = Integer.parseInt(args[0]);
             } catch (Exception e) {
-                player.sendMessage("usage: standardRadius must be a number between 1 and "+MAX_RADIUS);
+                player.sendMessage("usage: standardRadius must be a number between 1 and " + MAX_RADIUS);
                 return false;
             }
             if (range < 1 || range > MAX_RADIUS) {
-                player.sendMessage("usage: standardRadius must be a number between 1 and "+MAX_RADIUS);
+                player.sendMessage("usage: standardRadius must be a number between 1 and " + MAX_RADIUS);
                 return false;
             }
         }
@@ -52,15 +53,15 @@ public class StarveCommand extends CowNetThingy {
             try {
                 damage = Integer.parseInt(args[1]);
             } catch (Exception e) {
-                player.sendMessage("usage: standardDamage must be a number between 1 and "+MAX_DAMAGE);
+                player.sendMessage("usage: standardDamage must be a number between 1 and " + MAX_DAMAGE);
                 return false;
             }
             if (damage < 1 || damage > MAX_RADIUS) {
-                player.sendMessage("usage: standardDamage must be a number between 1 and "+MAX_DAMAGE);
+                player.sendMessage("usage: standardDamage must be a number between 1 and " + MAX_DAMAGE);
                 return false;
             }
         }
-        player.sendMessage("Starving creatures within a standardRadius of: "+range);
+        player.sendMessage("Starving creatures within a standardRadius of: " + range);
         List<Entity> entities = player.getNearbyEntities(range, range, range);
         int deathToll = 0;
         int wounded = 0;
@@ -79,13 +80,13 @@ public class StarveCommand extends CowNetThingy {
             player.sendMessage("No dead.  No wounded.  Happy day.");
         } else {
             if (deathToll > 0) {
-                player.sendMessage(""+deathToll+" creatures died.");
+                player.sendMessage("" + deathToll + " creatures died.");
             }
             if (wounded > 0) {
-                player.sendMessage(""+deathToll+" creatures wounded.");
+                player.sendMessage("" + deathToll + " creatures wounded.");
             }
         }
         return true;
-	}
+    }
 }
 

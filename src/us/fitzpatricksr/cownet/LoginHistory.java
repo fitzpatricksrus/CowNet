@@ -1,17 +1,8 @@
 package us.fitzpatricksr.cownet;
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -21,6 +12,13 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+
 public class LoginHistory extends CowNetThingy implements Listener {
     enum Filter {
         IN,
@@ -28,7 +26,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
         INOUT;
 
         public boolean shouldDisplayLine(String line) {
-            return ((this == IN  || this == INOUT) && line.contains("login")) ||
+            return ((this == IN || this == INOUT) && line.contains("login")) ||
                     ((this == OUT || this == INOUT) && line.contains("quit"));
         }
     }
@@ -37,7 +35,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
     private static final int DEFAULT_MAX_RESULTS = 5;
     private Plugin plugin;
     private HashMap<String, GameMode> gameModeSave = new HashMap<String, GameMode>();
-    
+
     public LoginHistory(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
         this.plugin = plugin;
@@ -56,9 +54,11 @@ public class LoginHistory extends CowNetThingy implements Listener {
 
     private class Output {
         private Player p;
+
         public Output(Player p) {
             this.p = p;
         }
+
         public void say(String s) {
             if (p != null) {
                 p.sendMessage(s);
@@ -78,7 +78,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
         int count = DEFAULT_MAX_RESULTS;
         Filter directionFilter = Filter.INOUT;
         Output out = new Output(player);
-        
+
         if (args.length > 0) {
             if (args.length > 2) {
                 out.say(getHelpString(player));
@@ -128,7 +128,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
         return true;
     }
 
-    @EventHandler(priority= EventPriority.LOW)
+    @EventHandler(priority = EventPriority.LOW)
     public void onPlayerLogin(PlayerLoginEvent event) {
         File logFile = getLogFile(plugin);
         if (logFile != null) {
@@ -147,7 +147,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority= EventPriority.LOW)
+    @EventHandler(priority = EventPriority.LOW)
     public void onPlayerQuit(PlayerQuitEvent event) {
         File logFile = getLogFile(plugin);
         if (logFile != null) {
@@ -171,10 +171,10 @@ public class LoginHistory extends CowNetThingy implements Listener {
         GameMode oldMode = gameModeSave.get(player.getPlayerListName());
         if (oldMode != null) {
             player.setGameMode(oldMode);
-            logInfo("Restoring game mode for "+player.getPlayerListName()+" "+oldMode);
+            logInfo("Restoring game mode for " + player.getPlayerListName() + " " + oldMode);
         }
     }
-    
+
     private void saveGameMode(Player player) {
         gameModeSave.put(player.getPlayerListName(), player.getGameMode());
     }
@@ -201,7 +201,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
 //        return player.getPlayerListName()+" "+player.getLocation();
         return player.getPlayerListName();
     }
-    
+
     private String[] lastNLogins(File file, Filter filter, int count) {
         LinkedList<String> results = new LinkedList<String>();
         try {

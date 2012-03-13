@@ -18,7 +18,7 @@ public class PlayerCenteredClaim implements Plots.AbstractClaim {
     public PlayerCenteredClaim(Plots plugin) {
         int gridSizeX = plugin.getConfigInt("plotSize", 64);
         int gridSizeZ = plugin.getConfigInt("plotSize", 64);
-        sizeVectorOffset = new Vector(gridSizeX /2, 0, gridSizeZ /2);
+        sizeVectorOffset = new Vector(gridSizeX / 2, 0, gridSizeZ / 2);
     }
 
     public ProtectedRegion defineClaim(Player p, String name) {

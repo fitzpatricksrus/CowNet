@@ -4,11 +4,9 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.Listener;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
@@ -38,7 +36,7 @@ public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listen
         return "usage: put a redstone torch below a glass block and stand on it.";
     }
 
-    @EventHandler(priority= EventPriority.NORMAL)
+    @EventHandler(priority = EventPriority.NORMAL)
     private void onPlayerMove(PlayerMoveEvent event) {
         // if we moved over a fling portal then here we go...
         if (shouldFlingPlayer(event.getPlayer())) {
@@ -46,10 +44,10 @@ public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listen
         }
     }
 
-    @EventHandler(priority=EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGH)
     public void onEntityDamage(EntityDamageEvent event) {
         if (event.getEntity() instanceof Player) {
-            Player player = (Player)event.getEntity();
+            Player player = (Player) event.getEntity();
             if (playerIsInFlight(player)) {
                 EntityDamageEvent.DamageCause cause = event.getCause();
                 if (cause.equals(EntityDamageEvent.DamageCause.FALL)) {
@@ -65,11 +63,11 @@ public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listen
         if (player.getLocation().getBlockY() > 127) return false;
         if (playerIsInFlight(player)) return false;
         Location loc = player.getLocation().clone();
-        loc.setY(loc.getY() -1);
+        loc.setY(loc.getY() - 1);
         Block topBlock = loc.getBlock();
         if (topBlock.getType().equals(Material.GLASS)) {
             //OK, it's a glass block.  Does it have a redstone torch underneath?
-            loc.setY(loc.getY() -1);
+            loc.setY(loc.getY() - 1);
             topBlock = loc.getBlock();
             boolean result = topBlock.getType().equals(Material.REDSTONE_TORCH_ON);
 //            logInfo("Fling: "+result+" "+topBlock.getTypeId()+" "+topBlock.getType());
@@ -92,10 +90,10 @@ public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listen
                 5,
                 5);
 
-        getPlugin().getServer().getScheduler().scheduleSyncDelayedTask(getPlugin(),new Runnable() {
+        getPlugin().getServer().getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
             public void run() {
                 Location destination = getPlayerDestination(player);
-                logInfo("Fling "+player.getName()+" to: "+destination);
+                logInfo("Fling " + player.getName() + " to: " + destination);
                 player.teleport(destination);
                 getPlugin().getServer().getScheduler().cancelTask(nyan);
             }// end of run
@@ -108,7 +106,7 @@ public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listen
             return false;
         } else {
             long duration = System.currentTimeMillis() - timeStamp;
-            if (duration  < 30*1000) {
+            if (duration < 30 * 1000) {
                 return true;
             } else {
                 // they've been in flight too long.  Let them suffer.
@@ -135,7 +133,7 @@ public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listen
     }
 
     private long rotateBytes(long value) {
-        Short s = (short)value;
+        Short s = (short) value;
         return Short.reverseBytes(s);
     }
 

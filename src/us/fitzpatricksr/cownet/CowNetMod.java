@@ -37,7 +37,7 @@ public class CowNetMod extends JavaPlugin {
 
     @Override
     public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
-        logger.info("CowNetMod is the terrain generator for "+worldName+"  id:"+id);
+        logger.info("CowNetMod is the terrain generator for " + worldName + "  id:" + id);
         return plots.getDefaultWorldGenerator(worldName, id);
     }
 

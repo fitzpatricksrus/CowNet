@@ -3,22 +3,24 @@ package us.fitzpatricksr.cownet;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.bukkit.BukkitPlayer;
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.databases.ProtectionDatabaseException;
 import com.sk89q.worldguard.protection.flags.DefaultFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import org.bukkit.*;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import us.fitzpatricksr.cownet.plots.PlotsChunkGenerator;
-import us.fitzpatricksr.cownet.plots.PlayerCenteredClaim;
 import us.fitzpatricksr.cownet.plots.InfinitePlotClaim;
+import us.fitzpatricksr.cownet.plots.PlayerCenteredClaim;
+import us.fitzpatricksr.cownet.plots.PlotsChunkGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,8 +45,10 @@ public class Plots extends CowNetThingy {
     public interface AbstractClaim {
         //define the region of the claim
         public ProtectedRegion defineClaim(Player p, String name);
+
         //after it has been claimed, we can build it out a bit and make it look nice.
         public void decorateClaim(Player p, ProtectedRegion region);
+
         public void dedecorateClaim(Player p, ProtectedRegion region);
     }
 
@@ -53,7 +57,7 @@ public class Plots extends CowNetThingy {
         if (isEnabled()) {
             //get WorldGuard and WorldEdit plugins
             Plugin worldPlugin = plugin.getServer().getPluginManager().getPlugin("WorldGuard");
-            if(worldPlugin == null || !(worldPlugin instanceof WorldGuardPlugin)){
+            if (worldPlugin == null || !(worldPlugin instanceof WorldGuardPlugin)) {
                 throw new RuntimeException("WorldGuard must be loaded first");
             }
             worldGuard = (WorldGuardPlugin) worldPlugin;
@@ -73,7 +77,7 @@ public class Plots extends CowNetThingy {
 
     @Override
     protected String getHelpString(Player player) {
-        return "usage: plot [ claim <plotName> | release | share <player> | unshare <player> | "+
+        return "usage: plot [ claim <plotName> | release | share <player> | unshare <player> | " +
                 "info | list [player] | giveto <player> | tp <plotName> ]";
     }
 
@@ -128,12 +132,12 @@ public class Plots extends CowNetThingy {
                 if (region.isOwner(wgPlayer)) {
                     region.getMembers().addPlayer(playerName);
                     if (saveRegions(regionManager)) {
-                        player.sendMessage("Sharing "+region.getId()+" with "+ playerName);
+                        player.sendMessage("Sharing " + region.getId() + " with " + playerName);
                     } else {
                         player.sendMessage("Could not share region for unknown reasons.");
                     }
                 } else {
-                    player.sendMessage("Could not share region "+region.getId()+" because you don't own it.");
+                    player.sendMessage("Could not share region " + region.getId() + " because you don't own it.");
                 }
             }
         }
@@ -159,12 +163,12 @@ public class Plots extends CowNetThingy {
                 if (region.isOwner(wgPlayer)) {
                     region.getMembers().removePlayer(playerName);
                     if (saveRegions(regionManager)) {
-                        player.sendMessage("No longer sharing "+region.getId()+" with "+ playerName);
+                        player.sendMessage("No longer sharing " + region.getId() + " with " + playerName);
                     } else {
                         player.sendMessage("Could not unshare region for unknown reasons.");
                     }
                 } else {
-                    player.sendMessage("Could not unshare region "+region.getId()+" because you don't own it.");
+                    player.sendMessage("Could not unshare region " + region.getId() + " because you don't own it.");
                 }
             }
         }
@@ -187,13 +191,13 @@ public class Plots extends CowNetThingy {
                 if (region.isOwner(wgPlayer)) {
                     regionManager.removeRegion(region.getId());
                     if (saveRegions(regionManager)) {
-                        player.sendMessage("Releasing region "+region.getId());
+                        player.sendMessage("Releasing region " + region.getId());
                         getClaimType(player).dedecorateClaim(player, region);
                     } else {
                         player.sendMessage("Could not release region for unknown reasons.");
                     }
                 } else {
-                    player.sendMessage("Could not release region "+region.getId()+" because you don't own it.");
+                    player.sendMessage("Could not release region " + region.getId() + " because you don't own it.");
                 }
             }
         }
@@ -214,11 +218,11 @@ public class Plots extends CowNetThingy {
             for (ProtectedRegion region : regions) {
                 String name = region.getId();
                 String owners = region.getOwners().toPlayersString();
-                player.sendMessage("Plot name: "+name);
-                player.sendMessage("    Owner: "+owners);
+                player.sendMessage("Plot name: " + name);
+                player.sendMessage("    Owner: " + owners);
                 if (region.getMembers().size() > 0) {
                     String members = region.getMembers().toPlayersString();
-                    player.sendMessage("    Shared with: "+members);
+                    player.sendMessage("    Shared with: " + members);
                 }
             }
             return true;
@@ -233,11 +237,11 @@ public class Plots extends CowNetThingy {
 
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
         String playerName = (args.length == 1) ? player.getName() : args[1];
-        player.sendMessage("Plots claimed by "+playerName);
+        player.sendMessage("Plots claimed by " + playerName);
         for (Map.Entry<String, ProtectedRegion> entry : regionManager.getRegions().entrySet()) {
             for (String owner : entry.getValue().getOwners().getPlayers()) {
                 if (owner.equalsIgnoreCase(playerName)) {
-                    player.sendMessage("    "+entry.getKey());
+                    player.sendMessage("    " + entry.getKey());
                     break;
                 }
             }
@@ -254,19 +258,19 @@ public class Plots extends CowNetThingy {
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
         ProtectedRegion region = regionManager.getRegion(plotName);
         if (region == null) {
-            player.sendMessage("Can't find a plot named "+plotName);
+            player.sendMessage("Can't find a plot named " + plotName);
             return true;
         }
 
         Vector middle = region.getMinimumPoint();
         middle = middle.add(region.getMaximumPoint());
         middle = middle.divide(2.0);
-        
+
         Location dropPoint = BlockUtils.getHighestLandLocation(
-                new Location(player.getWorld(), middle.getX()+0.5, middle.getY(), middle.getZ()+0.5));
-        
-        dropPoint.setY(dropPoint.getY()+1); //above ground.  :-)
-        player.sendMessage("Zooooop!   You're in "+plotName+".");
+                new Location(player.getWorld(), middle.getX() + 0.5, middle.getY(), middle.getZ() + 0.5));
+
+        dropPoint.setY(dropPoint.getY() + 1); //above ground.  :-)
+        player.sendMessage("Zooooop!   You're in " + plotName + ".");
         player.teleport(dropPoint);
         return true;
     }
@@ -295,13 +299,13 @@ public class Plots extends CowNetThingy {
                     region.getOwners().removePlayer(player.getName());
                     region.getMembers().addPlayer(player.getName());
                     if (saveRegions(regionManager)) {
-                        player.sendMessage("Gave "+region.getId()+" to "+ playerName+".  "+
+                        player.sendMessage("Gave " + region.getId() + " to " + playerName + ".  " +
                                 "You are no longer an owner, but it's shared with you.");
                     } else {
                         player.sendMessage("Could not give away region for unknown reasons.");
                     }
                 } else {
-                    player.sendMessage("Could not give region "+region.getId()+" away because you don't own it.");
+                    player.sendMessage("Could not give region " + region.getId() + " away because you don't own it.");
                 }
             }
         }
@@ -338,7 +342,7 @@ public class Plots extends CowNetThingy {
         //does this player reached his maximum number of plots.
         boolean hasUnlimitedPlots = hasPermissions(player, "unlimitedPlots");
         if (!hasUnlimitedPlots && regionManager.getRegionCountOfPlayer(wgPlayer) >= maxPlots) {
-            player.sendMessage("You've exceeded the maximum of "+maxPlots+" allowed plots");
+            player.sendMessage("You've exceeded the maximum of " + maxPlots + " allowed plots");
             return true;
         }
 
@@ -350,7 +354,7 @@ public class Plots extends CowNetThingy {
             for (ProtectedRegion conflict : conflicts) {
                 String owners = conflict.getOwners().toPlayersString();
                 String name = conflict.getId();
-                player.sendMessage("Sorry, this overlaps \""+name+"\" owned by "+owners);
+                player.sendMessage("Sorry, this overlaps \"" + name + "\" owned by " + owners);
             }
             return true;
         }
@@ -364,7 +368,7 @@ public class Plots extends CowNetThingy {
         region.setFlag(DefaultFlag.ENDER_BUILD, StateFlag.State.DENY);
         region.setFlag(DefaultFlag.GHAST_FIREBALL, StateFlag.State.DENY);
         region.setFlag(DefaultFlag.TNT, StateFlag.State.DENY);
-        region.setFlag(DefaultFlag.GREET_MESSAGE, "Now entering "+claimName+" owned by "+wgPlayer.getName());
+        region.setFlag(DefaultFlag.GREET_MESSAGE, "Now entering " + claimName + " owned by " + wgPlayer.getName());
         region.setFlag(DefaultFlag.FAREWELL_MESSAGE, "Now leaving " + claimName);
 
         // looks good, so let's twiddle as needed.
@@ -387,7 +391,7 @@ public class Plots extends CowNetThingy {
             return false;
         }
     }
-    
+
     private AbstractClaim getClaimType(Player p) {
         World w = p.getWorld();
         ChunkGenerator cg = w.getGenerator();
@@ -398,7 +402,7 @@ public class Plots extends CowNetThingy {
         } else {
             // player centered claim
             if (cg != null) {
-                logInfo("Claiming using PlayerCenterClaim.  Chunk generator was a "+cg.getClass().getName());
+                logInfo("Claiming using PlayerCenterClaim.  Chunk generator was a " + cg.getClass().getName());
             } else {
                 logInfo("Claiming using PlayerCenterClaim.");
             }
@@ -417,7 +421,7 @@ public class Plots extends CowNetThingy {
         return result;
     }
 
-    public ChunkGenerator getDefaultWorldGenerator(String worldName, String id){
+    public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
         return new PlotsChunkGenerator(plotSize, plotHeight, plotBase, plotSurface, plotPath);
     }
 }

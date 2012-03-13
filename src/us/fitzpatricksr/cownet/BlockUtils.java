@@ -13,11 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created by IntelliJ IDEA.
- * User: jfitzpatrick
- * Date: 3/12/12
- * Time: 5:01 PM
- * To change this template use File | Settings | File Templates.
+ * Simple utilities for checking block properties and putting down fences.
  */
 public class BlockUtils {
     public static final Set<Material> PASS_THROUGH_BLOCKS = new HashSet<Material>(
@@ -58,7 +54,7 @@ public class BlockUtils {
                             Material.VINE,
                             Material.WATER_LILY
                     }));
-    
+
     public static Location getHighestLandLocation(Location start) {
         Location loc = start.clone();
         for (int i = 254; i > 0; i--) {
@@ -97,7 +93,7 @@ public class BlockUtils {
 
     private static void placeFenceAt(World world, int x, int z, boolean addFences) {
         Location loc = BlockUtils.getHighestLandLocation(new Location(world, x, 0, z));
-        loc.setY(loc.getY()+1);
+        loc.setY(loc.getY() + 1);
         Block fenceBlock = world.getBlockAt(loc);
         if (addFences) {
             fenceBlock.setType(Material.FENCE);
@@ -110,5 +106,6 @@ public class BlockUtils {
                 fenceBlock.getState().update(true);
             }
         }
-    }}
+    }
+}
 
