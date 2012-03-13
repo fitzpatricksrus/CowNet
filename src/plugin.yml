@@ -5,22 +5,22 @@ load: startup
 commands:
   starve:
       description: Starve mobs and players around you
-      usage: starve [radius] [damage]
+      usage: Use "/starve help? for help.
   bounce:
       description: Bounce mobs and players around you
-      usage: bounce [radius] [velocity]
+      usage: Use "/bounce help" for help.
   tntsheep:
       description: Some sheep go boom!
       usage: tntsheep
   logins:
       description: show who has logged in recently
-      usage: logins [-in | -out | -inout] [number of results]
+      usage: Use "/logins help" for help.
   flingportal:
       description: place a redstone torch under a glass block and step on the block.
       usage: flingportal
   plot:
       description: claim a plot of land for building
-      usage: plot [ claim <plotName> | release | share <player> | unshare <player> | info | list [player] | tp <plotName>
+      usage: Use "/plot help" for help.
 permissions:
     cownet.starve:
         description: Starve creatures around you
@@ -40,6 +40,9 @@ permissions:
     cownet.flingportal:
         description: do you fling?
         default: true
-    cownet.plot:
+    cownet.plot.claim:
         description: are you allowed to claim land
         default: true
+    cownet.plot.unlimitedplots:
+        description: if true the player is allowed unlimited active plots
+        default: false

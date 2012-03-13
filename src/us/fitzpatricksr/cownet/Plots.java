@@ -73,7 +73,8 @@ public class Plots extends CowNetThingy {
 
     @Override
     protected String getHelpString(Player player) {
-        return "usage: plot [ claim <plotName> | release | share <player> | unshare <player> | info | list [player] | tp <plotName> ]";
+        return "usage: plot [ claim <plotName> | release | share <player> | unshare <player> | "+
+                "info | list [player] | giveto <player> | tp <plotName> ]";
     }
 
     @Override
@@ -84,19 +85,21 @@ public class Plots extends CowNetThingy {
         } else if (hasPermissions(player)) {
             String subCmd = args[0].toLowerCase();
             if ("claim".equalsIgnoreCase(subCmd)) {
-                return claim(player, cmd, args);
+                return claim(player, args);
             } else if ("release".equalsIgnoreCase(subCmd)) {
-                return release(player, cmd, args);
+                return release(player, args);
             } else if ("share".equalsIgnoreCase(subCmd)) {
-                return share(player, cmd, args);
+                return share(player, args);
             } else if ("unshare".equalsIgnoreCase(subCmd)) {
-                return unshare(player, cmd, args);
+                return unshare(player, args);
             } else if ("info".equalsIgnoreCase(subCmd)) {
-                return info(player, cmd, args);
+                return info(player, args);
             } else if ("list".equalsIgnoreCase(subCmd)) {
-                return list(player, cmd, args);
+                return list(player, args);
             } else if ("tp".equalsIgnoreCase(subCmd)) {
-                return tp(player, cmd, args);
+                return tp(player, args);
+            } else if ("giveto".equalsIgnoreCase(subCmd)) {
+                return giveTo(player, args);
             } else {
                 return false;
             }
@@ -106,7 +109,7 @@ public class Plots extends CowNetThingy {
         }
     }
 
-    private boolean share(Player player, Command cmd, String[] args) {
+    private boolean share(Player player, String[] args) {
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
 
@@ -137,7 +140,7 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    private boolean unshare(Player player, Command cmd, String[] args) {
+    private boolean unshare(Player player, String[] args) {
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
 
@@ -168,7 +171,7 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    private boolean release(Player player, Command cmd, String[] args) {
+    private boolean release(Player player, String[] args) {
         if (args.length != 1) {
             return false;
         }
@@ -197,7 +200,7 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    private boolean info(Player player, Command cmd, String[] args) {
+    private boolean info(Player player, String[] args) {
         if (args.length != 1) {
             return false;
         }
@@ -223,7 +226,7 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    private boolean list(Player player, Command cmd, String[] args) {
+    private boolean list(Player player, String[] args) {
         if (args.length < 1 || args.length > 2) {
             return false;
         }
@@ -242,7 +245,7 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    private boolean tp(Player player, Command cmd, String[] args) {
+    private boolean tp(Player player, String[] args) {
         if (args.length != 2) {
             return false;
         }
@@ -268,9 +271,51 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    private boolean claim(Player player, Command cmd, String[] args) {
+    private boolean giveTo(Player player, String[] args) {
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
+
+        if ((args.length != 2)) {
+            player.sendMessage("You must specify a player to give your plot to.");
+            return true;
+        }
+
+        String playerName = args[1];
+
+        ApplicableRegionSet regions = regionManager.getApplicableRegions(player.getLocation());
+        if (regions.size() == 0) {
+            player.sendMessage("Nothing to give.");
+        } else {
+            for (ProtectedRegion region : regions) {
+                if (region.isOwner(wgPlayer)) {
+                    // add designated player to owners and remove from sharing
+                    region.getOwners().addPlayer(playerName);
+                    region.getMembers().removePlayer(playerName);
+                    // remove this player from owners and add to sharing
+                    region.getOwners().removePlayer(player.getName());
+                    region.getMembers().addPlayer(player.getName());
+                    if (saveRegions(regionManager)) {
+                        player.sendMessage("Gave "+region.getId()+" to "+ playerName+".  "+
+                                "You are no longer an owner, but it's shared with you.");
+                    } else {
+                        player.sendMessage("Could not give away region for unknown reasons.");
+                    }
+                } else {
+                    player.sendMessage("Could not give region "+region.getId()+" away because you don't own it.");
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean claim(Player player, String[] args) {
+        BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
+        RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
+
+        if (!hasPermissions(player, "claim")) {
+            player.sendMessage("You don't have permission to claim plots.");
+            return true;
+        }
 
         if ((args.length != 2) || !ProtectedRegion.isValidId(args[1])) {
             player.sendMessage("You must specify a valid name for the claim: /plot claim <name>");
@@ -291,7 +336,8 @@ public class Plots extends CowNetThingy {
         }
 
         //does this player reached his maximum number of plots.
-        if (regionManager.getRegionCountOfPlayer(wgPlayer) >= maxPlots) {
+        boolean hasUnlimitedPlots = hasPermissions(player, "unlimitedPlots");
+        if (!hasUnlimitedPlots && regionManager.getRegionCountOfPlayer(wgPlayer) >= maxPlots) {
             player.sendMessage("You've exceeded the maximum of "+maxPlots+" allowed plots");
             return true;
         }

@@ -4,7 +4,6 @@ import java.util.Random;
 
 import org.bukkit.command.Command;
 import org.bukkit.entity.*;
-import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -55,20 +54,9 @@ public class ExplodingSheep extends CowNetThingy {
 	}
 	
 	private boolean sheepShouldExplode(Entity sheep) {
-		boolean result = (rand.nextInt(100) <= chanceToExplode) &&
+		return (rand.nextInt(100) <= chanceToExplode) &&
 				(allowedWorlds.contains(sheep.getWorld().getName()) ||
                     allowedWorlds.equalsIgnoreCase("ALL"));
-        /*
-		if (result) {
-			logInfo("Sheep should explode");
-		} else {
-			if (!allowedWorlds.contains(sheep.getWorld().getName())) {
-                logInfo("Sheep in this world don't explode");
-			} else {
-                logInfo("This sheep is a dud.");
-			}
-		} */
-		return result;
 	}
 	
 	public float getExplosionRadius() {
@@ -90,7 +78,7 @@ public class ExplodingSheep extends CowNetThingy {
                     logInfo("Killer was a " + killer.getClass().getName());
                     // We don't want this to hurt the chances of someone getting an explosion in their face
                     try {
-                        if (((Player)killer).hasPermission("explodingsheep.immune")) return;
+                        if (hasPermissions(((Player)killer), "immune")) return;
                     } catch (Exception e) {
                         //class cast?  What can happen here?
                     }
@@ -113,7 +101,6 @@ public class ExplodingSheep extends CowNetThingy {
 
 	    /**
 	     * Pulled from http://forums.bukkit.org/threads/work-around-for-lack-of-entitydamagebyprojectileevent.31727/#post-581023
-	     * @param event
 	     * @return The killer of the sheep.
 	     */
 	    private LivingEntity GetKiller(EntityDamageEvent event) {

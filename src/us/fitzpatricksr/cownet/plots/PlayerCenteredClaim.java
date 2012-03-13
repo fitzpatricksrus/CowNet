@@ -16,8 +16,8 @@ public class PlayerCenteredClaim implements Plots.AbstractClaim {
     private final Vector sizeVectorOffset;
 
     public PlayerCenteredClaim(Plots plugin) {
-        int gridSizeX = plugin.getConfigInt("gridSizeX", 64);
-        int gridSizeZ = plugin.getConfigInt("gridSizeZ", 64);
+        int gridSizeX = plugin.getConfigInt("plotSize", 64);
+        int gridSizeZ = plugin.getConfigInt("plotSize", 64);
         sizeVectorOffset = new Vector(gridSizeX /2, 0, gridSizeZ /2);
     }
 

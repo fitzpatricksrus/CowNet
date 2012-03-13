@@ -16,19 +16,17 @@ import us.fitzpatricksr.cownet.NoSwearing;
 
 public class CreepThemOut implements NoSwearing.Consequence, Runnable {
 	// spawn random mobs in front of them for a while
-    private static EntityType[] creatureTypes = {
-            EntityType.SKELETON,
-            EntityType.CREEPER,
-            EntityType.SPIDER,
-            EntityType.ZOMBIE,
+    private static EntityType[] creatureTypes = new EntityType[] {
+        EntityType.SKELETON,
+        EntityType.CREEPER,
+        EntityType.SPIDER,
+        EntityType.ZOMBIE,
     };
 
-	/**
-	 * 
-	 */
 	private Random rand = new Random();
 	private ConcurrentMap<Player, Integer> remainingCreepers = new ConcurrentHashMap<Player, Integer>();
 	private int mobsToSpawn;
+
 	public CreepThemOut(JavaPlugin plugin, String trigger) {
 		FileConfiguration config = plugin.getConfig();
         mobsToSpawn = config.getInt(trigger+".mobsToSpawn", 5); // 5 mobs will be spawned

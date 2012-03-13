@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -64,11 +63,10 @@ public class NoSwearing implements Listener {
     
     public boolean scanForBadWords(Player player, String textToScan) {
         String text = textToScan.toLowerCase();
-        for (int i = 0; i < bannedPhrases.length; i++) {
-            String phrase = bannedPhrases[i];
+        for (String phrase : bannedPhrases) {
             if (text.matches(phrase)) {
-                String word = phrase.replace("(","").replace(")","").replace(".*","");
-                consequences[rand.nextInt(consequences.length)].handleBadWord(player,  word);
+                String word = phrase.replace("(", "").replace(")", "").replace(".*", "");
+                consequences[rand.nextInt(consequences.length)].handleBadWord(player, word);
                 return true;
             } else {
                 //logger.info("Didn't see word '"+bannedPhrase+"'");
