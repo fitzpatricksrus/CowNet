@@ -1,20 +1,17 @@
-package us.fitzpatricksr.cownet.plotsclaims;
+package us.fitzpatricksr.cownet.plots;
 
 import com.sk89q.worldedit.BlockVector;
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
-import com.sk89q.worldedit.bukkit.selections.CuboidSelection;
-import com.sk89q.worldguard.LocalPlayer;
-import com.sk89q.worldguard.bukkit.BukkitPlayer;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.sk89q.worldguard.protection.flags.DefaultFlag;
-import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.generator.ChunkGenerator;
-import uk.co.jacekk.bukkit.infiniteplots.InfinitePlotsGenerator;
+import us.fitzpatricksr.cownet.BlockUtils;
 import us.fitzpatricksr.cownet.Plots;
 
 /**
@@ -24,20 +21,16 @@ public class InfinitePlotClaim implements Plots.AbstractClaim {
     private int roadOffsetX = 4;
     private int roadOffsetZ = 4;
     private int walkwaySize = 7; // width of walkway between plots, this is not configurable in InfinitePlots so I'm not going to make it configurable in this plugin.
-    private WorldGuardPlugin wgp;
-
-    public InfinitePlotClaim(WorldGuardPlugin wg) {
-        this.wgp = wg;
+    private int plotSize;
+    
+    public InfinitePlotClaim(int plotSize) {
+        this.plotSize = plotSize;
     }
 
     public ProtectedRegion defineClaim(Player p, String name) {
         Location loc = p.getLocation();
         double x = loc.getX();
-        double y = loc.getY();
         double z = loc.getZ();
-        World w = p.getWorld();
-        ChunkGenerator cg = w.getGenerator();
-        double plotSize = ((InfinitePlotsGenerator)cg).getPlotSize();
         double move = plotSize+walkwaySize;
 
         x = (int)(Math.floor((x-roadOffsetX)/move)*move+roadOffsetX);
@@ -49,7 +42,11 @@ public class InfinitePlotClaim implements Plots.AbstractClaim {
         return new ProtectedCuboidRegion(name, min, max);
     }
 
-    public void constructClaim(Player p, String name) {
+    public void decorateClaim(Player p, ProtectedRegion region) {
+        BlockUtils.manageFences(p, region, true);
     }
 
+    public void dedecorateClaim(Player p, ProtectedRegion region) {
+        BlockUtils.manageFences(p, region, false);
+    }
 }

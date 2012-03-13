@@ -58,24 +58,28 @@ public class NoSwearing implements Listener {
 			logger.info(player.getName()+" said a bad word, but has permissions.");
 			return;
 		}
-		
-		String text = event.getMessage().toLowerCase();
-		for (int i = 0; i < bannedPhrases.length; i++) {
-			String phrase = bannedPhrases[i];
-			if (text.matches(phrase)) {
-				String word = phrase.replace("(","").replace(")","").replace(".*","");
-				consequences[rand.nextInt(consequences.length)].handleBadWord(event,  word);
-				event.setCancelled(true);
-				return;
-			} else {
-				//logger.info("Didn't see word '"+bannedPhrase+"'");
-			}
-		}
+
+        scanForBadWords(event.getPlayer(), event.getMessage());
 	}
-	
+    
+    public boolean scanForBadWords(Player player, String textToScan) {
+        String text = textToScan.toLowerCase();
+        for (int i = 0; i < bannedPhrases.length; i++) {
+            String phrase = bannedPhrases[i];
+            if (text.matches(phrase)) {
+                String word = phrase.replace("(","").replace(")","").replace(".*","");
+                consequences[rand.nextInt(consequences.length)].handleBadWord(player,  word);
+                return true;
+            } else {
+                //logger.info("Didn't see word '"+bannedPhrase+"'");
+            }
+        }
+        return false;
+    }
+
 	// interface for all consequences
 	public static interface Consequence {
-		public void handleBadWord(PlayerChatEvent event, String word);
+		public void handleBadWord(Player player, String word);
 	}
 	
 	private String[] loadBadWords(JavaPlugin plugin, String fileName, String trigger) {

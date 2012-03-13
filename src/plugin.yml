@@ -1,6 +1,7 @@
 name: CowNetPlugin
 main: us.fitzpatricksr.cownet.CowNetMod
 version: 1.0.0
+load: startup
 commands:
   starve:
       description: Starve mobs and players around you
@@ -14,12 +15,12 @@ commands:
   logins:
       description: show who has logged in recently
       usage: logins [-in | -out | -inout] [number of results]
-  dragonsbgone:
-      description: kill all the ender dragons in a radius of 100
-      usage: dragonsbgone
   flingportal:
       description: place a redstone torch under a glass block and step on the block.
       usage: flingportal
+  plot:
+      description: claim a plot of land for building
+      usage: plot [ claim <plotName> | release | share <player> | unshare <player> | info | list [player] | tp <plotName>
 permissions:
     cownet.starve:
         description: Starve creatures around you
@@ -38,4 +39,7 @@ permissions:
         default: false
     cownet.flingportal:
         description: do you fling?
+        default: true
+    cownet.plot:
+        description: are you allowed to claim land
         default: true

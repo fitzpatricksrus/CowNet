@@ -1,25 +1,26 @@
-package us.fitzpatricksr.cownet.plotsclaims;
+package us.fitzpatricksr.cownet;
 
 import com.sk89q.worldedit.BlockVector;
-import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
-import us.fitzpatricksr.cownet.Plots;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Plots centered around where the player is standing.
+ * Created by IntelliJ IDEA.
+ * User: jfitzpatrick
+ * Date: 3/12/12
+ * Time: 5:01 PM
+ * To change this template use File | Settings | File Templates.
  */
-public class PlayerCenteredClaim implements Plots.AbstractClaim {
-    private static final Set<Material> PASS_THROUGH = new HashSet<Material>(
+public class BlockUtils {
+    public static final Set<Material> PASS_THROUGH_BLOCKS = new HashSet<Material>(
             Arrays.asList(
                     new Material[]{
                             Material.AIR,
@@ -27,8 +28,8 @@ public class PlayerCenteredClaim implements Plots.AbstractClaim {
                             Material.STATIONARY_WATER,
                             Material.LEAVES,
                             Material.WEB,
-                            Material.FENCE,
                             Material.FEATHER,
+                            Material.FENCE,
                             Material.FENCE_GATE,
                             Material.LONG_GRASS,
                             Material.DEAD_BUSH,
@@ -57,69 +58,57 @@ public class PlayerCenteredClaim implements Plots.AbstractClaim {
                             Material.VINE,
                             Material.WATER_LILY
                     }));
-    private final Vector sizeVectorOffset;
-
-    public PlayerCenteredClaim(Plots plugin) {
-        int gridSizeX = plugin.getConfigInt("gridSizeX", 64);
-        int gridSizeZ = plugin.getConfigInt("gridSizeZ", 64);
-        sizeVectorOffset = new Vector(gridSizeX /2, 0, gridSizeZ /2);
+    
+    public static Location getHighestLandLocation(Location start) {
+        Location loc = start.clone();
+        for (int i = 254; i > 0; i--) {
+            loc.setY(i);
+            if (!BlockUtils.PASS_THROUGH_BLOCKS.contains(loc.getBlock().getType())) {
+                return loc;
+            }
+        }
+        return start;
     }
 
-    public ProtectedRegion defineClaim(Player p, String name) {
-        Location loc = p.getLocation();
-        Vector minVector = getMinLocation(loc);
-        Vector maxVector = getMaxLocation(loc);
-
-        BlockVector min = new BlockVector(minVector.getX(), 0, minVector.getZ());
-        BlockVector max = new BlockVector(maxVector.getX(), 255, maxVector.getZ());
-        return new ProtectedCuboidRegion(name, min, max);
-    }
-
-    public void constructClaim(Player p, String name) {
-        Location loc = p.getLocation();
+    public static void manageFences(Player p, ProtectedRegion region, boolean addFences) {
         World world = p.getWorld();
-        Vector minVector = getMinLocation(loc);
-        Vector maxVector = getMaxLocation(loc);
+        BlockVector minVector = region.getMinimumPoint();
+        BlockVector maxVector = region.getMaximumPoint();
 
         int minX = minVector.getBlockX();
-        int minZ = minVector.getBlockZ();
+        int minZ = minVector.getBlockZ() + 1;
         int maxX = maxVector.getBlockX();
-        int maxZ = maxVector.getBlockZ();
+        int maxZ = maxVector.getBlockZ() + 1;
 
         // (minX, minZ) -> (maxX, minZ)
         // (minX, maxZ) -> (maxX, maxZ)
         for (int x = minX; x <= maxX; x++) {
-            placeFenceAt(world, x, minZ);
-            placeFenceAt(world, x, maxZ);
+            placeFenceAt(world, x, minZ, addFences);
+            placeFenceAt(world, x, maxZ, addFences);
         }
 
         // (minX, minZ) -> (minX, maxZ)
         // (maxX, minZ) -> (maxX, maxZ)
         for (int z = minZ; z <= maxZ; z++) {
-            placeFenceAt(world, minX, z);
-            placeFenceAt(world, maxX, z);
+            placeFenceAt(world, minX, z, addFences);
+            placeFenceAt(world, maxX, z, addFences);
         }
     }
 
-    private void placeFenceAt(World world, int x, int z) {
-        Location loc = new Location(world, x, 0, z);
-        for (int i = 254; i > 0; i--) {
-            loc.setY(i);
-            if (!PASS_THROUGH.contains(loc.getBlock().getType())) {
-                loc.setY(loc.getY()+1);
-                Block fenceBlock = world.getBlockAt(loc);
-                fenceBlock.setType(Material.FENCE);
+    private static void placeFenceAt(World world, int x, int z, boolean addFences) {
+        Location loc = BlockUtils.getHighestLandLocation(new Location(world, x, 0, z));
+        loc.setY(loc.getY()+1);
+        Block fenceBlock = world.getBlockAt(loc);
+        if (addFences) {
+            fenceBlock.setType(Material.FENCE);
+            fenceBlock.getState().update(true);
+        } else {
+            //remove fence if it is there
+            Material type = fenceBlock.getType();
+            if (type.equals(Material.FENCE) || type.equals(Material.FENCE_GATE)) {
+                fenceBlock.setType(Material.AIR);
                 fenceBlock.getState().update(true);
-                return;
             }
         }
-    }
+    }}
 
-    private Vector getMinLocation(Location l) {
-        return l.toVector().subtract(sizeVectorOffset);
-    }
-
-    private Vector getMaxLocation(Location l) {
-        return l.toVector().add(sizeVectorOffset);
-    }
-}

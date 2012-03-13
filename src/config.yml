@@ -26,18 +26,21 @@ tntsheep:
   explosionDamage: 3
   sheepExplode: true
   cowsExplode: true
-  allowedWords: guest,guestworld,d74g0n,funky
+  allowedWords: ALL
 
 logins:
   enable: true
   savegamemode: true
 
-dragonsbgone:
-  enable: true
-
 FlingPortal:
   enable: true
 
-savegamemode:
-  enabled: true
+plot:
+  enable: true
+  maxPlots: 4
+  plotSize: 64
+  plotHeight: 20
+  plotBase: STONE
+  plotSurface: GRASS
+  plotPath: DOUBLE_STEP
 

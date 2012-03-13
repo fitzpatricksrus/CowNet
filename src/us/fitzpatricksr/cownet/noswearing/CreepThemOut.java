@@ -10,7 +10,6 @@ import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import us.fitzpatricksr.cownet.NoSwearing;
@@ -36,8 +35,7 @@ public class CreepThemOut implements NoSwearing.Consequence, Runnable {
         //we schedule a task that runs every second to spawn ALL mobs for all players that cycle
 		plugin.getServer().getScheduler().scheduleAsyncRepeatingTask(plugin, this, 0L, 20L);
 	}
-	public void handleBadWord(PlayerChatEvent event, String word) {
-		Player player = event.getPlayer();
+	public void handleBadWord(Player player, String word) {
 		player.sendMessage("You're creepin me out using worlds like "+word+"!");
 		remainingCreepers.putIfAbsent(player, mobsToSpawn);
 	}

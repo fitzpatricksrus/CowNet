@@ -1,5 +1,6 @@
 package us.fitzpatricksr.cownet;
 
+import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.LocalPlayer;
 import com.sk89q.worldguard.bukkit.BukkitPlayer;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
@@ -13,85 +14,95 @@ import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import uk.co.jacekk.bukkit.infiniteplots.InfinitePlotsGenerator;
-import us.fitzpatricksr.cownet.plotsclaims.PlayerCenteredClaim;
-import us.fitzpatricksr.cownet.plotsclaims.InfinitePlotClaim;
+import us.fitzpatricksr.cownet.plots.PlotsChunkGenerator;
+import us.fitzpatricksr.cownet.plots.PlayerCenteredClaim;
+import us.fitzpatricksr.cownet.plots.InfinitePlotClaim;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Plots extends CowNetThingy {
     private WorldGuardPlugin worldGuard;
+    private NoSwearing noSwearingMod;
     private PlayerCenteredClaim pcc;
     private InfinitePlotClaim ipc;
     private int maxPlots = 4;
 
+    private int plotSize = 64;
+    private int plotHeight = 20;
+    private Material plotBase = Material.STONE;
+    private Material plotSurface = Material.GRASS;
+    private Material plotPath = Material.DOUBLE_STEP;
+
+    /**
+     * Interface for different type of claim shapes and decorations
+     */
     public interface AbstractClaim {
         //define the region of the claim
         public ProtectedRegion defineClaim(Player p, String name);
         //after it has been claimed, we can build it out a bit and make it look nice.
-        public void constructClaim(Player p, String name);
+        public void decorateClaim(Player p, ProtectedRegion region);
+        public void dedecorateClaim(Player p, ProtectedRegion region);
     }
 
-    public interface AbstractDecorator {
-        public void decorateClaim(Player p, String name, ProtectedRegion region);
-        public void undecorateClaim(Player p, String name, ProtectedRegion region);
-    }
-
-    public Plots(JavaPlugin plugin, String permissionRoot, String trigger) {
+    public Plots(JavaPlugin plugin, String permissionRoot, String trigger, NoSwearing noSwearingMod) {
         super(plugin, permissionRoot, trigger);
         if (isEnabled()) {
             //get WorldGuard and WorldEdit plugins
-            Server server = plugin.getServer();
-            if(server == null){
-                throw new RuntimeException("getServer() is null");
-            }
-            PluginManager pluginManager = server.getPluginManager();
-            if(pluginManager == null){
-                throw new RuntimeException("server.getPluginManager() is null");
-            }
-            Plugin worldPlugin = pluginManager.getPlugin("WorldGuard");
+            Plugin worldPlugin = plugin.getServer().getPluginManager().getPlugin("WorldGuard");
             if(worldPlugin == null || !(worldPlugin instanceof WorldGuardPlugin)){
                 throw new RuntimeException("WorldGuard must be loaded first");
             }
             worldGuard = (WorldGuardPlugin) worldPlugin;
 
             this.maxPlots = getConfigInt("maxPlots", maxPlots);
-            
+            this.plotSize = getConfigInt("plotSize", plotSize);
+            this.plotHeight = getConfigInt("plotHeight", plotHeight);
+            this.plotBase = Material.valueOf(getConfigString("plotBase", plotBase.toString()));
+            this.plotSurface = Material.valueOf(getConfigString("plotSurface", plotSurface.toString()));
+            this.plotPath = Material.valueOf(getConfigString("plotPath", plotPath.toString()));
+
+            this.noSwearingMod = noSwearingMod;
             this.pcc = new PlayerCenteredClaim(this);
-            this.ipc = new InfinitePlotClaim(worldGuard);
+            this.ipc = new InfinitePlotClaim(plotSize);
         }
     }
 
     @Override
     protected String getHelpString(Player player) {
-        return "usage: plot [claim <name>,release <name>,share <name><player>]";
+        return "usage: plot [ claim <plotName> | release | share <player> | unshare <player> | info | list [player] | tp <plotName> ]";
     }
 
     @Override
     protected boolean onCommand(Player player, Command cmd, String[] args) {
         if (args.length < 1) {
+            //just return the default help string
             return false;
         } else if (hasPermissions(player)) {
             String subCmd = args[0].toLowerCase();
-            if (subCmd.equals("claim")) {
+            if ("claim".equalsIgnoreCase(subCmd)) {
                 return claim(player, cmd, args);
-            } else if (subCmd.equals("release")) {
+            } else if ("release".equalsIgnoreCase(subCmd)) {
                 return release(player, cmd, args);
-            } else if (subCmd.equals("share")) {
+            } else if ("share".equalsIgnoreCase(subCmd)) {
                 return share(player, cmd, args);
-            } else if (subCmd.equals("unshare")) {
+            } else if ("unshare".equalsIgnoreCase(subCmd)) {
                 return unshare(player, cmd, args);
+            } else if ("info".equalsIgnoreCase(subCmd)) {
+                return info(player, cmd, args);
+            } else if ("list".equalsIgnoreCase(subCmd)) {
+                return list(player, cmd, args);
+            } else if ("tp".equalsIgnoreCase(subCmd)) {
+                return tp(player, cmd, args);
             } else {
-                player.sendMessage("Unknown command: "+args[0]);
-                return true;
+                return false;
             }
         } else {
             player.sendMessage("You don't have permission to claim land.");
-            return false;
+            return true;
         }
     }
 
@@ -106,25 +117,13 @@ public class Plots extends CowNetThingy {
 
         String playerName = args[1];
 
-        OfflinePlayer offPlayer = getPlugin().getServer().getOfflinePlayer(playerName);
-        if (offPlayer == null) {
-            player.sendMessage("Don't know any player named "+playerName);
-            return true;
-        }
-        Player otherPlayer = offPlayer.getPlayer();
-        if (otherPlayer == null) {
-            player.sendMessage("Don't know any player named "+playerName);
-            return true;
-        }
-        BukkitPlayer playerToShareWith = new BukkitPlayer(worldGuard, otherPlayer);
-
         ApplicableRegionSet regions = regionManager.getApplicableRegions(player.getLocation());
         if (regions.size() == 0) {
             player.sendMessage("Nothing to share.");
         } else {
             for (ProtectedRegion region : regions) {
                 if (region.isOwner(wgPlayer)) {
-                    region.getMembers().addPlayer(playerToShareWith);
+                    region.getMembers().addPlayer(playerName);
                     if (saveRegions(regionManager)) {
                         player.sendMessage("Sharing "+region.getId()+" with "+ playerName);
                     } else {
@@ -149,25 +148,13 @@ public class Plots extends CowNetThingy {
 
         String playerName = args[1];
 
-        OfflinePlayer offPlayer = getPlugin().getServer().getOfflinePlayer(playerName);
-        if (offPlayer == null) {
-            player.sendMessage("Don't know any player named "+playerName);
-            return true;
-        }
-        Player otherPlayer = offPlayer.getPlayer();
-        if (otherPlayer == null) {
-            player.sendMessage("Don't know any player named "+playerName);
-            return true;
-        }
-        BukkitPlayer playerToShareWith = new BukkitPlayer(worldGuard, otherPlayer);
-
         ApplicableRegionSet regions = regionManager.getApplicableRegions(player.getLocation());
         if (regions.size() == 0) {
             player.sendMessage("Nothing to unshare.");
         } else {
             for (ProtectedRegion region : regions) {
                 if (region.isOwner(wgPlayer)) {
-                    region.getMembers().removePlayer(playerToShareWith);
+                    region.getMembers().removePlayer(playerName);
                     if (saveRegions(regionManager)) {
                         player.sendMessage("No longer sharing "+region.getId()+" with "+ playerName);
                     } else {
@@ -198,6 +185,7 @@ public class Plots extends CowNetThingy {
                     regionManager.removeRegion(region.getId());
                     if (saveRegions(regionManager)) {
                         player.sendMessage("Releasing region "+region.getId());
+                        getClaimType(player).dedecorateClaim(player, region);
                     } else {
                         player.sendMessage("Could not release region for unknown reasons.");
                     }
@@ -206,6 +194,77 @@ public class Plots extends CowNetThingy {
                 }
             }
         }
+        return true;
+    }
+
+    private boolean info(Player player, Command cmd, String[] args) {
+        if (args.length != 1) {
+            return false;
+        }
+
+        RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
+
+        ApplicableRegionSet regions = regionManager.getApplicableRegions(player.getLocation());
+        if (regions.size() == 0) {
+            player.sendMessage("This region is free to be claimed.");
+        } else {
+            for (ProtectedRegion region : regions) {
+                String name = region.getId();
+                String owners = region.getOwners().toPlayersString();
+                player.sendMessage("Plot name: "+name);
+                player.sendMessage("    Owner: "+owners);
+                if (region.getMembers().size() > 0) {
+                    String members = region.getMembers().toPlayersString();
+                    player.sendMessage("    Shared with: "+members);
+                }
+            }
+            return true;
+        }
+        return true;
+    }
+
+    private boolean list(Player player, Command cmd, String[] args) {
+        if (args.length < 1 || args.length > 2) {
+            return false;
+        }
+
+        RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
+        String playerName = (args.length == 1) ? player.getName() : args[1];
+        player.sendMessage("Plots claimed by "+playerName);
+        for (Map.Entry<String, ProtectedRegion> entry : regionManager.getRegions().entrySet()) {
+            for (String owner : entry.getValue().getOwners().getPlayers()) {
+                if (owner.equalsIgnoreCase(playerName)) {
+                    player.sendMessage("    "+entry.getKey());
+                    break;
+                }
+            }
+        }
+        return true;
+    }
+
+    private boolean tp(Player player, Command cmd, String[] args) {
+        if (args.length != 2) {
+            return false;
+        }
+
+        String plotName = args[1];
+        RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
+        ProtectedRegion region = regionManager.getRegion(plotName);
+        if (region == null) {
+            player.sendMessage("Can't find a plot named "+plotName);
+            return true;
+        }
+
+        Vector middle = region.getMinimumPoint();
+        middle = middle.add(region.getMaximumPoint());
+        middle = middle.divide(2.0);
+        
+        Location dropPoint = BlockUtils.getHighestLandLocation(
+                new Location(player.getWorld(), middle.getX()+0.5, middle.getY(), middle.getZ()+0.5));
+        
+        dropPoint.setY(dropPoint.getY()+1); //above ground.  :-)
+        player.sendMessage("Zooooop!   You're in "+plotName+".");
+        player.teleport(dropPoint);
         return true;
     }
 
@@ -219,13 +278,20 @@ public class Plots extends CowNetThingy {
         }
 
         String claimName = args[1];
+
+        //make sure nobody uses bad language.
+        if (noSwearingMod.scanForBadWords(player, claimName)) {
+            return true;
+        }
+
+        //is there already a claim with that name?
         if (regionManager.hasRegion(claimName)) {
             player.sendMessage("There's already a claim with that name.  Please choose another name.");
             return true;
         }
 
         //does this player reached his maximum number of plots.
-        if (regionManager.getRegionCountOfPlayer(wgPlayer) > maxPlots) {
+        if (regionManager.getRegionCountOfPlayer(wgPlayer) >= maxPlots) {
             player.sendMessage("You've exceeded the maximum of "+maxPlots+" allowed plots");
             return true;
         }
@@ -233,11 +299,13 @@ public class Plots extends CowNetThingy {
         //does the region on unclaimed land?
         AbstractClaim claim = getClaimType(player);
         ProtectedRegion region = claim.defineClaim(player, claimName);
-        ProtectedRegion conflict = getConflictingRegions(regionManager, region, wgPlayer);
-        if (conflict != null) {
-            String owners = conflict.getOwners().toPlayersString();
-            String name = conflict.getId();
-            player.sendMessage("Sorry, this overlaps \""+name+"\" owned by "+owners);
+        List<ProtectedRegion> conflicts = getConflictingRegions(regionManager, region, wgPlayer);
+        if (conflicts.size() > 0) {
+            for (ProtectedRegion conflict : conflicts) {
+                String owners = conflict.getOwners().toPlayersString();
+                String name = conflict.getId();
+                player.sendMessage("Sorry, this overlaps \""+name+"\" owned by "+owners);
+            }
             return true;
         }
 
@@ -254,7 +322,7 @@ public class Plots extends CowNetThingy {
         region.setFlag(DefaultFlag.FAREWELL_MESSAGE, "Now leaving " + claimName);
 
         // looks good, so let's twiddle as needed.
-        claim.constructClaim(player, claimName);
+        claim.decorateClaim(player, region);
         regionManager.addRegion(region);
         if (saveRegions(regionManager)) {
             player.sendMessage("You now own a plot named " + claimName);
@@ -277,25 +345,34 @@ public class Plots extends CowNetThingy {
     private AbstractClaim getClaimType(Player p) {
         World w = p.getWorld();
         ChunkGenerator cg = w.getGenerator();
-        if (cg instanceof InfinitePlotsGenerator) {
+        if (cg instanceof PlotsChunkGenerator) {
             // InfinitePlotsClaim
             logInfo("Claiming using InfinitePlotsClaim");
             return ipc;
         } else {
             // player centered claim
-            logInfo("Claiming using PlayerCenterClaim");
+            if (cg != null) {
+                logInfo("Claiming using PlayerCenterClaim.  Chunk generator was a "+cg.getClass().getName());
+            } else {
+                logInfo("Claiming using PlayerCenterClaim.");
+            }
             return pcc;
         }
     }
 
-    public ProtectedRegion getConflictingRegions(RegionManager mgr, ProtectedRegion checkRegion, LocalPlayer player) {
+    private List<ProtectedRegion> getConflictingRegions(RegionManager mgr, ProtectedRegion checkRegion, LocalPlayer player) {
+        ArrayList<ProtectedRegion> result = new ArrayList<ProtectedRegion>();
         ApplicableRegionSet appRegions = mgr.getApplicableRegions(checkRegion);
         for (ProtectedRegion region : appRegions) {
             if (!region.getOwners().contains(player)) {
-                return region;
+                result.add(region);
             }
         }
-        return null;
+        return result;
+    }
+
+    public ChunkGenerator getDefaultWorldGenerator(String worldName, String id){
+        return new PlotsChunkGenerator(plotSize, plotHeight, plotBase, plotSurface, plotPath);
     }
 }
 

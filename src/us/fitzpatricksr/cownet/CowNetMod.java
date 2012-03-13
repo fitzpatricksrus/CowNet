@@ -1,5 +1,6 @@
 package us.fitzpatricksr.cownet;
 
+import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.logging.Logger;
@@ -7,6 +8,7 @@ import java.util.logging.Logger;
 public class CowNetMod extends JavaPlugin {
     private static final String COWNET = "cownet";
     private final Logger logger = Logger.getLogger("Minecraft");
+    private Plots plots;
 
     @Override
     public void onDisable() {
@@ -17,14 +19,14 @@ public class CowNetMod extends JavaPlugin {
     @Override
     public void onEnable() {
         this.getConfig().options().copyDefaults(true);
-        if (getConfig().getBoolean("cownet.enable", false)) {
+        if (getConfig().getBoolean("cownet.enable", true)) {
             logger.info("CowNetMod enabled.");
             new StarveCommand(this, COWNET, "starve");
             new BounceCommand(this, COWNET, "bounce");
-            new NoSwearing(this, COWNET, "noswearing");
+            NoSwearing noSwearingMod = new NoSwearing(this, COWNET, "noswearing");
             new ExplodingSheep(this, COWNET, "tntsheep");
             new LoginHistory(this, COWNET, "logins");
-            new Plots(this, COWNET, "plot");
+            plots = new Plots(this, COWNET, "plot", noSwearingMod);
 //            new FlingPortal(this, COWNET, "flingportal");
         } else {
             logger.info("CowNetMod disabled");
@@ -32,5 +34,12 @@ public class CowNetMod extends JavaPlugin {
         }
         this.saveConfig();
     }
+
+    @Override
+    public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
+        logger.info("CowNetMod is the terrain generator for "+worldName+"  id:"+id);
+        return plots.getDefaultWorldGenerator(worldName, id);
+    }
+
 }
 

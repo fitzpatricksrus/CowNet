@@ -2,7 +2,6 @@ package us.fitzpatricksr.cownet.noswearing;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.NoSwearing.Consequence;
 
@@ -13,8 +12,7 @@ public class SetOnFire implements Consequence {
         FileConfiguration config = plugin.getConfig();
         fireTicks = config.getInt(trigger+".fireTicks", 5) * 20; // 5 seconds
 	}
-	public void handleBadWord(PlayerChatEvent event, String word) {
-		Player player = event.getPlayer();
+	public void handleBadWord(Player player, String word) {
 		player.setFireTicks(fireTicks);
 		player.sendMessage("You've been very naughty!  Saying words like "+word+"!");
 	}

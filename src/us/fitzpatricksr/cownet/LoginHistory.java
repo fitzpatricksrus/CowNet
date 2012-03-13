@@ -128,7 +128,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
         return true;
     }
 
-    @EventHandler(priority= EventPriority.NORMAL)
+    @EventHandler(priority= EventPriority.LOW)
     public void onPlayerLogin(PlayerLoginEvent event) {
         File logFile = getLogFile(plugin);
         if (logFile != null) {
@@ -147,7 +147,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority= EventPriority.NORMAL)
+    @EventHandler(priority= EventPriority.LOW)
     public void onPlayerQuit(PlayerQuitEvent event) {
         File logFile = getLogFile(plugin);
         if (logFile != null) {
