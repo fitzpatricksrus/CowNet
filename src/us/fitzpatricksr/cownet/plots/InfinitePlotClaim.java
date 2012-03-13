@@ -5,7 +5,6 @@ import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import us.fitzpatricksr.cownet.BlockUtils;
 import us.fitzpatricksr.cownet.Plots;
 
 /**
@@ -30,8 +29,8 @@ public class InfinitePlotClaim implements Plots.AbstractClaim {
         x = (int) (Math.floor((x - roadOffsetX) / move) * move + roadOffsetX);
         z = (int) (Math.floor((z - roadOffsetZ) / move) * move + roadOffsetZ);
 
-        BlockVector min = new BlockVector(x, 0, z);
-        BlockVector max = new BlockVector(x + (plotSize - 1), 255, z + (plotSize - 1));
+        BlockVector min = new BlockVector(x - 1, 0, z - 1);
+        BlockVector max = new BlockVector(x + plotSize, 255, z + plotSize);
 
         return new ProtectedCuboidRegion(name, min, max);
     }

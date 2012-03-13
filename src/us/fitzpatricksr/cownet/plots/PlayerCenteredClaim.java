@@ -6,7 +6,6 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
-import us.fitzpatricksr.cownet.BlockUtils;
 import us.fitzpatricksr.cownet.Plots;
 
 /**

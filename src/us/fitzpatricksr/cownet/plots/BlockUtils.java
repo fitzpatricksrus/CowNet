@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.plots;
 
 import com.sk89q.worldedit.BlockVector;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
@@ -72,9 +72,9 @@ public class BlockUtils {
         BlockVector maxVector = region.getMaximumPoint();
 
         int minX = minVector.getBlockX();
-        int minZ = minVector.getBlockZ() + 1;
+        int minZ = minVector.getBlockZ();
         int maxX = maxVector.getBlockX();
-        int maxZ = maxVector.getBlockZ() + 1;
+        int maxZ = maxVector.getBlockZ();
 
         // (minX, minZ) -> (maxX, minZ)
         // (minX, maxZ) -> (maxX, maxZ)
