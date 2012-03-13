@@ -19,10 +19,14 @@ public class StarveCommand extends CowNetThingy {
     public StarveCommand(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
         if (isEnabled()) {
-            this.standardRadius = getConfigInt("radius", DEFAULT_RADIUS);
-            this.standardDamage = getConfigInt("damage", DEFAULT_DAMAGE);
-            logInfo("radius=" + standardRadius + ", damage=" + standardDamage);
+            reload();
         }
+    }
+
+    protected void reload() {
+        this.standardRadius = getConfigInt("radius", DEFAULT_RADIUS);
+        this.standardDamage = getConfigInt("damage", DEFAULT_DAMAGE);
+        logInfo("radius=" + standardRadius + ", damage=" + standardDamage);
     }
 
     protected boolean onCommand(Player player, Command cmd, String[] args) {

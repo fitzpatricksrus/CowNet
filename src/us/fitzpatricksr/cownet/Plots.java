@@ -61,18 +61,23 @@ public class Plots extends CowNetThingy {
                 throw new RuntimeException("WorldGuard must be loaded first");
             }
             worldGuard = (WorldGuardPlugin) worldPlugin;
-
-            this.maxPlots = getConfigInt("maxPlots", maxPlots);
-            this.plotSize = getConfigInt("plotSize", plotSize);
-            this.plotHeight = getConfigInt("plotHeight", plotHeight);
-            this.plotBase = Material.valueOf(getConfigString("plotBase", plotBase.toString()));
-            this.plotSurface = Material.valueOf(getConfigString("plotSurface", plotSurface.toString()));
-            this.plotPath = Material.valueOf(getConfigString("plotPath", plotPath.toString()));
-
             this.noSwearingMod = noSwearingMod;
             this.pcc = new PlayerCenteredClaim(this);
-            this.ipc = new InfinitePlotClaim(plotSize);
+
+            reload();
         }
+    }
+
+    @Override
+    protected void reload() {
+        this.maxPlots = getConfigInt("maxPlots", maxPlots);
+        this.plotSize = getConfigInt("plotSize", plotSize);
+        this.plotHeight = getConfigInt("plotHeight", plotHeight);
+        this.plotBase = Material.valueOf(getConfigString("plotBase", plotBase.toString()));
+        this.plotSurface = Material.valueOf(getConfigString("plotSurface", plotSurface.toString()));
+        this.plotPath = Material.valueOf(getConfigString("plotPath", plotPath.toString()));
+
+        this.ipc = new InfinitePlotClaim(plotSize);
     }
 
     @Override
@@ -421,6 +426,7 @@ public class Plots extends CowNetThingy {
         return result;
     }
 
+    @SuppressWarnings("unused")
     public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
         return new PlotsChunkGenerator(plotSize, plotHeight, plotBase, plotSurface, plotPath);
     }

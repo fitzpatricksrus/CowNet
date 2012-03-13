@@ -20,16 +20,16 @@ public class CowNetThingy implements CommandExecutor {
         this.plugin = plugin;
         this.trigger = trigger;
         this.permissionNode = permissionRoot + "." + trigger;
-        this.isEnabled = plugin.getConfig().getBoolean(trigger + ".enable");
+        this.isEnabled = getConfigBoolean("enable", false);
         if (!this.isEnabled()) {
             //allow this common alias
-            this.isEnabled = plugin.getConfig().getBoolean(trigger + ".enabled");
+            this.isEnabled = getConfigBoolean("enabled", true);
         }
         if (isEnabled) {
             plugin.getCommand(trigger).setExecutor(this);
-            logger.info(trigger + " enabled");
+            logInfo(trigger + " enabled");
         } else {
-            logger.info(trigger + " disabled");
+            logInfo(trigger + " disabled");
         }
     }
 
@@ -61,15 +61,15 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     public final int getConfigInt(String key, int def) {
-        return plugin.getConfig().getInt(trigger + key, def);
+        return plugin.getConfig().getInt(trigger + "." + key, def);
     }
 
     public final boolean getConfigBoolean(String key, boolean def) {
-        return plugin.getConfig().getBoolean(trigger + key, def);
+        return plugin.getConfig().getBoolean(trigger + "." + key, def);
     }
 
     public final String getConfigString(String key, String def) {
-        return plugin.getConfig().getString(trigger + key, def);
+        return plugin.getConfig().getString(trigger + "." + key, def);
     }
 
     public final boolean hasPermissions(Player player) {

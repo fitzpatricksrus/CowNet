@@ -20,10 +20,15 @@ public class BounceCommand extends CowNetThingy {
     public BounceCommand(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
         if (isEnabled()) {
-            this.standardRadius = getConfigInt("radius", DEFAULT_RADIUS);
-            this.standardVelocity = getConfigInt("velocity", DEFAULT_VELOCITY);
-            logInfo("radius=" + standardRadius + ",velocity=" + standardVelocity);
+            reload();
         }
+    }
+
+    @Override
+    protected void reload() {
+        this.standardRadius = getConfigInt("radius", DEFAULT_RADIUS);
+        this.standardVelocity = getConfigInt("velocity", DEFAULT_VELOCITY);
+        logInfo("radius=" + standardRadius + ",velocity=" + standardVelocity);
     }
 
     @Override

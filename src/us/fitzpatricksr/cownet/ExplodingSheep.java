@@ -23,18 +23,23 @@ public class ExplodingSheep extends CowNetThingy {
     public ExplodingSheep(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
         if (isEnabled()) {
-            this.chanceToExplode = getConfigInt("chanceToExplode", this.chanceToExplode);
-            this.explosionRadius = getConfigInt("explosionRadius", (int) this.explosionRadius);
-            this.explosionDamage = getConfigInt("explosionDamage", this.explosionDamage);
-            this.allowedWorlds = getConfigString("allowedWords", this.allowedWorlds);
-            this.sheepExplode = getConfigBoolean("sheepExplode", this.sheepExplode);
-            this.cowsExplode = getConfigBoolean("cowsExplode", this.cowsExplode);
 
+            reload();
             plugin.getServer().getPluginManager().registerEvents(
                     new ExplodingSheepListener(),
                     plugin);
-            logInfo("(chanceToExplode=" + chanceToExplode + ",explosionRadius=" + explosionRadius + ",explosionDamage=" + explosionDamage + ",allowedWorlds=" + allowedWorlds + ")");
         }
+    }
+
+    @Override
+    public void reload() {
+        this.chanceToExplode = getConfigInt("chanceToExplode", this.chanceToExplode);
+        this.explosionRadius = getConfigInt("explosionRadius", (int) this.explosionRadius);
+        this.explosionDamage = getConfigInt("explosionDamage", this.explosionDamage);
+        this.allowedWorlds = getConfigString("allowedWords", this.allowedWorlds);
+        this.sheepExplode = getConfigBoolean("sheepExplode", this.sheepExplode);
+        this.cowsExplode = getConfigBoolean("cowsExplode", this.cowsExplode);
+        logInfo("(chanceToExplode=" + chanceToExplode + ",explosionRadius=" + explosionRadius + ",explosionDamage=" + explosionDamage + ",allowedWorlds=" + allowedWorlds + ")");
     }
 
     @Override
@@ -64,6 +69,7 @@ public class ExplodingSheep extends CowNetThingy {
     }
 
     private class ExplodingSheepListener implements Listener {
+        @SuppressWarnings("unused")
         @EventHandler(priority = EventPriority.HIGH)
         public void onEntityDamage(EntityDamageEvent event) {
             // Oh please be a sheep
@@ -102,6 +108,7 @@ public class ExplodingSheep extends CowNetThingy {
         /**
          * Pulled from http://forums.bukkit.org/threads/work-around-for-lack-of-entitydamagebyprojectileevent.31727/#post-581023
          *
+         * @param event the event.
          * @return The killer of the sheep.
          */
         private LivingEntity GetKiller(EntityDamageEvent event) {
