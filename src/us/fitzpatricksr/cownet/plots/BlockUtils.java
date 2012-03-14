@@ -20,8 +20,8 @@ public class BlockUtils {
             Arrays.asList(
                     new Material[]{
                             Material.AIR,
-                            Material.WATER,
-                            Material.STATIONARY_WATER,
+//                            Material.WATER,
+//                            Material.STATIONARY_WATER,
                             Material.LEAVES,
                             Material.WEB,
                             Material.FEATHER,
@@ -38,7 +38,7 @@ public class BlockUtils {
                             Material.FIRE,
                             Material.CROPS,
                             Material.SNOW,
-                            Material.ICE,
+//                            Material.ICE,
                             Material.SNOW_BLOCK,
                             Material.CACTUS,
                             Material.SUGAR_CANE_BLOCK,

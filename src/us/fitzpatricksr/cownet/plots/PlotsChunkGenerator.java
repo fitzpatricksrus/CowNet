@@ -54,12 +54,6 @@ public class PlotsChunkGenerator extends ChunkGenerator {
                 ((z + 2) % this.plotSize == 0) ||
                 ((x - 2) % this.plotSize == 0) ||
                 ((z - 2) % this.plotSize == 0);
-        /*
-        return (Math.abs(x) % this.plotSize <= 3) ||
-               (Math.abs(z) % this.plotSize <= 3) ||
-               (Math.abs(x) % this.plotSize >= 61) ||
-               (Math.abs(z) % this.plotSize >= 61)
-         */
     }
 
     public byte[] generate(World world, Random random, int chunkX, int chunkZ) {

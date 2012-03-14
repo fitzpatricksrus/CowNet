@@ -40,6 +40,9 @@ permissions:
     cownet.flingportal:
         description: do you fling?
         default: true
+    cownet.plot:
+        description: can use plots in general
+        default: true
     cownet.plot.claim:
         description: are you allowed to claim land
         default: true

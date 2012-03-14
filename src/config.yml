@@ -43,4 +43,5 @@ plot:
   plotBase: STONE
   plotSurface: GRASS
   plotPath: DOUBLE_STEP
+  plotCost: 100
 

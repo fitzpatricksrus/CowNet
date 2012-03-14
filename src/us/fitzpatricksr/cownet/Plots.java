@@ -10,6 +10,7 @@ import com.sk89q.worldguard.protection.flags.DefaultFlag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import cosine.boseconomy.BOSEconomy;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -29,11 +30,13 @@ import java.util.Map;
 
 public class Plots extends CowNetThingy {
     private WorldGuardPlugin worldGuard;
+    private BOSEconomy economy;
     private NoSwearing noSwearingMod;
     private PlayerCenteredClaim pcc;
     private InfinitePlotClaim ipc;
     private int maxPlots = 4;
 
+    private int plotCost = 100;
     private int plotSize = 64;
     private int plotHeight = 20;
     private Material plotBase = Material.STONE;
@@ -62,6 +65,14 @@ public class Plots extends CowNetThingy {
                 throw new RuntimeException("WorldGuard must be loaded first");
             }
             worldGuard = (WorldGuardPlugin) worldPlugin;
+            Plugin econ = plugin.getServer().getPluginManager().getPlugin("BOSEconomy");
+            if (econ instanceof BOSEconomy) {
+                this.economy = (BOSEconomy) econ;
+                logInfo("Found BOSEconomy.  Plot economy enable.");
+            } else {
+                logInfo("Could not find BOSEconomy.  Plot economy disabled.");
+            }
+
             this.noSwearingMod = noSwearingMod;
             this.pcc = new PlayerCenteredClaim(this);
 
@@ -71,6 +82,7 @@ public class Plots extends CowNetThingy {
 
     @Override
     protected void reload() {
+        this.plotCost = getConfigInt("plotCost", plotCost);
         this.maxPlots = getConfigInt("maxPlots", maxPlots);
         this.plotSize = getConfigInt("plotSize", plotSize);
         this.plotHeight = getConfigInt("plotHeight", plotHeight);
@@ -219,7 +231,11 @@ public class Plots extends CowNetThingy {
 
         ApplicableRegionSet regions = regionManager.getApplicableRegions(player.getLocation());
         if (regions.size() == 0) {
-            player.sendMessage("This region is free to be claimed.");
+            player.sendMessage("This region is free to be claimed for " + getPurchaseFeeString(regionManager, player));
+            String moneyInPocket = getAvailableMoneyString(regionManager, player);
+            if (moneyInPocket != null) {
+                player.sendMessage("   You have " + moneyInPocket);
+            }
         } else {
             for (ProtectedRegion region : regions) {
                 String name = region.getId();
@@ -345,13 +361,6 @@ public class Plots extends CowNetThingy {
             return true;
         }
 
-        //does this player reached his maximum number of plots.
-        boolean hasUnlimitedPlots = hasPermissions(player, "unlimitedPlots");
-        if (!hasUnlimitedPlots && regionManager.getRegionCountOfPlayer(wgPlayer) >= maxPlots) {
-            player.sendMessage("You've exceeded the maximum of " + maxPlots + " allowed plots");
-            return true;
-        }
-
         //does the region on unclaimed land?
         AbstractClaim claim = getClaimType(player);
         ProtectedRegion region = claim.defineClaim(player, claimName);
@@ -363,6 +372,25 @@ public class Plots extends CowNetThingy {
                 player.sendMessage("Sorry, this overlaps \"" + name + "\" owned by " + owners);
             }
             return true;
+        }
+
+        if (!plotsAreFree(player)) {
+            if (economy != null) {
+                if (!canPayForClaim(regionManager, player)) {
+                    player.sendMessage("You have used you " + maxPlots +
+                            " free plots and can't afford another for " + getPurchaseFeeString(regionManager, player));
+                    String moneyInPocket = getAvailableMoneyString(regionManager, player);
+                    if (moneyInPocket != null) {
+                        player.sendMessage("   You have " + moneyInPocket);
+                    }
+                    return true;
+                }
+            } else {
+                if (regionManager.getRegionCountOfPlayer(wgPlayer) >= maxPlots) {
+                    player.sendMessage("You've exceeded the maximum of " + maxPlots + " allowed plots");
+                    return true;
+                }
+            }
         }
 
         // set up owner and flags
@@ -379,9 +407,16 @@ public class Plots extends CowNetThingy {
 
         // looks good, so let's twiddle as needed.
         claim.decorateClaim(player, region);
+        String feeString = getPurchaseFeeString(regionManager, player);
+        int fee = getPurchaseFee(regionManager, player);
         regionManager.addRegion(region);
         if (saveRegions(regionManager)) {
-            player.sendMessage("You now own a plot named " + claimName);
+            if (plotsAreFree(player) || (economy == null)) {
+                player.sendMessage("You now own a plot named " + claimName);
+            } else {
+                payForClaim(regionManager, player, fee);
+                player.sendMessage("You now own a plot named " + claimName + " and you paid " + feeString);
+            }
         } else {
             player.sendMessage("You're claim was REJECTED by the county land manager.  Bummer.");
         }
@@ -426,6 +461,53 @@ public class Plots extends CowNetThingy {
         }
         return result;
     }
+
+    private int getPurchaseFee(RegionManager regionManager, Player player) {
+        if (economy == null) return 0;
+        BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
+        int existingPlots = regionManager.getRegionCountOfPlayer(wgPlayer);
+        if (existingPlots < maxPlots) {
+            return 0;
+        } else {
+            return (int) Math.pow(2, (existingPlots - maxPlots)) * 100;
+        }
+    }
+
+    private String getPurchaseFeeString(RegionManager regionManager, Player player) {
+        if (economy == null) return "Free";
+        int fee = getPurchaseFee(regionManager, player);
+        if (fee == 0) {
+            return "free";
+        } else {
+            return "" + fee + " " + economy.getMoneyNamePlural();
+        }
+    }
+
+    private boolean plotsAreFree(Player player) {
+        return hasPermissions(player, "unlimitedPlots");
+    }
+
+    private String getAvailableMoneyString(RegionManager regionManager, Player player) {
+        if (economy == null) return null;
+        return "" + economy.getPlayerMoneyDouble(player.getName()) + " " + economy.getMoneyNamePlural();
+    }
+
+    private boolean canPayForClaim(RegionManager regionManager, Player player) {
+        int fee = getPurchaseFee(regionManager, player);
+        if (economy.getPlayerMoneyDouble(player.getName()) < fee) {
+            logInfo("canPayForClaim: false has: " + economy.getPlayerMoneyDouble(player.getName()) + " needs: " + fee);
+            return false;
+        } else {
+            logInfo("canPayForClaim: true has: " + economy.getPlayerMoneyDouble(player.getName()) + " needs: " + fee);
+            return true;
+        }
+    }
+
+    private void payForClaim(RegionManager regionManager, Player player, int fee) {
+        logInfo("payForClaim: true has: " + economy.getPlayerMoneyDouble(player.getName()) + " needs: " + fee);
+        economy.addPlayerMoney(player.getName(), (double) -fee, false);
+    }
+
 
     @SuppressWarnings("unused")
     public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
