@@ -21,6 +21,9 @@ commands:
   plot:
       description: claim a plot of land for building
       usage: Use "/plot help" for help.
+  hide:
+      description: hide from other players.  Sshhhh....
+      usage: Use "/hide help" for help
 permissions:
     cownet.starve:
         description: Starve creatures around you
@@ -48,4 +51,13 @@ permissions:
         default: true
     cownet.plot.unlimitedplots:
         description: if true the player is allowed unlimited active plots
+        default: false
+    cownet.hide:
+        description: if true player has permission to hide
+        default: false
+    cownet.hide.joinHidden:
+        description: if true player joins the game hidden
+        default: false
+    cownet.hide.seesInvisible:
+        descriptions: if true player can see invisible players (srsly)
         default: false

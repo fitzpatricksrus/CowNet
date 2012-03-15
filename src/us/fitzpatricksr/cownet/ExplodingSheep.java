@@ -23,7 +23,6 @@ public class ExplodingSheep extends CowNetThingy {
     public ExplodingSheep(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
         if (isEnabled()) {
-
             reload();
             plugin.getServer().getPluginManager().registerEvents(
                     new ExplodingSheepListener(),
