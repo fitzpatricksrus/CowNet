@@ -27,7 +27,7 @@ public class Hide extends CowNetThingy implements Listener {
     //chat
     //interactions
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
     private Map<String, Player> invisiblePlayers = new HashMap<String, Player>();
     private Random rand = new Random();
 
@@ -122,11 +122,10 @@ public class Hide extends CowNetThingy implements Listener {
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerJoinEarly(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (hasPermissions(player, "joinHidden")) {
+        if (hasPermissions(player, "joinHidden", false)) {
             hidePlayer(player, false);
             player.sendMessage("Joining hidden...");
         }
-        hideOtherPlayersFrom(player);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -134,6 +133,7 @@ public class Hide extends CowNetThingy implements Listener {
         if (isHidden(event.getPlayer())) {
             event.setJoinMessage(null);
         }
+        hideInvisiblePlayersFrom(event.getPlayer());
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -199,19 +199,25 @@ public class Hide extends CowNetThingy implements Listener {
         if (poof) smokeScreenEffect(p.getLocation());
         for (Player other : w.getPlayers()) {
             if (!other.equals(p)) {
-                if (!hasPermissions(other, "seesInvisible")) {
-                    other.hidePlayer(p);
+                if (!hasPermissions(other, "seesInvisible", false)) {
+                    debugInfo("Hiding " + p.getName() + " from " + other.getName());
+                    if (other.canSee(p)) {
+                        other.hidePlayer(p);
+                    }
                 }
             }
         }
         p.sendMessage("You are now hidden");
     }
 
-    public void hideOtherPlayersFrom(Player p) {
-        if (!hasPermissions(p, "seesInvisible")) return;
+    public void hideInvisiblePlayersFrom(Player p) {
+        if (hasPermissions(p, "seesInvisible", false)) return;
         for (Player other : invisiblePlayers.values()) {
             if (!other.equals(p)) {
-                p.hidePlayer(other);
+                debugInfo("Hiding " + other.getName() + " from " + p.getName());
+                if (p.canSee(other)) {
+                    p.hidePlayer(other);
+                }
             }
         }
     }
@@ -223,7 +229,9 @@ public class Hide extends CowNetThingy implements Listener {
         if (poof) smokeScreenEffect(p.getLocation());
         for (Player other : w.getPlayers()) {
             if (!other.equals(p)) {
-                other.showPlayer(p);
+                if (!other.canSee(p)) {
+                    other.showPlayer(p);
+                }
             }
         }
         p.sendMessage("You are now unhidden");

@@ -82,10 +82,14 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     public final boolean hasPermissions(Player player, String perm) {
-        if (player.isOp() || player.hasPermission(permissionNode + "." + perm)) {
+        return hasPermissions(player, perm, true);
+    }
+
+    public final boolean hasPermissions(Player player, String perm, boolean allowOps) {
+        if ((allowOps && player.isOp()) || player.hasPermission(permissionNode + "." + perm)) {
             return true;
         } else {
-            logInfo(player.getName() + " does not have " + permissionNode + "." + perm);
+            logInfo(player.getName() + " does not have explicit " + permissionNode + "." + perm);
             return false;
         }
     }
