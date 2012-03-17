@@ -1,6 +1,7 @@
 package us.fitzpatricksr.cownet;
 
 import org.bukkit.GameMode;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -44,8 +45,8 @@ public class LoginHistory extends CowNetThingy implements Listener {
         if (isEnabled()) {
             PluginManager pm = plugin.getServer().getPluginManager();
             pm.registerEvents(this, plugin);
-            pm.registerEvents(this, plugin);
             getLogFile(plugin);
+            getChatLogFile(plugin);
         }
     }
 
@@ -140,6 +141,9 @@ public class LoginHistory extends CowNetThingy implements Listener {
                 PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFile, true)));
                 out.println(dateFormat.format(date) + " login:" + getPlayerInfoString(event.getPlayer()));
                 out.close();
+                out = new PrintWriter(new BufferedWriter(new FileWriter(getChatLogFile(plugin), true)));
+                out.println(getChatLogString(event.getPlayer(), "<JOIN>"));
+                out.close();
                 setGameMode(event.getPlayer());
             } catch (FileNotFoundException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -159,6 +163,9 @@ public class LoginHistory extends CowNetThingy implements Listener {
                 PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFile, true)));
                 out.println(dateFormat.format(date) + " quit:" + getPlayerInfoString(event.getPlayer()));
                 out.close();
+                out = new PrintWriter(new BufferedWriter(new FileWriter(getChatLogFile(plugin), true)));
+                out.println(getChatLogString(event.getPlayer(), "<QUIT>"));
+                out.close();
                 saveGameMode(event.getPlayer());
             } catch (FileNotFoundException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -170,11 +177,15 @@ public class LoginHistory extends CowNetThingy implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerChat(PlayerChatEvent event) {
+        Player player = event.getPlayer();
+        World world = player.getWorld();
+        String message = event.getMessage();
+
         File logFile = getChatLogFile(plugin);
         if (logFile != null) {
             try {
                 PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFile, true)));
-                out.println(event.getPlayer().getName() + ": " + getPlayerInfoString(event.getPlayer()));
+                out.println(getChatLogString(event.getPlayer(), message));
                 out.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -182,6 +193,13 @@ public class LoginHistory extends CowNetThingy implements Listener {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
         }
+    }
+
+    private String getChatLogString(Player player, String message) {
+        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+        Date date = new Date();
+        World world = player.getWorld();
+        return dateFormat.format(date) + " [" + world.getName() + "] " + player.getName() + ": " + message;
     }
 
     //--------------------------------------------------
@@ -199,15 +217,17 @@ public class LoginHistory extends CowNetThingy implements Listener {
 
     //--------------------------------------------------
     private File getChatLogFile(Plugin plugin) {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         Date date = new Date();
         File folder = plugin.getDataFolder();
+        logInfo("Chatlog folder: " + folder);
         if (!folder.exists()) {
             folder.mkdir();
         }
         File result = new File(folder, "ChatLog-" + dateFormat.format(date) + ".txt");
         if (!result.exists()) {
             try {
+                logInfo("Chatlog file: " + result);
                 result.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
