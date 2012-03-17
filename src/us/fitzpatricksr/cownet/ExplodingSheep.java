@@ -90,6 +90,7 @@ public class ExplodingSheep extends CowNetThingy {
 
                     // Time to whip out the random number generator and get the chance that this sheep is going to blow.
                     if (sheepShouldExplode(victim)) {
+                        logInfo("Sheep asploded.");
                         victim.getWorld().createExplosion(victim.getLocation(), getExplosionRadius(), false);
 
                         // Damage the killer

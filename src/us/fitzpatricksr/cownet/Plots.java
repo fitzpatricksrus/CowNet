@@ -34,7 +34,7 @@ public class Plots extends CowNetThingy {
     private NoSwearing noSwearingMod;
     private PlayerCenteredClaim pcc;
     private InfinitePlotClaim ipc;
-    private int maxPlots = 4;
+    private int maxPlots = 3;
 
     private int plotCost = 100;
     private int plotSize = 64;
@@ -508,8 +508,6 @@ public class Plots extends CowNetThingy {
         economy.addPlayerMoney(player.getName(), (double) -fee, false);
     }
 
-
-    @SuppressWarnings("unused")
     public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
         return new PlotsChunkGenerator(plotSize, plotHeight, plotBase, plotSurface, plotPath);
     }

@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
@@ -35,6 +36,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
     private static final int DEFAULT_MAX_RESULTS = 5;
     private Plugin plugin;
     private HashMap<String, GameMode> gameModeSave = new HashMap<String, GameMode>();
+
 
     public LoginHistory(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
@@ -166,6 +168,22 @@ public class LoginHistory extends CowNetThingy implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPlayerChat(PlayerChatEvent event) {
+        File logFile = getChatLogFile(plugin);
+        if (logFile != null) {
+            try {
+                PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFile, true)));
+                out.println(event.getPlayer().getName() + ": " + getPlayerInfoString(event.getPlayer()));
+                out.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
+    }
+
     //--------------------------------------------------
     private void setGameMode(Player player) {
         GameMode oldMode = gameModeSave.get(player.getPlayerListName());
@@ -180,6 +198,25 @@ public class LoginHistory extends CowNetThingy implements Listener {
     }
 
     //--------------------------------------------------
+    private File getChatLogFile(Plugin plugin) {
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+        Date date = new Date();
+        File folder = plugin.getDataFolder();
+        if (!folder.exists()) {
+            folder.mkdir();
+        }
+        File result = new File(folder, "ChatLog-" + dateFormat.format(date) + ".txt");
+        if (!result.exists()) {
+            try {
+                result.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                result = null;
+            }
+        }
+        return result;
+    }
+
     private File getLogFile(Plugin plugin) {
         File folder = plugin.getDataFolder();
         if (!folder.exists()) {
