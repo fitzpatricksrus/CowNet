@@ -88,7 +88,7 @@ public class PlotsChunkGenerator extends ChunkGenerator {
     }
 
     public byte[][] generateBlockSections(World world, Random random, int chunkX, int chunkZ, BiomeGrid biomes) {
-        byte[][] result = new byte[16][];
+        Chunk chunk = new Chunk();
         int worldChunkX = chunkX << 4;
         int worldChunkZ = chunkZ << 4;
         byte bedId = (byte) Material.BEDROCK.getId();
@@ -96,32 +96,94 @@ public class PlotsChunkGenerator extends ChunkGenerator {
 
         for (int x = 0; x < 16; ++x) {
             for (int z = 0; z < 16; ++z) {
-                setBlock(result, x, 0, z, bedId);
+                chunk.setBlock(x, 0, z, bedId);
 
-                for (int y = 1; y < this.plotHeight; ++y) {
-                    setBlock(result, x, y, z, baseId);
+                for (int y = 1; y < this.plotHeight; y++) {
+                    chunk.setBlock(x, y, z, baseId);
                 }
                 if (this.isPathBlock(worldChunkX + x, worldChunkZ + z)) {
-                    setBlock(result, x, this.plotHeight, z, this.pathId);
+                    chunk.setBlock(x, this.plotHeight, z, this.pathId);
                 } else {
-                    setBlock(result, x, this.plotHeight, z, getBiomeSurfaceBlock(biomes.getBiome(x, z), random));
-                    setBlock(result, x, this.plotHeight + 1, z, getBiomeAboveSurfaceBlock(biomes.getBiome(x, z), random));
+                    chunk.setMaterial(x, this.plotHeight, z, getBiomeSurfaceBlock(biomes.getBiome(x, z), random));
+                    chunk.setMaterial(x, this.plotHeight + 1, z, getBiomeAboveSurfaceBlock(biomes.getBiome(x, z), random));
                 }
             }
         }
-        return result;
-    }
-
-    void setBlock(byte[][] result, int x, int y, int z, Material m) {
-        setBlock(result, x, y, z, (byte) m.getId());
-    }
-
-    void setBlock(byte[][] result, int x, int y, int z, byte blkid) {
-        if (blkid == 0) return;
-        if (result[y >> 4] == null) {
-            result[y >> 4] = new byte[4096];
+        //now make the waters deeeeeeeper
+        for (int y = this.plotHeight; y > 0; y--) {
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    if (chunk.getMaterial(x, y, z) == Material.WATER) {
+                        //OK, we found a water square, it's it's completely surrounded by other water, make it deeper
+                        // check (x-1,z-1) -> (x+1,z+1) to see if they're all water
+                        int howWetIsIt = 1 +
+                                chunk.isWetValue(x - 1, y, z - 1) +
+                                chunk.isWetValue(x, y, z - 1) +
+                                chunk.isWetValue(x + 1, y, z - 1) +
+                                chunk.isWetValue(x - 1, y, z) +
+                                chunk.isWetValue(x + 1, y, z) +
+                                chunk.isWetValue(x - 1, y, z + 1) +
+                                chunk.isWetValue(x, y, z + 1) +
+                                chunk.isWetValue(x + 1, y, z + 1);
+                        if (Math.abs(random.nextInt()) % 10 < howWetIsIt) {
+                            // even if it's not surrounded, give it a 20% chance of being deep
+                            chunk.setMaterial(x, y - 1, z, Material.WATER);
+                        }
+                    }
+                }
+            }
         }
-        result[y >> 4][((y & 0xF) << 8) | (z << 4) | x] = blkid;
+        return chunk.getData();
+    }
+
+    private static class Chunk {
+        private byte[][] data;
+
+        public Chunk() {
+            data = new byte[16][];
+        }
+
+        public Chunk(byte[][] data) {
+            this.data = data;
+        }
+
+        public Material getMaterial(int x, int y, int z) {
+            return Material.getMaterial(getBlockType(x, y, z));
+        }
+
+        public int getBlockType(int x, int y, int z) {
+            if (data[y >> 4] == null) {
+                return (byte) 0;
+            }
+            return data[y >> 4][((y & 0xF) << 8) | (z << 4) | x];
+        }
+
+        void setMaterial(int x, int y, int z, Material m) {
+            setBlock(x, y, z, (byte) m.getId());
+        }
+
+        void setBlock(int x, int y, int z, byte blkid) {
+            if (blkid == 0) return;
+            if (data[y >> 4] == null) {
+                data[y >> 4] = new byte[4096];
+            }
+            data[y >> 4][((y & 0xF) << 8) | (z << 4) | x] = blkid;
+        }
+
+        public byte[][] getData() {
+            return data;
+        }
+
+        private int isWetValue(int x, int y, int z) {
+            return isWet(x, y, z) ? 1 : 0;
+        }
+
+        private boolean isWet(int x, int y, int z) {
+            if (x < 0 || x > 15 || z < 0 || z > 15) return false;
+            Material m = getMaterial(x, y, z);
+            return m == Material.WATER || m == Material.DOUBLE_STEP;
+        }
+
     }
 
     public Material getBiomeSurfaceBlock(Biome b, Random random) {
