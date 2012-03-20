@@ -1,15 +1,14 @@
 package us.fitzpatricksr.cownet;
 
 import org.bukkit.GameMode;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerChatEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.*;
+import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -25,19 +24,25 @@ public class LoginHistory extends CowNetThingy implements Listener {
     enum Filter {
         IN,
         OUT,
-        INOUT;
+        INOUT,
+        CHAT,
+        ALL;
 
-        public boolean shouldDisplayLine(String line) {
-            return ((this == IN || this == INOUT) && line.contains("login")) ||
-                    ((this == OUT || this == INOUT) && line.contains("quit"));
+        public boolean shouldDisplayEntry(LogEntry entry, String filter) {
+            return ((this == ALL) ||
+                    (this == IN || this == INOUT) && entry.isJoin()) ||
+                    ((this == OUT || this == INOUT) && entry.isQuit()) ||
+                    ((this == CHAT) && entry.isChat(filter));
         }
     }
 
-
-    private static final int DEFAULT_MAX_RESULTS = 5;
+    private static final String JOIN_STRING = "<JOIN>";
+    private static final String QUIT_STRING = "<QUIT>";
+    private static final int MAX_QUEUE_SIZE = 50;
     private Plugin plugin;
     private HashMap<String, GameMode> gameModeSave = new HashMap<String, GameMode>();
-
+    private PrintWriter log;
+    private LinkedList<LogEntry> recentLogEntries = new LinkedList<LogEntry>();
 
     public LoginHistory(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
@@ -45,29 +50,102 @@ public class LoginHistory extends CowNetThingy implements Listener {
         if (isEnabled()) {
             PluginManager pm = plugin.getServer().getPluginManager();
             pm.registerEvents(this, plugin);
-            getLogFile(plugin);
-            getChatLogFile(plugin);
         }
     }
 
     @Override
     protected String getHelpString(Player player) {
-        return "usage: <command> [filter string]";
+        return "usage: <command> [-in|-out|-inout] | [<filter>]";
     }
 
-    private class Output {
-        private Player p;
-
-        public Output(Player p) {
-            this.p = p;
-        }
-
-        public void say(String s) {
-            if (p != null) {
-                p.sendMessage(s);
-            } else {
-                logInfo(s);
+    @EventHandler(priority = EventPriority.LOW)
+    public void onEnable(PluginEnableEvent event) {
+        Plugin pl = event.getPlugin();
+        if (pl.equals(plugin)) {
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(getLogFile()));
+                for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+                    LogEntry entry = new LogEntry(line);
+                    queueEntry(entry);
+                }
+                reader.close();
+                log = new PrintWriter(new BufferedWriter(new FileWriter(getLogFile(), true)));
+            } catch (IOException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onDisable(PluginDisableEvent event) {
+        Plugin pl = event.getPlugin();
+        if (pl.equals(plugin)) {
+            if (log != null) {
+                log.close();
+                log = null;
+            }
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onPlayerLogin(PlayerLoginEvent event) {
+        if (log != null) {
+            LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage(JOIN_STRING);
+            log.println(entry.toString());
+            log.flush();
+            queueEntry(entry);
+        }
+        setGameMode(event.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        if (log != null) {
+            LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage(QUIT_STRING);
+            log.println(entry.toString());
+            log.flush();
+            queueEntry(entry);
+        }
+        saveGameMode(event.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onPlayerChat(PlayerChatEvent event) {
+        if (log != null) {
+            LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage(event.getMessage());
+            log.println(entry.toString());
+            log.flush();
+            queueEntry(entry);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
+        if (log != null) {
+            LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage(event.getMessage());
+            log.println(entry.toString());
+            log.flush();
+            queueEntry(entry);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onPlayerCommand(PlayerGameModeChangeEvent event) {
+        if (log != null) {
+            LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage("set game mode: " + event.getNewGameMode());
+            log.println(entry.toString());
+            log.flush();
+            queueEntry(entry);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onPlayerTeleport(PlayerTeleportEvent event) {
+        if (log != null) {
+            LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage("Teleported: " + event.getPlayer().getWorld().getName());
+            log.println(entry.toString());
+            log.flush();
+            queueEntry(entry);
         }
     }
 
@@ -78,128 +156,120 @@ public class LoginHistory extends CowNetThingy implements Listener {
 
     @Override
     protected boolean onCommand(Player player, Command cmd, String[] args) {
-        int count = DEFAULT_MAX_RESULTS;
-        Filter directionFilter = Filter.INOUT;
-        Output out = new Output(player);
-
+        if (args.length > 1) return false;
+        Filter filterType = Filter.INOUT;
+        String filterString = null;
         if (args.length > 0) {
-            if (args.length > 2) {
-                out.say(getHelpString(player));
+            filterString = args[0];
+            // it's -in, -out, or a filter
+            if (filterString.equalsIgnoreCase("-in")) {
+                filterType = Filter.IN;
+            } else if (filterString.equalsIgnoreCase("-out")) {
+                filterType = Filter.OUT;
+            } else if (filterString.equalsIgnoreCase("-inout")) {
+                filterType = Filter.INOUT;
+            } else if (filterString.equalsIgnoreCase("-all")) {
+                filterType = Filter.ALL;
             } else {
-                // 1 or 2 args
-                if (args[0].startsWith("-")) {
-                    try {
-                        directionFilter = Filter.valueOf(args[0].substring(1).toUpperCase());
-                    } catch (Exception e) {
-                        out.say(getHelpString(player));
-                        return false;
-                    }
-                    if (args.length == 2) {
-                        try {
-                            count = Integer.parseInt(args[1]);
-                        } catch (Exception e) {
-                            // only arg not a number OR a filter type
-                            out.say(getHelpString(player));
-                            return false;
-                        }
-                    }
+                filterType = Filter.CHAT;
+            }
+        }
+
+        for (LogEntry entry : recentLogEntries) {
+            if (filterType.shouldDisplayEntry(entry, filterString)) {
+                if (player != null) {
+                    player.sendMessage(entry.toHumanReadableString());
                 } else {
-                    // first arg was not a filter so it must be the only arg and be a count
-                    if (args.length != 1) {
-                        out.say(getHelpString(player));
-                        return false;
-                    } else {
-                        try {
-                            count = Integer.parseInt(args[0]);
-                        } catch (Exception e) {
-                            // only arg not a number OR a filter type
-                            out.say(getHelpString(player));
-                            return false;
-                        }
-                    }
+                    logInfo(entry.toHumanReadableString());
                 }
             }
         }
-        String[] results = lastNLogins(getLogFile(plugin), directionFilter, count);
-        if (results.length > 0) {
-            for (String line : results) {
-                out.say(line);
-            }
-        } else {
-            out.say("Nobody has logged in since the log file was created.");
-        }
+
         return true;
     }
 
-    @EventHandler(priority = EventPriority.LOW)
-    public void onPlayerLogin(PlayerLoginEvent event) {
-        File logFile = getLogFile(plugin);
-        if (logFile != null) {
-            try {
-                DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                Date date = new Date();
-                PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFile, true)));
-                out.println(dateFormat.format(date) + " login:" + getPlayerInfoString(event.getPlayer()));
-                out.close();
-                out = new PrintWriter(new BufferedWriter(new FileWriter(getChatLogFile(plugin), true)));
-                out.println(getChatLogString(event.getPlayer(), "<JOIN>"));
-                out.close();
-                setGameMode(event.getPlayer());
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            }
+    private File getLogFile() throws IOException {
+        File folder = plugin.getDataFolder();
+        if (!folder.exists()) {
+            folder.mkdir();
+        }
+        File file = new File(folder, "ChatLog-" + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ".txt");
+        if (!file.exists()) {
+            file.createNewFile();
+        }
+        return file;
+    }
+
+    private void queueEntry(LogEntry e) {
+        recentLogEntries.addLast(e);
+        if (recentLogEntries.size() > MAX_QUEUE_SIZE) {
+            recentLogEntries.removeFirst();
         }
     }
 
-    @EventHandler(priority = EventPriority.LOW)
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        File logFile = getLogFile(plugin);
-        if (logFile != null) {
-            try {
-                DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-                Date date = new Date();
-                PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFile, true)));
-                out.println(dateFormat.format(date) + " quit:" + getPlayerInfoString(event.getPlayer()));
-                out.close();
-                out = new PrintWriter(new BufferedWriter(new FileWriter(getChatLogFile(plugin), true)));
-                out.println(getChatLogString(event.getPlayer(), "<QUIT>"));
-                out.close();
-                saveGameMode(event.getPlayer());
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            }
+    private static class LogEntry {
+        private static DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+        private String playerName;
+        private String worldName;
+        private String time;
+        private String message;
+
+        public LogEntry() {
+            time = dateFormat.format(new Date());
         }
-    }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onPlayerChat(PlayerChatEvent event) {
-        Player player = event.getPlayer();
-        World world = player.getWorld();
-        String message = event.getMessage();
-
-        File logFile = getChatLogFile(plugin);
-        if (logFile != null) {
-            try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(logFile, true)));
-                out.println(getChatLogString(event.getPlayer(), message));
-                out.close();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            }
+        public LogEntry(String line) {
+            fromString(line);
         }
-    }
 
-    private String getChatLogString(Player player, String message) {
-        DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
-        Date date = new Date();
-        World world = player.getWorld();
-        return dateFormat.format(date) + " [" + world.getName() + "] " + player.getName() + ": " + message;
+        public LogEntry forUser(Player p) {
+            playerName = p.getName();
+            worldName = p.getWorld().getName();
+            return this;
+        }
+
+        public LogEntry forMessage(String message) {
+            this.message = message;
+            return this;
+        }
+
+        public LogEntry fromString(String entry) {
+            String[] args = entry.split("/");
+            time = args[0];
+            worldName = args[1];
+            playerName = args[2];
+            message = args[3];
+            return this;
+        }
+
+        public String toString() {
+            return time + "/" + worldName + "/" + playerName + "/" + message;
+        }
+
+        private String toHumanReadableString() {
+            return "[" + time + "] [" + worldName + "] " + playerName + ": " + message;
+        }
+
+        public boolean isJoin() {
+            return JOIN_STRING.equalsIgnoreCase(message);
+        }
+
+        public boolean isQuit() {
+            return QUIT_STRING.equalsIgnoreCase(message);
+        }
+
+        public boolean isChat() {
+            return isChat(null);
+        }
+
+        public boolean isChat(String filter) {
+            if (isJoin() || isQuit()) return false;
+            return (filter == null) || toHumanReadableString().contains(filter) || filter.equals("-chat");
+        }
+
+        public String getMessage() {
+            return message;
+        }
     }
 
     //--------------------------------------------------
@@ -215,69 +285,4 @@ public class LoginHistory extends CowNetThingy implements Listener {
         gameModeSave.put(player.getPlayerListName(), player.getGameMode());
     }
 
-    //--------------------------------------------------
-    private File getChatLogFile(Plugin plugin) {
-        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        Date date = new Date();
-        File folder = plugin.getDataFolder();
-        logInfo("Chatlog folder: " + folder);
-        if (!folder.exists()) {
-            folder.mkdir();
-        }
-        File result = new File(folder, "ChatLog-" + dateFormat.format(date) + ".txt");
-        if (!result.exists()) {
-            try {
-                logInfo("Chatlog file: " + result);
-                result.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                result = null;
-            }
-        }
-        return result;
-    }
-
-    private File getLogFile(Plugin plugin) {
-        File folder = plugin.getDataFolder();
-        if (!folder.exists()) {
-            folder.mkdir();
-        }
-        File result = new File(folder, "loginHistory.txt");
-        if (!result.exists()) {
-            try {
-                result.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                result = null;
-            }
-        }
-        return result;
-    }
-
-    private String getPlayerInfoString(Player player) {
-//        return player.getPlayerListName()+" "+player.getLocation();
-        return player.getPlayerListName();
-    }
-
-    private String[] lastNLogins(File file, Filter filter, int count) {
-        LinkedList<String> results = new LinkedList<String>();
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            String line = null;
-            while ((line = reader.readLine()) != null) {
-                if (filter.shouldDisplayLine(line)) {
-                    if (results.size() > count) {
-                        results.removeFirst();
-                    }
-                    results.offerLast(line);
-                } else {
-//                    logInfo("skipping: "+line);
-                }
-            }
-            return results.toArray(new String[results.size()]);
-        } catch (IOException x) {
-            System.err.format("IOException: %s%n", x);
-            return new String[0];
-        }
-    }
 }
