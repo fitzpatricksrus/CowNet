@@ -234,7 +234,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
         }
 
         public LogEntry fromString(String entry) {
-            String[] args = entry.split("/");
+            String[] args = entry.split("|");
             time = args[0];
             worldName = args[1];
             playerName = args[2];
@@ -243,7 +243,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
         }
 
         public String toString() {
-            return time + "/" + worldName + "/" + playerName + "/" + message;
+            return time + "|" + worldName + "|" + playerName + "|" + message;
         }
 
         private String toHumanReadableString() {

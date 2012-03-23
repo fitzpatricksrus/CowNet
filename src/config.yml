@@ -45,3 +45,6 @@ plot:
   plotPath: DOUBLE_STEP
   plotCost: 100
 
+rank:
+  enable: true
+  groupNames: Convict,BadBoy,Default,Builder,Trusted,Engineer,BossBuilder,Architect,EarthMover,Terraformer,BlockGod

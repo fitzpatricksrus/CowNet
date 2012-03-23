@@ -1,5 +1,6 @@
 package us.fitzpatricksr.cownet;
 
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -98,6 +99,7 @@ public class ExplodingSheep extends CowNetThingy {
 
                         // Make sure the sheep goes away in the explosion.
                         victim.remove();
+                        buildWreckage(victim.getLocation());
                     }
                 } else if (killer != null) {
 //	                	logger.info("killer of type "+killer.getClass().getName());
@@ -130,6 +132,10 @@ public class ExplodingSheep extends CowNetThingy {
 
             }
             return null;
+        }
+
+        private void buildWreckage(Location loc) {
+
         }
     }
 }

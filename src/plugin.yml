@@ -24,6 +24,9 @@ commands:
   hide:
       description: hide from other players.  Sshhhh....
       usage: Use "/hide help" for help
+  rank:
+      description: promote/demote a player
+      usage: Use "/rank help"
 permissions:
     cownet.starve:
         description: Starve creatures around you
@@ -44,7 +47,7 @@ permissions:
         description: do you fling?
         default: true
     cownet.plot:
-        description: can use plots in general
+        description: can  use plots in general
         default: true
     cownet.plot.claim:
         description: are you allowed to claim land
@@ -60,4 +63,7 @@ permissions:
         default: false
     cownet.hide.seesInvisible:
         descriptions: if true player can see invisible players (srsly)
+        default: false
+    cownet.rank:
+        descriptions: If true, allows access to the rankup command
         default: false

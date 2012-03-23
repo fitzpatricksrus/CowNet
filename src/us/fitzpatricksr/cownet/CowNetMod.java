@@ -18,6 +18,9 @@ public class CowNetMod extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        if (getResource("config.yml") == null) {
+            this.saveConfig();
+        }
         this.getConfig().options().copyDefaults(true);
         if (getConfig().getBoolean("cownet.enable", true)) {
             logger.info("CowNetMod enabled.");
@@ -27,6 +30,7 @@ public class CowNetMod extends JavaPlugin {
             new ExplodingSheep(this, COWNET, "tntsheep");
             new LoginHistory(this, COWNET, "logins");
             plots = new Plots(this, COWNET, "plot", noSwearingMod);
+            new Rank(this, COWNET, "rank");
 //            new FlingPortal(this, COWNET, "flingportal");
 //            new Hide(this, COWNET, "Hide");
         } else {

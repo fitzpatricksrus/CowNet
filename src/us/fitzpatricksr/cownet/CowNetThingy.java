@@ -106,6 +106,12 @@ public class CowNetThingy implements CommandExecutor {
         return isEnabled;
     }
 
+    // disable the plugin if there was some critical startup error.
+    protected void disable() {
+        isEnabled = false;
+        logInfo("Plugin disabled.");
+    }
+
     protected void reload() {
     }
 
