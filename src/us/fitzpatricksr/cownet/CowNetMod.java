@@ -31,6 +31,7 @@ public class CowNetMod extends JavaPlugin {
             new LoginHistory(this, COWNET, "logins");
             plots = new Plots(this, COWNET, "plot", noSwearingMod);
             new Rank(this, COWNET, "rank");
+            new Timber(this, COWNET, "timber");
 //            new FlingPortal(this, COWNET, "flingportal");
 //            new Hide(this, COWNET, "Hide");
         } else {

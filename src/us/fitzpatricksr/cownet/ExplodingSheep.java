@@ -1,6 +1,7 @@
 package us.fitzpatricksr.cownet;
 
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -15,11 +16,12 @@ import java.util.Random;
 public class ExplodingSheep extends CowNetThingy {
     private Random rand = new Random();
     private int chanceToExplode = 25;
-    private String allowedWorlds = "guest,guestworld,d74g0n,funky";
+    private String allowedWorlds = "ALL";
     private float explosionRadius = 3; //4 = tnt
     private int explosionDamage = 3; //4 = tnt
     private boolean sheepExplode = false;
     private boolean cowsExplode = false;
+    private int wreckage = 5;
 
     public ExplodingSheep(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
@@ -39,7 +41,8 @@ public class ExplodingSheep extends CowNetThingy {
         this.allowedWorlds = getConfigString("allowedWords", this.allowedWorlds);
         this.sheepExplode = getConfigBoolean("sheepExplode", this.sheepExplode);
         this.cowsExplode = getConfigBoolean("cowsExplode", this.cowsExplode);
-        logInfo("(chanceToExplode=" + chanceToExplode + ",explosionRadius=" + explosionRadius + ",explosionDamage=" + explosionDamage + ",allowedWorlds=" + allowedWorlds + ")");
+        this.wreckage = getConfigInt("wreckage", this.wreckage);
+        logInfo("(chanceToExplode=" + chanceToExplode + ",explosionRadius=" + explosionRadius + ",explosionDamage=" + explosionDamage + ",wreckage=" + wreckage + ",allowedWorlds=" + allowedWorlds + ")");
     }
 
     @Override
@@ -59,9 +62,15 @@ public class ExplodingSheep extends CowNetThingy {
     }
 
     private boolean sheepShouldExplode(Entity sheep) {
+        boolean y = allowedWorlds.contains(sheep.getWorld().getName());
+        boolean z = allowedWorlds.contains("ALL");
+
+        logInfo(sheep.getWorld().getName() + " in " + allowedWorlds + " = " + y);
+        logInfo(sheep.getWorld().getName() + " in ALL = " + z);
+
         return (rand.nextInt(100) <= chanceToExplode) &&
                 (allowedWorlds.contains(sheep.getWorld().getName()) ||
-                        allowedWorlds.equalsIgnoreCase("ALL"));
+                        allowedWorlds.contains("ALL"));
     }
 
     public float getExplosionRadius() {
@@ -84,9 +93,15 @@ public class ExplodingSheep extends CowNetThingy {
                     logInfo("Killer was a " + killer.getClass().getName());
                     // We don't want this to hurt the chances of someone getting an explosion in their face
                     try {
-                        if (hasPermissions(((Player) killer), "immune")) return;
+                        Player player = (Player) killer;
+                        if (hasPermissions(player, "immune")) {
+                            logInfo(player.getName() + " is immune to sheep explosions");
+                            return;
+                        }
                     } catch (Exception e) {
                         //class cast?  What can happen here?
+                        logInfo(killer.getClass().getName() + " can't kill sheep");
+                        return;
                     }
 
                     // Time to whip out the random number generator and get the chance that this sheep is going to blow.
@@ -99,7 +114,7 @@ public class ExplodingSheep extends CowNetThingy {
 
                         // Make sure the sheep goes away in the explosion.
                         victim.remove();
-                        buildWreckage(victim.getLocation());
+                        buildWreckage(killer, victim.getLocation());
                     }
                 } else if (killer != null) {
 //	                	logger.info("killer of type "+killer.getClass().getName());
@@ -134,8 +149,10 @@ public class ExplodingSheep extends CowNetThingy {
             return null;
         }
 
-        private void buildWreckage(Location loc) {
-
+        private void buildWreckage(LivingEntity killer, Location loc) {
+            for (int i = 0; i < wreckage; i++) {
+                World world = killer.getWorld();
+            }
         }
     }
 }

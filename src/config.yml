@@ -26,6 +26,7 @@ tntsheep:
   explosionDamage: 3
   sheepExplode: true
   cowsExplode: true
+  wreckage: 5
   allowedWords: ALL
 
 logins:

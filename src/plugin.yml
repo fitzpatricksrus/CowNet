@@ -27,6 +27,9 @@ commands:
   rank:
       description: promote/demote a player
       usage: Use "/rank help"
+  timber:
+      description: Yeah.  It's about trees
+      usage: Use "/timber help"
 permissions:
     cownet.starve:
         description: Starve creatures around you
@@ -67,3 +70,6 @@ permissions:
     cownet.rank:
         descriptions: If true, allows access to the rankup command
         default: false
+    cownet.timber:
+        descriptions: If true, allows access to the timber command
+        default: true
