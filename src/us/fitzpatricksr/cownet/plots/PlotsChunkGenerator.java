@@ -11,28 +11,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.logging.Logger;
 
 /**
  * Generator for a flat map with square plots separated by roads.
  */
 public class PlotsChunkGenerator extends ChunkGenerator {
+    private static final Logger logger = Logger.getLogger("Minecraft");
     private int plotSize;
     private int plotHeight;
-    private Material bed = Material.BEDROCK;
-    private Material base = Material.DIRT;
-    private Material surface = Material.GRASS;
     private Material path = Material.DOUBLE_STEP;
-
-    private byte bedId = (byte) bed.getId();
-    private byte baseId = (byte) base.getId();
-    private byte surfaceId = (byte) surface.getId();
     private byte pathId = (byte) path.getId();
 
     public PlotsChunkGenerator(int size, int height, Material base, Material surface, Material path) {
         this.plotSize = size + 7;
         this.plotHeight = height;
 
-        this.surfaceId = (byte) surface.getId();
         this.pathId = (byte) path.getId();
     }
 
@@ -42,10 +36,6 @@ public class PlotsChunkGenerator extends ChunkGenerator {
 
     public Location getFixedSpawnLocation(World world, Random rand) {
         return new Location(world, 0, 18, 0);
-    }
-
-    public int coordsToByte(int x, int y, int z) {
-        return (x * 16 + z) * 128 + y;
     }
 
     private boolean isPathBlock(int x, int z) {
@@ -58,33 +48,30 @@ public class PlotsChunkGenerator extends ChunkGenerator {
                 ((x + 2) % this.plotSize == 0) ||
                 ((z + 2) % this.plotSize == 0) ||
                 ((x - 2) % this.plotSize == 0) ||
-                ((z - 2) % this.plotSize == 0);
+                ((z - 2) % this.plotSize == 0) ||
+
+                ((x + 3) % this.plotSize == 0) ||
+                ((z + 3) % this.plotSize == 0) ||
+                ((x - 3) % this.plotSize == 0) ||
+                ((z - 3) % this.plotSize == 0);
     }
 
-    public byte[] generate(World world, Random random, int chunkX, int chunkZ) {
-        byte[] blocks = new byte[32768];
-        int x, y, z;
+    private byte getPathBlock(int x, int z) {
+        // (12,12) - (15, 15)
+        // (0,0) - (2,2)
 
-        int worldChunkX = chunkX << 4;
-        int worldChunkZ = chunkZ << 4;
+        int top = this.plotSize - 2;
+        int bottom = 2;
 
-        for (x = 0; x < 16; ++x) {
-            for (z = 0; z < 16; ++z) {
-                blocks[this.coordsToByte(x, 0, z)] = this.bedId;
+        int x1 = x % plotSize;
+        int z1 = z % plotSize;
 
-                for (y = 1; y < this.plotHeight; ++y) {
-                    blocks[this.coordsToByte(x, y, z)] = this.baseId;
-                }
-
-                if (this.isPathBlock(worldChunkX + x, worldChunkZ + z)) {
-                    blocks[this.coordsToByte(x, this.plotHeight, z)] = this.pathId;
-                } else {
-                    blocks[this.coordsToByte(x, this.plotHeight, z)] = this.surfaceId;
-                }
-            }
+        if (x1 == 0 && z1 == 0) {
+            logger.info("GRASS(" + x + "," + z + ")");
+            return (byte) Material.GRASS.getId();
         }
 
-        return blocks;
+        return (byte) Material.DOUBLE_STEP.getId();
     }
 
     public byte[][] generateBlockSections(World world, Random random, int chunkX, int chunkZ, BiomeGrid biomes) {
@@ -102,7 +89,7 @@ public class PlotsChunkGenerator extends ChunkGenerator {
                     chunk.setBlock(x, y, z, baseId);
                 }
                 if (this.isPathBlock(worldChunkX + x, worldChunkZ + z)) {
-                    chunk.setBlock(x, this.plotHeight, z, this.pathId);
+                    chunk.setBlock(x, this.plotHeight, z, getPathBlock(worldChunkX + x, worldChunkZ + z));
                 } else {
                     chunk.setMaterial(x, this.plotHeight, z, getBiomeSurfaceBlock(biomes.getBiome(x, z), random));
                     chunk.setMaterial(x, this.plotHeight + 1, z, getBiomeAboveSurfaceBlock(biomes.getBiome(x, z), random));
@@ -110,7 +97,7 @@ public class PlotsChunkGenerator extends ChunkGenerator {
             }
         }
         //now make the waters deeeeeeeper
-        for (int y = this.plotHeight; y > 0; y--) {
+        for (int y = this.plotHeight; y > 10; y--) {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
                     if (chunk.getMaterial(x, y, z) == Material.WATER) {
@@ -125,7 +112,7 @@ public class PlotsChunkGenerator extends ChunkGenerator {
                                 chunk.isWetValue(x - 1, y, z + 1) +
                                 chunk.isWetValue(x, y, z + 1) +
                                 chunk.isWetValue(x + 1, y, z + 1);
-                        if (Math.abs(random.nextInt()) % 10 < howWetIsIt) {
+                        if (howWetIsIt > 7) {
                             // even if it's not surrounded, give it a 20% chance of being deep
                             chunk.setMaterial(x, y - 1, z, Material.WATER);
                         }
@@ -179,7 +166,10 @@ public class PlotsChunkGenerator extends ChunkGenerator {
         }
 
         private boolean isWet(int x, int y, int z) {
-            if (x < 0 || x > 15 || z < 0 || z > 15) return false;
+            if (x < 0) x = 0;
+            if (x > 15) x = 15;
+            if (z < 0) z = 0;
+            if (z > 15) z = 15;
             Material m = getMaterial(x, y, z);
             return m == Material.WATER || m == Material.DOUBLE_STEP;
         }

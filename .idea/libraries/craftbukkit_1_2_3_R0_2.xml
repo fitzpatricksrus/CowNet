@@ -11,6 +11,10 @@
     <SOURCES>
       <root url="jar://$PROJECT_DIR$/../LIBRARIES/craftbukkit-1.2.3-R0.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/../PermissionsBukkit/classes/artifacts/PermissionsBukkit/PermissionsBukkit-CowNet.jar!/main/java" />
+      <root url="file://$PROJECT_DIR$/../Bukkit/src/main/java" />
+      <root url="file://$PROJECT_DIR$/../CraftBukkit/src/main/java" />
+      <root url="file://$PROJECT_DIR$/../Bukkit/src/main/java" />
+      <root url="file://$PROJECT_DIR$/../CraftBukkit/src/main/java" />
     </SOURCES>
   </library>
 </component>
