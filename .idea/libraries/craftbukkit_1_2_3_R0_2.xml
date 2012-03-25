@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="craftbukkit-1.2.3-R0.2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../LIBRARIES/craftbukkit-1.2.3-R0.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LIBRARIES/BOSEconomy.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../PermissionsBukkit/classes/artifacts/PermissionsBukkit/PermissionsBukkit-CowNet.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../worldedit/classes/artifacts/WorldEdit/WorldEdit-CowNet.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../worldguard/classes/artifacts/WorldGuard/WorldGuard-CowNet.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../LIBRARIES/craftbukkit-1.2.3-R0.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../PermissionsBukkit/classes/artifacts/PermissionsBukkit/PermissionsBukkit-CowNet.jar!/main/java" />
+    </SOURCES>
+  </library>
+</component>

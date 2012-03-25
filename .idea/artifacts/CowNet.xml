@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="CowNet">
+    <output-path>$PROJECT_DIR$/out/artifacts/CowNet</output-path>
+    <root id="archive" name="CowNet.jar">
+      <element id="module-output" name="CowNet" />
+      <element id="file-copy" path="$PROJECT_DIR$/src/badwords.txt" />
+      <element id="file-copy" path="$PROJECT_DIR$/src/config.yml" />
+      <element id="file-copy" path="$PROJECT_DIR$/src/plugin.yml" />
+      <element id="dir-copy" path="$PROJECT_DIR$/src" />
+    </root>
+  </artifact>
+</component>
