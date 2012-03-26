@@ -31,17 +31,16 @@ public class Rank extends CowNetThingy {
         if (permsPlugin == null) {
             logInfo("Could not find permissions plugin.");
             disable();
-            return;
         } else {
             String groupNamesString = getConfigString("groupNames", null);
             if (groupNamesString == null) {
                 logInfo("Could not find groupNames in config file.  ");
                 disable();
-                return;
+            } else {
+                String[] groupNames = groupNamesString.split(",");
+                permsGroups.addAll(Arrays.asList(groupNames));
+                logInfo("found " + permsGroups.size() + " groups: " + groupNamesString);
             }
-            String[] groupNames = groupNamesString.split(",");
-            permsGroups.addAll(Arrays.asList(groupNames));
-            logInfo("found " + permsGroups.size() + " groups: " + groupNamesString);
         }
     }
 

@@ -38,7 +38,8 @@ public class LoginHistory extends CowNetThingy implements Listener {
 
     private static final String JOIN_STRING = "<JOIN>";
     private static final String QUIT_STRING = "<QUIT>";
-    private static final int MAX_QUEUE_SIZE = 50;
+    private static final int MAX_QUEUE_SIZE = 500;
+    private static final int MAX_DISPLAYED_TO_PLAYER = 10;
     private Plugin plugin;
     private HashMap<String, GameMode> gameModeSave = new HashMap<String, GameMode>();
     private PrintWriter log;
@@ -176,10 +177,12 @@ public class LoginHistory extends CowNetThingy implements Listener {
             }
         }
 
+        int count = 0;
         for (LogEntry entry : recentLogEntries) {
             if (filterType.shouldDisplayEntry(entry, filterString)) {
                 if (player != null) {
                     player.sendMessage(entry.toHumanReadableString());
+                    if (++count > MAX_DISPLAYED_TO_PLAYER) return true;
                 } else {
                     logInfo(entry.toHumanReadableString());
                 }
