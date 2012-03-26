@@ -67,6 +67,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
                 for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                     LogEntry entry = new LogEntry(line);
                     queueEntry(entry);
+                    logInfo("Logins loaded: " + line + " as: " + entry.toHumanReadableString());
                 }
                 reader.close();
                 log = new PrintWriter(new BufferedWriter(new FileWriter(getLogFile(), true)));
@@ -233,8 +234,8 @@ public class LoginHistory extends CowNetThingy implements Listener {
             return this;
         }
 
-        public LogEntry fromString(String entry) {
-            String[] args = entry.split("|");
+        public LogEntry fromString(String line) {
+            String[] args = line.split("\\|");
             time = args[0];
             worldName = args[1];
             playerName = args[2];
@@ -247,7 +248,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
         }
 
         private String toHumanReadableString() {
-            return "[" + time + "] [" + worldName + "] " + playerName + ": " + message;
+            return time + " [" + worldName + "] " + playerName + ": " + message;
         }
 
         public boolean isJoin() {
