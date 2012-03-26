@@ -48,18 +48,15 @@ public class PlotsChunkGenerator extends ChunkGenerator {
                 ((x + 2) % this.plotSize == 0) ||
                 ((z + 2) % this.plotSize == 0) ||
                 ((x - 2) % this.plotSize == 0) ||
-                ((z - 2) % this.plotSize == 0) ||
-
-                ((x + 3) % this.plotSize == 0) ||
-                ((z + 3) % this.plotSize == 0) ||
-                ((x - 3) % this.plotSize == 0) ||
-                ((z - 3) % this.plotSize == 0);
+                ((z - 2) % this.plotSize == 0);
     }
 
     private byte getPathBlock(int x, int z) {
+        return pathId;
+
         // (12,12) - (15, 15)
         // (0,0) - (2,2)
-
+/*
         int top = this.plotSize - 2;
         int bottom = 2;
 
@@ -67,11 +64,10 @@ public class PlotsChunkGenerator extends ChunkGenerator {
         int z1 = z % plotSize;
 
         if (x1 == 0 && z1 == 0) {
-            logger.info("GRASS(" + x + "," + z + ")");
-            return (byte) Material.GRASS.getId();
+            return (byte) Material.DOUBLE_STEP.getId();
         }
 
-        return (byte) Material.DOUBLE_STEP.getId();
+        return (byte) Material.DOUBLE_STEP.getId(); */
     }
 
     public byte[][] generateBlockSections(World world, Random random, int chunkX, int chunkZ, BiomeGrid biomes) {
@@ -96,28 +92,32 @@ public class PlotsChunkGenerator extends ChunkGenerator {
                 }
             }
         }
+
         //now make the waters deeeeeeeper
-        for (int y = this.plotHeight; y > 10; y--) {
+        double depthModifier = 0.5;
+        for (int y = plotHeight; y > 1; y--) {
             for (int x = 0; x < 16; x++) {
                 for (int z = 0; z < 16; z++) {
                     if (chunk.getMaterial(x, y, z) == Material.WATER) {
                         //OK, we found a water square, it's it's completely surrounded by other water, make it deeper
                         // check (x-1,z-1) -> (x+1,z+1) to see if they're all water
-                        int howWetIsIt = 1 +
+                        int howWetIsIt =
                                 chunk.isWetValue(x - 1, y, z - 1) +
-                                chunk.isWetValue(x, y, z - 1) +
-                                chunk.isWetValue(x + 1, y, z - 1) +
-                                chunk.isWetValue(x - 1, y, z) +
-                                chunk.isWetValue(x + 1, y, z) +
-                                chunk.isWetValue(x - 1, y, z + 1) +
-                                chunk.isWetValue(x, y, z + 1) +
-                                chunk.isWetValue(x + 1, y, z + 1);
-                        if (howWetIsIt > 7) {
+                                        chunk.isWetValue(x, y, z - 1) +
+                                        chunk.isWetValue(x + 1, y, z - 1) +
+                                        chunk.isWetValue(x - 1, y, z) +
+                                        chunk.isWetValue(x + 1, y, z) +
+                                        chunk.isWetValue(x - 1, y, z + 1) +
+                                        chunk.isWetValue(x, y, z + 1) +
+                                        chunk.isWetValue(x + 1, y, z + 1);
+                        if (howWetIsIt >= 6 + (plotHeight - y) / 2) {
+//                        if (howWetIsIt >= 6 + depthModifier/2) {
                             // even if it's not surrounded, give it a 20% chance of being deep
                             chunk.setMaterial(x, y - 1, z, Material.WATER);
                         }
                     }
                 }
+                depthModifier = depthModifier * 2;
             }
         }
         return chunk.getData();
