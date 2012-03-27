@@ -6,6 +6,7 @@ import com.platymuus.bukkit.permissions.PermissionsUtils;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -44,7 +45,7 @@ public class Rank extends CowNetThingy {
         }
     }
 
-    protected boolean onCommand(Player player, Command cmd, String[] args) {
+    protected boolean handleCommand(Player player, Command cmd, String[] args) {
         if (args.length > 2) return false;
         try {
             String subCmd = (args.length > 1) ? args[1] : null;

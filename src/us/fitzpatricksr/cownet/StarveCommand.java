@@ -5,6 +5,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class StarveCommand extends CowNetThingy {
         logInfo("radius=" + standardRadius + ", damage=" + standardDamage);
     }
 
-    protected boolean onCommand(Player player, Command cmd, String[] args) {
+    protected boolean handleCommand(Player player, Command cmd, String[] args) {
         if (!hasPermissions(player)) {
             player.sendMessage("Sorry, you don't have permission");
             return false;

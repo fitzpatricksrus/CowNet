@@ -23,6 +23,7 @@ import us.fitzpatricksr.cownet.plots.BlockUtils;
 import us.fitzpatricksr.cownet.plots.InfinitePlotClaim;
 import us.fitzpatricksr.cownet.plots.PlayerCenteredClaim;
 import us.fitzpatricksr.cownet.plots.PlotsChunkGenerator;
+import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -100,7 +101,7 @@ public class Plots extends CowNetThingy {
     }
 
     @Override
-    protected boolean onCommand(Player player, Command cmd, String[] args) {
+    protected boolean handleCommand(Player player, Command cmd, String[] args) {
         if (args.length < 1) {
             //just return the default help string
             return false;

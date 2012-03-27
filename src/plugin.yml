@@ -30,6 +30,9 @@ commands:
   timber:
       description: Yeah.  It's about trees
       usage: Use "/timber help"
+  hardcore:
+      description: Go to the Hard Core world.
+      usage: Use "/hardcore help"
 permissions:
     cownet.starve:
         description: Starve creatures around you
@@ -57,7 +60,7 @@ permissions:
         default: true
     cownet.plot.unlimitedplots:
         description: if true the player is allowed unlimited active plots
-        default: false
+        default: op
     cownet.hide:
         description: if true player has permission to hide
         default: false
@@ -69,7 +72,7 @@ permissions:
         default: false
     cownet.rank:
         descriptions: If true, allows access to the rankup command
-        default: false
+        default: op
     cownet.timber:
         descriptions: If true, allows access to the timber command
         default: true

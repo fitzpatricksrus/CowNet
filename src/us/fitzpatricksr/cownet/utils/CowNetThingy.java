@@ -1,17 +1,17 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.utils;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.logging.Logger;
 
 public class CowNetThingy implements CommandExecutor {
     private Logger logger = Logger.getLogger("Minecraft");
-    private Plugin plugin;
+    private JavaPlugin plugin;
     private String trigger;
     private String permissionNode;
     private boolean isEnabled;
@@ -51,13 +51,21 @@ public class CowNetThingy implements CommandExecutor {
                 player.sendMessage("Sorry, you don't have permission");
                 return false;
             }
-            return onCommand(player, cmd, args);
+            return handleCommand(sender, cmd, args);
         } else if (sender.getClass().getName().contains("Console")) {
             // commands from the console
-            return onCommand(cmd, args);
+            return handleCommand(sender, cmd, args);
         } else {
             return false;
         }
+    }
+
+    public final String getTrigger() {
+        return trigger;
+    }
+
+    public final ConfigurationSection getConfigSection() {
+        return (ConfigurationSection) plugin.getConfig().get(trigger);
     }
 
     public final int getConfigInt(String key, int def) {
@@ -70,6 +78,10 @@ public class CowNetThingy implements CommandExecutor {
 
     public final String getConfigString(String key, String def) {
         return plugin.getConfig().getString(trigger + "." + key, def);
+    }
+
+    public final void saveConfiguration() {
+        plugin.saveConfig();
     }
 
     public final boolean hasPermissions(Player player) {
@@ -94,7 +106,7 @@ public class CowNetThingy implements CommandExecutor {
         }
     }
 
-    public final Plugin getPlugin() {
+    public final JavaPlugin getPlugin() {
         return plugin;
     }
 
@@ -119,11 +131,15 @@ public class CowNetThingy implements CommandExecutor {
         return "There isn't any help for you...";
     }
 
-    protected boolean onCommand(Player sender, Command cmd, String[] args) {
-        return onCommand(cmd, args);
+    protected boolean handleCommand(Player sender, Command cmd, String[] args) {
+        return false;
     }
 
-    protected boolean onCommand(Command cmd, String[] args) {
-        return false;
+    protected boolean handleCommand(CommandSender sender, Command cmd, String[] args) {
+        if (sender instanceof Player) {
+            return handleCommand((Player) sender, cmd, args);
+        } else {
+            return false;
+        }
     }
 }

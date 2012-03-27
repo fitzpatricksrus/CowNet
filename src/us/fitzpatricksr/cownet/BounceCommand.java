@@ -6,6 +6,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
+import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 import java.util.List;
 
@@ -37,7 +38,7 @@ public class BounceCommand extends CowNetThingy {
     }
 
     @Override
-    protected boolean onCommand(Player player, Command cmd, String[] args) {
+    protected boolean handleCommand(Player player, Command cmd, String[] args) {
         if (hasPermissions(player)) {
             if (args.length > 2) {
                 player.sendMessage("usage: /" + cmd.getName() + " [radius:" + standardRadius + "] [velocity:" + standardVelocity + "]");

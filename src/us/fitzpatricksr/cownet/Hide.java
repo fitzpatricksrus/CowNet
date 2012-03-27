@@ -16,6 +16,7 @@ import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.painting.PaintingBreakEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.plugin.java.JavaPlugin;
+import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +50,7 @@ public class Hide extends CowNetThingy implements Listener {
     }
 
     @Override
-    protected boolean onCommand(Player player, Command cmd, String[] args) {
+    protected boolean handleCommand(Player player, Command cmd, String[] args) {
         if (hasPermissions(player)) {
             if (args.length == 0) {
                 toggleHiddenState(player);

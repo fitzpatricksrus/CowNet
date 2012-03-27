@@ -2,6 +2,7 @@ package us.fitzpatricksr.cownet;
 
 import org.bukkit.GameMode;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -12,6 +13,7 @@ import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 import java.io.*;
 import java.text.DateFormat;
@@ -68,9 +70,9 @@ public class LoginHistory extends CowNetThingy implements Listener {
                 for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                     LogEntry entry = new LogEntry(line);
                     queueEntry(entry);
-                    logInfo("Logins loaded: " + line + " as: " + entry.toHumanReadableString());
                 }
                 reader.close();
+                logInfo("Restored " + recentLogEntries.size() + " log entries");
                 log = new PrintWriter(new BufferedWriter(new FileWriter(getLogFile(), true)));
             } catch (IOException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -152,12 +154,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
     }
 
     @Override
-    protected boolean onCommand(Command cmd, String[] args) {
-        return onCommand(null, cmd, args);
-    }
-
-    @Override
-    protected boolean onCommand(Player player, Command cmd, String[] args) {
+    protected boolean handleCommand(CommandSender player, Command cmd, String[] args) {
         if (args.length > 1) return false;
         Filter filterType = Filter.INOUT;
         String filterString = null;
@@ -180,7 +177,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
         int count = 0;
         for (LogEntry entry : recentLogEntries) {
             if (filterType.shouldDisplayEntry(entry, filterString)) {
-                if (player != null) {
+                if (player instanceof Player) {
                     player.sendMessage(entry.toHumanReadableString());
                     if (++count > MAX_DISPLAYED_TO_PLAYER) return true;
                 } else {
