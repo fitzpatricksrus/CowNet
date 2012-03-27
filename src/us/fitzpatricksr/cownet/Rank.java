@@ -4,7 +4,7 @@ import com.platymuus.bukkit.permissions.Group;
 import com.platymuus.bukkit.permissions.PermissionsPlugin;
 import com.platymuus.bukkit.permissions.PermissionsUtils;
 import org.bukkit.command.Command;
-import org.bukkit.entity.Player;
+import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
@@ -45,7 +45,7 @@ public class Rank extends CowNetThingy {
         }
     }
 
-    protected boolean handleCommand(Player player, Command cmd, String[] args) {
+    protected boolean handleCommand(CommandSender sender, Command cmd, String[] args) {
         if (args.length > 2) return false;
         try {
             String subCmd = (args.length > 1) ? args[1] : null;
@@ -53,27 +53,27 @@ public class Rank extends CowNetThingy {
             if (UP_CMD.equalsIgnoreCase(subCmd)) {
                 int ndx = getPlayerGroup(playerName);
                 if (ndx == -1) {
-                    player.sendMessage("Could not find " + playerName);
+                    sender.sendMessage("Could not find " + playerName);
                 } else if (ndx < permsGroups.size() - 1) {
                     permsUtils.playerAddGroup(playerName, permsGroups.get(ndx + 1));
                     permsUtils.playerRemoveGroup(playerName, permsGroups.get(ndx));
-                    player.sendMessage("Change player " + playerName + " from " + permsGroups.get(ndx) + " to " + permsGroups.get(ndx + 1));
+                    sender.sendMessage("Change player " + playerName + " from " + permsGroups.get(ndx) + " to " + permsGroups.get(ndx + 1));
                 }
             } else if (DOWN_CMD.equalsIgnoreCase(subCmd)) {
                 int ndx = getPlayerGroup(playerName);
                 if (ndx == -1) {
-                    player.sendMessage("Could not find " + playerName);
+                    sender.sendMessage("Could not find " + playerName);
                 } else if (ndx > 0) {
                     permsUtils.playerAddGroup(playerName, permsGroups.get(ndx - 1));
                     permsUtils.playerRemoveGroup(playerName, permsGroups.get(ndx));
-                    player.sendMessage("Change player " + playerName + " from " + permsGroups.get(ndx) + " to " + permsGroups.get(ndx - 1));
+                    sender.sendMessage("Change player " + playerName + " from " + permsGroups.get(ndx) + " to " + permsGroups.get(ndx - 1));
                 }
             } else if (args.length == 1) {
                 int ndx = getPlayerGroup(playerName);
                 if (ndx == -1) {
-                    player.sendMessage("Could not find " + playerName);
+                    sender.sendMessage("Could not find " + playerName);
                 } else if (ndx > 0) {
-                    player.sendMessage(playerName + " is in group " + permsGroups.get(ndx));
+                    sender.sendMessage(playerName + " is in group " + permsGroups.get(ndx));
                 }
             } else {
                 return false;

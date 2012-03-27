@@ -75,7 +75,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
                 logInfo("Restored " + recentLogEntries.size() + " log entries");
                 log = new PrintWriter(new BufferedWriter(new FileWriter(getLogFile(), true)));
             } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                e.printStackTrace();
             }
         }
     }
@@ -234,13 +234,12 @@ public class LoginHistory extends CowNetThingy implements Listener {
             return this;
         }
 
-        public LogEntry fromString(String line) {
+        public void fromString(String line) {
             String[] args = line.split("\\|");
             time = args[0];
             worldName = args[1];
             playerName = args[2];
             message = args[3];
-            return this;
         }
 
         public String toString() {

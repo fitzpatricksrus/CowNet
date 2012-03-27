@@ -68,11 +68,27 @@ permissions:
         description: if true player joins the game hidden
         default: false
     cownet.hide.seesInvisible:
-        descriptions: if true player can see invisible players (srsly)
+        description: if true player can see invisible players (srsly)
         default: false
     cownet.rank:
-        descriptions: If true, allows access to the rankup command
+        description: If true, allows access to the rankup command
         default: op
     cownet.timber:
-        descriptions: If true, allows access to the timber command
+        description: If true, allows access to the timber command
         default: true
+    cownet.hardcore:
+        description: If true, allows access to the HardCore command
+        default: true
+    cownet.hardcore.go:
+        description: Are you HARD CORE enough?
+        default: true
+    cownet.hardcore.info:
+        description: Do you know HARD CORE when you see it?
+        default: true
+    cownet.hardcore.regen:
+        description: Can you regenerate the HARD CORE world?
+        default: false
+    cownet.hardcore.revive:
+        description: Can you give wimps another chance to be HARD CORE?
+        default: false
+

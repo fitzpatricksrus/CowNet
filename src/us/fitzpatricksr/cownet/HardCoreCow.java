@@ -150,6 +150,10 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     private boolean goInfo(Player player) {
+        if (!hasPermissions(player, "info")) {
+            player.sendMessage("Sorry, you don't have permission.");
+            return true;
+        }
         if (config.playerIsDead(player.getName())) {
             player.sendMessage("You're dead.  Not very HARD CORE.");
         } else {
@@ -389,7 +393,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         if (config.getDeadPlayers().size() > 0 && config.getLivePlayers().size() == 0) {
-            logInfo("Everyone's dead.  Generating a new world");
+            logInfo("Everyone's dead.  Generating a new world.   Please wait...");
             if (generateNewWorld()) {
                 getPlugin().getServer().broadcastMessage("Seems " + config.getWorldName() + " was too HARD CORE.  " +
                         "It's been regenerated to be a bit more fluffy for you softies.");

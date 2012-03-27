@@ -123,14 +123,13 @@ public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listen
 
         Location loc = player.getLocation();
 
-        Location result = new Location(
+        return new Location(
                 loc.getWorld(),
                 rotateBytes(loc.getBlockX()) ^ seed,
                 300,
                 rotateBytes(loc.getBlockZ()) ^ seed,
                 loc.getYaw(),
                 loc.getPitch());
-        return result;
     }
 
     private long rotateBytes(long value) {
@@ -143,13 +142,12 @@ public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listen
         long seed = player.getName().hashCode() & MASK;
         Location loc = player.getLocation();
 
-        Location result = new Location(
+        return new Location(
                 loc.getWorld(),
                 loc.getBlockX() ^ seed,
                 300,
                 loc.getBlockZ() ^ seed,
                 loc.getYaw(),
                 loc.getPitch());
-        return result;
     }
 }

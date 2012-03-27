@@ -54,7 +54,7 @@ public class Timber extends CowNetThingy {
             Block dropBlock = event.getBlock();
             Location dropLoc = dropBlock.getLocation();
             Location loc = dropLoc.clone();
-            LinkedList<ItemStack> drops = new LinkedList();
+            LinkedList<ItemStack> drops = new LinkedList<ItemStack>();
             while (loc.getBlock().getType() == Material.LOG) {
                 drops.addAll(loc.getBlock().getDrops());
                 loc.getBlock().setType(Material.AIR);

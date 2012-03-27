@@ -6,7 +6,7 @@ public class StringUtils {
     }
 
     public static String flatten(Iterable<String> strings, String seperator) {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         for (String s : strings) {
             if (result.length() > 0) {
                 result.append(seperator);
