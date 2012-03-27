@@ -16,7 +16,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetConfig;
@@ -108,8 +110,12 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             player.sendMessage("Sorry, you don't have permission.");
             return true;
         }
+        if (player.getWorld().getName().equalsIgnoreCase(config.getWorldName())) {
+            player.sendMessage("You are already HARD CORE.");
+            return true;
+        }
         MVWorldManager mgr = mvPlugin.getMVWorldManager();
-        if (!mgr.isMVWorld(config.getWorldName()) && !generateNewWorld(player)) {
+        if (!mgr.isMVWorld(config.getWorldName()) && !generateNewWorld()) {
             return true;
         }
         if (config.playerIsDead(player.getName())) {
@@ -145,9 +151,9 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     private boolean goInfo(Player player) {
         if (config.playerIsDead(player.getName())) {
-            player.sendMessage("You're dead.  Let's establish that right off the bat.");
+            player.sendMessage("You're dead.  Not very HARD CORE.");
         } else {
-            player.sendMessage("You're still breathing.  That's a good thing.");
+            player.sendMessage("You've been very HARD CORE up 'till now.");
         }
         player.sendMessage("  World: " + config.getWorldName());
         player.sendMessage("  Created: " + config.getCreationDate());
@@ -158,18 +164,22 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     private boolean goRegen(Player player) {
         if (!hasPermissions(player, "regen")) {
-            player.sendMessage("Sorry.  You don't have permissions.");
+            player.sendMessage("Sorry, you're not HARD CORE enough.  Come back when you're more HARD CORE.");
             return true;
         }
-        generateNewWorld(player);
+        if (generateNewWorld()) {
+            player.sendMessage(config.getWorldName() + " has been regenerated HARDer and more CORE than ever.");
+        } else {
+            player.sendMessage(config.getWorldName() + " is too HARD CORE to be regenerated.");
+        }
         return true;
     }
 
-    private boolean generateNewWorld(Player player) {
+    private boolean generateNewWorld() {
         MVWorldManager mgr = mvPlugin.getMVWorldManager();
         if (mgr.isMVWorld(config.getWorldName())) {
             if (!mgr.deleteWorld(config.getWorldName())) {
-                player.sendMessage("Agh!  Can't regen " + config.getWorldName());
+                logInfo("Agh!  Can't regen " + config.getWorldName());
                 return false;
             }
         }
@@ -185,23 +195,23 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            player.sendMessage(config.getWorldName() + " has been regenerated.");
+            logInfo(config.getWorldName() + " has been regenerated.");
             return true;
         } else {
-            player.sendMessage("Oh No's! " + config.getWorldName() + " don wurk.");
+            logInfo("Oh No's! " + config.getWorldName() + " don wurk.");
             return false;
         }
     }
 
     private boolean goRevive(Player player, String arg) {
         if (!hasPermissions(player, "revive")) {
-            player.sendMessage("Sorry.  You don't have permissions.");
+            player.sendMessage("Sorry, you're not HARD CORE enough.");
         } else if (!config.playerIsDead(arg)) {
-            player.sendMessage(arg + " isn't quite dead.  I mean, not completely.  Not yet.");
+            player.sendMessage(arg + " is still going at it HARD CORE and isn't dead.");
         } else if (config.markPlayerLive(arg)) {
-            player.sendMessage("Kay. Fine. " + arg + " can has " + config.getWorldName());
+            player.sendMessage("We'll give " + arg + " a second chance to be HARD CORE.");
         } else {
-            player.sendMessage("Oh No's!  " + arg + " no can has!");
+            player.sendMessage(arg + " just isn't HARD CORE enough to be given another chance right now.");
         }
         return true;
     }
@@ -239,7 +249,6 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
 
         public void saveConfig() throws IOException {
-            logInfo("saveConfig");
             set("worldname", worldName);
             set("creationdate", creationDate);
             set("liveplayers", StringUtils.flatten(livePlayers));
@@ -253,7 +262,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
 
         public boolean playerIsDead(String player) {
-            logInfo("playerIsDead(" + player + ") = " + deadPlayers.contains(player));
+            player = player.toLowerCase();
             return deadPlayers.contains(player);
         }
 
@@ -270,6 +279,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
 
         public boolean markPlayerDead(String p) {
+            p = p.toLowerCase();
             if (deadPlayers.contains(p)) return true;
             deadPlayers.add(p);
             livePlayers.remove(p);
@@ -289,6 +299,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
 
         private boolean markPlayerLive(String p) {
+            p = p.toLowerCase();
             if (livePlayers.contains(p)) return true;
             deadPlayers.remove(p);
             livePlayers.add(p);
@@ -328,22 +339,18 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
     }
 
-    // --- add players to the live player list
-
 
     // --- Stop Ghosts from doing things
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
-        logInfo("onPlayerInteract");
         if (event.isCancelled()) return;
+        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(config.getWorldName())) return;
         if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_AIR) {
             return;
         }
         if (config.playerIsDead(event.getPlayer())) {
-            logInfo("onBlockPlace: dead");
             event.setCancelled(true);
         } else {
-            logInfo("onBlockPlace: mark as live");
             config.markPlayerLive(event.getPlayer());
         }
     }
@@ -351,26 +358,44 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         if (event.isCancelled()) return;
+        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(config.getWorldName())) return;
         if (config.playerIsDead(event.getPlayer())) {
-            logInfo("onBlockPlace: dead");
             event.setCancelled(true);
         } else {
-            logInfo("onBlockPlace: mark as live");
             config.markPlayerLive(event.getPlayer());
         }
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
-        logInfo("onBlockBreak");
         if (event.isCancelled()) return;
+        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(config.getWorldName())) return;
         if (config.playerIsDead(event.getPlayer())) {
-            logInfo("onBlockPlace: dead");
             event.setCancelled(true);
         } else {
-            logInfo("onBlockPlace: mark as live");
             config.markPlayerLive(event.getPlayer());
         }
     }
+
+    @EventHandler
+    public void onPlayerDeath(EntityDeathEvent event) {
+        if (event.getEntity() instanceof Player) {
+            Player player = (Player) event.getEntity();
+            if (!player.getWorld().getName().equalsIgnoreCase(config.getWorldName())) return;
+            config.markPlayerDead(player);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent event) {
+        if (config.getDeadPlayers().size() > 0 && config.getLivePlayers().size() == 0) {
+            logInfo("Everyone's dead.  Generating a new world");
+            if (generateNewWorld()) {
+                getPlugin().getServer().broadcastMessage("Seems " + config.getWorldName() + " was too HARD CORE.  " +
+                        "It's been regenerated to be a bit more fluffy for you softies.");
+            }
+        }
+    }
+
 }
 
