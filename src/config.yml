@@ -49,3 +49,7 @@ plot:
 rank:
   enable: true
   groupNames: Convict,BadBoy,Default,Builder,Trusted,Engineer,BossBuilder,Architect,EarthMover,Terraformer,BlockGod
+
+hardcore:
+  enable: true
+  worldname: HardCoreCow

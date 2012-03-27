@@ -32,6 +32,7 @@ import java.util.*;
 
 public class HardCoreCow extends CowNetThingy implements Listener {
     private HardCoreState config;
+    private String worldName = "HardCoreCow";
     private MultiverseCore mvPlugin;
 
     public HardCoreCow(JavaPlugin plugin, String permissionRoot, String trigger) {
@@ -45,15 +46,9 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     @Override
     protected void reload() {
-        /*
-        Configuration looks like this:
-        hardcorecow.creationDate: creationDate
-        hardcorecow.worldname: nameOfWorld
-        hardcorecow.liveplayers: player1,player2,player3
-        hardcorecow.deadplayers: player1,player2,player3
-         */
         if (mvPlugin != null) mvPlugin.decrementPluginCount();
         try {
+            worldName = getConfigString("worldname", worldName);
             config = new HardCoreState(getPlugin(), getTrigger() + ".yml");
             config.loadConfig();
             mvPlugin = (MultiverseCore) getPlugin().getServer().getPluginManager().getPlugin("Multiverse-Core");
@@ -110,12 +105,12 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             player.sendMessage("Sorry, you don't have permission.");
             return true;
         }
-        if (player.getWorld().getName().equalsIgnoreCase(config.getWorldName())) {
+        if (player.getWorld().getName().equalsIgnoreCase(worldName)) {
             player.sendMessage("You are already HARD CORE.");
             return true;
         }
         MVWorldManager mgr = mvPlugin.getMVWorldManager();
-        if (!mgr.isMVWorld(config.getWorldName()) && !generateNewWorld()) {
+        if (!mgr.isMVWorld(worldName) && !generateNewWorld()) {
             return true;
         }
         if (config.playerIsDead(player.getName())) {
@@ -123,11 +118,11 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
         SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
         DestinationFactory destFactory = mvPlugin.getDestFactory();
-        MVDestination destination = destFactory.getDestination(config.getWorldName());
+        MVDestination destination = destFactory.getDestination(worldName);
         TeleportResult result = teleporter.safelyTeleport(player, player, destination);
         switch (result) {
             case FAIL_PERMISSION:
-                player.sendMessage("You don't have permissions to go to " + config.getWorldName());
+                player.sendMessage("You don't have permissions to go to " + worldName);
                 break;
             case FAIL_UNSAFE:
                 player.sendMessage("Can't find a safe spawn location for you.");
@@ -136,7 +131,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 player.sendMessage("You don't have enough money.");
                 break;
             case FAIL_INVALID:
-                player.sendMessage(config.getWorldName() + " is temporarily out of service.");
+                player.sendMessage(worldName + " is temporarily out of service.");
                 break;
             case SUCCESS:
                 player.sendMessage("Good luck.");
@@ -159,7 +154,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         } else {
             player.sendMessage("You've been very HARD CORE up 'till now.");
         }
-        player.sendMessage("  World: " + config.getWorldName());
+        player.sendMessage("  World: " + worldName);
         player.sendMessage("  Created: " + config.getCreationDate());
         player.sendMessage("  Dead players: " + StringUtils.flatten(config.getDeadPlayers()));
         player.sendMessage("  Live players: " + StringUtils.flatten(config.getLivePlayers()));
@@ -172,22 +167,22 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             return true;
         }
         if (generateNewWorld()) {
-            player.sendMessage(config.getWorldName() + " has been regenerated HARDer and more CORE than ever.");
+            player.sendMessage(worldName + " has been regenerated HARDer and more CORE than ever.");
         } else {
-            player.sendMessage(config.getWorldName() + " is too HARD CORE to be regenerated.");
+            player.sendMessage(worldName + " is too HARD CORE to be regenerated.");
         }
         return true;
     }
 
     private boolean generateNewWorld() {
         MVWorldManager mgr = mvPlugin.getMVWorldManager();
-        if (mgr.isMVWorld(config.getWorldName())) {
-            if (!mgr.deleteWorld(config.getWorldName())) {
-                logInfo("Agh!  Can't regen " + config.getWorldName());
+        if (mgr.isMVWorld(worldName)) {
+            if (!mgr.deleteWorld(worldName)) {
+                logInfo("Agh!  Can't regen " + worldName);
                 return false;
             }
         }
-        if (mgr.addWorld(config.getWorldName(),
+        if (mgr.addWorld(worldName,
                 World.Environment.NORMAL,
                 "" + (new Random().nextLong()),
                 WorldType.NORMAL,
@@ -199,10 +194,10 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            logInfo(config.getWorldName() + " has been regenerated.");
+            logInfo(worldName + " has been regenerated.");
             return true;
         } else {
-            logInfo("Oh No's! " + config.getWorldName() + " don wurk.");
+            logInfo("Oh No's! " + worldName + " don wurk.");
             return false;
         }
     }
@@ -226,11 +221,19 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     //
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+    /*
+       Configuration looks like this:
+       hardcorecow.creationDate: creationDate
+       hardcorecow.liveplayers: player1,player2,player3
+       hardcorecow.deadplayers: player1,player2,player3
+    */
     private class HardCoreState extends CowNetConfig {
         private HashSet<String> livePlayers = new HashSet<String>();
         private HashSet<String> deadPlayers = new HashSet<String>();
-        private String worldName = "HardCoreCow";
         private String creationDate = "unknown";
+
+        //TODO hey jf - it would be nice if live players expired after a while so they
+        // don't keep the hardcore world around forever.
 
         public HardCoreState(JavaPlugin plugin, String name) {
             super(plugin, name);
@@ -238,7 +241,6 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
         public void loadConfig() throws IOException, InvalidConfigurationException {
             super.loadConfig();
-            worldName = getString("worldname", worldName);
             creationDate = getString("creationdate", creationDate);
 
             String liveString = getString("liveplayers", "");
@@ -253,7 +255,6 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
 
         public void saveConfig() throws IOException {
-            set("worldname", worldName);
             set("creationdate", creationDate);
             set("liveplayers", StringUtils.flatten(livePlayers));
             set("deadplayers", StringUtils.flatten(deadPlayers));
@@ -318,10 +319,6 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             }
         }
 
-        public String getWorldName() {
-            return worldName;
-        }
-
         public String getCreationDate() {
             return creationDate;
         }
@@ -348,7 +345,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.isCancelled()) return;
-        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(config.getWorldName())) return;
+        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) return;
         if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_AIR) {
             return;
         }
@@ -362,7 +359,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
         if (event.isCancelled()) return;
-        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(config.getWorldName())) return;
+        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) return;
         if (config.playerIsDead(event.getPlayer())) {
             event.setCancelled(true);
         } else {
@@ -373,7 +370,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         if (event.isCancelled()) return;
-        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(config.getWorldName())) return;
+        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) return;
         if (config.playerIsDead(event.getPlayer())) {
             event.setCancelled(true);
         } else {
@@ -385,7 +382,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     public void onPlayerDeath(EntityDeathEvent event) {
         if (event.getEntity() instanceof Player) {
             Player player = (Player) event.getEntity();
-            if (!player.getWorld().getName().equalsIgnoreCase(config.getWorldName())) return;
+            if (!player.getWorld().getName().equalsIgnoreCase(worldName)) return;
             config.markPlayerDead(player);
         }
     }
@@ -395,7 +392,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         if (config.getDeadPlayers().size() > 0 && config.getLivePlayers().size() == 0) {
             logInfo("Everyone's dead.  Generating a new world.   Please wait...");
             if (generateNewWorld()) {
-                getPlugin().getServer().broadcastMessage("Seems " + config.getWorldName() + " was too HARD CORE.  " +
+                getPlugin().getServer().broadcastMessage("Seems " + worldName + " was too HARD CORE.  " +
                         "It's been regenerated to be a bit more fluffy for you softies.");
             }
         }
