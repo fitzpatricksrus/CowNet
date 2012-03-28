@@ -19,6 +19,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.PluginManager;
@@ -250,6 +251,79 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         return true;
     }
 
+    // --- Stop Ghosts from doing things
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        if (event.isCancelled()) return;
+        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) return;
+        if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_AIR) {
+            return;
+        }
+        if (config.playerIsDead(event.getPlayer())) {
+            logInfo("Ghost event");
+            event.setCancelled(true);
+        } else {
+            config.markPlayerLive(event.getPlayer());
+        }
+    }
+
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event) {
+        if (event.isCancelled()) return;
+        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) return;
+        if (config.playerIsDead(event.getPlayer())) {
+            logInfo("Ghost event");
+            event.setCancelled(true);
+        } else {
+            config.markPlayerLive(event.getPlayer());
+        }
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (event.isCancelled()) return;
+        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) return;
+        if (config.playerIsDead(event.getPlayer())) {
+            logInfo("Ghost event");
+            event.setCancelled(true);
+        } else {
+            config.markPlayerLive(event.getPlayer());
+        }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(EntityDeathEvent event) {
+        if (event.getEntity() instanceof Player) {
+            Player player = (Player) event.getEntity();
+            if (!player.getWorld().getName().equalsIgnoreCase(worldName)) return;
+            config.markPlayerDead(player);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent event) {
+        if (regenIsAlreadyScheduled) return;
+        if (config.getDeadPlayers().size() > 0 && config.getLivePlayers().size() == 0) {
+            logInfo("Everyone's dead.  This world was too HARD CORE.  Generating a new world in 2 seconds.  Please wait...");
+            getPlugin().getServer().getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
+                public void run() {
+                    generateNewWorld();
+                    getPlugin().getServer().broadcastMessage("Seems like " + worldName + " was too HARD CORE.  " +
+                            "It's been regenerated to be a bit more fluffy for you softies.");
+                }// end of run
+            }, 40);
+        }
+    }
+
+    @EventHandler
+    public void onGameModeChange(PlayerGameModeChangeEvent event) {
+        if (event.isCancelled()) return;
+        if (worldName.equalsIgnoreCase(event.getPlayer().getWorld().getName())) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage("Can't change game modes.  " + worldName + " is HARD CORE.");
+        }
+    }
+
 
     //
     // Persistent state methods (ex. live vs. dead)
@@ -383,71 +457,5 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             logInfo("  Live players: " + StringUtils.flatten(livePlayers));
         }
     }
-
-
-    // --- Stop Ghosts from doing things
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        if (event.isCancelled()) return;
-        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) return;
-        if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_AIR) {
-            return;
-        }
-        if (config.playerIsDead(event.getPlayer())) {
-            logInfo("Ghost event");
-            event.setCancelled(true);
-        } else {
-            config.markPlayerLive(event.getPlayer());
-        }
-    }
-
-    @EventHandler
-    public void onBlockPlace(BlockPlaceEvent event) {
-        if (event.isCancelled()) return;
-        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) return;
-        if (config.playerIsDead(event.getPlayer())) {
-            logInfo("Ghost event");
-            event.setCancelled(true);
-        } else {
-            config.markPlayerLive(event.getPlayer());
-        }
-    }
-
-    @EventHandler
-    public void onBlockBreak(BlockBreakEvent event) {
-        if (event.isCancelled()) return;
-        if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) return;
-        if (config.playerIsDead(event.getPlayer())) {
-            logInfo("Ghost event");
-            event.setCancelled(true);
-        } else {
-            config.markPlayerLive(event.getPlayer());
-        }
-    }
-
-    @EventHandler
-    public void onPlayerDeath(EntityDeathEvent event) {
-        if (event.getEntity() instanceof Player) {
-            Player player = (Player) event.getEntity();
-            if (!player.getWorld().getName().equalsIgnoreCase(worldName)) return;
-            config.markPlayerDead(player);
-        }
-    }
-
-    @EventHandler
-    public void onPlayerRespawn(PlayerRespawnEvent event) {
-        if (regenIsAlreadyScheduled) return;
-        if (config.getDeadPlayers().size() > 0 && config.getLivePlayers().size() == 0) {
-            logInfo("Everyone's dead.  This world was too HARD CORE.  Generating a new world in 2 seconds.  Please wait...");
-            getPlugin().getServer().getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
-                public void run() {
-                    generateNewWorld();
-                    getPlugin().getServer().broadcastMessage("Seems like " + worldName + " was too HARD CORE.  " +
-                            "It's been regenerated to be a bit more fluffy for you softies.");
-                }// end of run
-            }, 40);
-        }
-    }
-
 }
 
