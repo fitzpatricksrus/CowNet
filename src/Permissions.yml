@@ -118,6 +118,8 @@ groups:
       commandbook.whereami.compass: false
       commandbook.clear: false
       commandbook.clear.other: false
+      commandbook.god: false
+      commandbook.god.other: false
       commandbook.slap: false
       commandbook.slap.other: false
       commandbook.rocket: false
@@ -417,18 +419,18 @@ groups:
       openwarp.warp.stack.print: true
     worlds:
       HardCoreCow:
-          openwarp.warp.list: false
-          openwarp.warp.use: false
-          openwarp.warp.detail: false
-          openwarp.home.use: false
-          openwarp.home.set: false
-          openwarp.jump: false
-          openwarp.top: false
-          openwarp.back: false
-          openwarp.warp.stack.push: false
-          openwarp.warp.stack.pop: false
-          openwarp.warp.stack.peek: false
-          openwarp.warp.stack.print: false
+        openwarp.warp.list: false
+        openwarp.warp.use: false
+        openwarp.warp.detail: false
+        openwarp.home.use: false
+        openwarp.home.set: false
+        openwarp.jump: false
+        openwarp.top: false
+        openwarp.back: false
+        openwarp.warp.stack.push: false
+        openwarp.warp.stack.pop: false
+        openwarp.warp.stack.peek: false
+        openwarp.warp.stack.print: false
   Builder:
     default: false
     inheritance:
@@ -448,9 +450,9 @@ groups:
       discosheep.party.many: true
     worlds:
       HardCoreCow:
-          AutoLight.use: false
-          discosheep.party.one: false
-          discosheep.party.many: false
+        AutoLight.use: false
+        discosheep.party.one: false
+        discosheep.party.many: false
   Engineer:
     default: false
     inheritance:
@@ -459,11 +461,11 @@ groups:
       simpleprefix.trusted: false
       simpleprefix.engineer: true
       commandbook.give: true
-      commandbook.give.other: true
+      commandbook.give.other: false
     worlds:
       HardCoreCow:
-          commandbook.give: false
-          commandbook.give.other: false
+        commandbook.give: false
+        commandbook.give.other: false
   BossBuilder:
     default: false
     inheritance:
@@ -472,17 +474,17 @@ groups:
       simpleprefix.engineer: false
       simpleprefix.bossbuilder: true
       commandbook.teleport: true
-      commandbook.teleport.other: true
+      commandbook.teleport.other: false
       commandbook.return: true
       openwarp.warp.set: true
       openwarp.warp.delete: true
     worlds:
       HardCoreCow:
-          commandbook.teleport: false
-          commandbook.teleport.other: false
-          commandbook.return: false
-          openwarp.warp.set: false
-          openwarp.warp.delete: false
+        commandbook.teleport: false
+        commandbook.teleport.other: false
+        commandbook.return: false
+        openwarp.warp.set: false
+        openwarp.warp.delete: false
   Architect:
     default: false
     inheritance:
@@ -540,39 +542,39 @@ groups:
       worldedit.butcher: true
     worlds:
       HardCoreCow:
-          commandbook.items.*: false
-          commandbook.weather: false
-          stopwhiners.giveback: false
-          stopwhiners.getback: false
-          worldedit.cunkinfo: false
-          worldedit.limit: false
-          worldedit.history.undo: false
-          worldedit.history.redo: false
-          worldedit.history.clear: false
-          worldedit.navigation.unstuck: false
-          worldedit.navigation.ascend: false
-          worldedit.navigation.descend: false
-          worldedit.navigation.ceiling: false
-          worldedit.navigation.thru: false
-          worldedit.navigation.jumpto: false
-          worldedit.navigation.up: false
-          worldedit.selection.pos: false
-          worldedit.selection.hpos: false
-          worldedit.selection.chunk: false
-          worldedit.selection.expand: false
-          worldedit.selection.contract: false
-          worldedit.selection.shift: false
-          worldedit.selection.outset: false
-          worldedit.selection.inset: false
-          worldedit.selection.size: false
-          worldedit.wand: false
-          worldedit.wand.toggle: false
-          worldedit.analysis.count: false
-          worldedit.analysis.distr: false
-          worldedit.superpickaxe: false
-          worldedit.thaw: false
-          worldedit.extinguish: false
-          worldedit.butcher: false
+        commandbook.items.*: false
+        commandbook.weather: false
+        stopwhiners.giveback: false
+        stopwhiners.getback: false
+        worldedit.cunkinfo: false
+        worldedit.limit: false
+        worldedit.history.undo: false
+        worldedit.history.redo: false
+        worldedit.history.clear: false
+        worldedit.navigation.unstuck: false
+        worldedit.navigation.ascend: false
+        worldedit.navigation.descend: false
+        worldedit.navigation.ceiling: false
+        worldedit.navigation.thru: false
+        worldedit.navigation.jumpto: false
+        worldedit.navigation.up: false
+        worldedit.selection.pos: false
+        worldedit.selection.hpos: false
+        worldedit.selection.chunk: false
+        worldedit.selection.expand: false
+        worldedit.selection.contract: false
+        worldedit.selection.shift: false
+        worldedit.selection.outset: false
+        worldedit.selection.inset: false
+        worldedit.selection.size: false
+        worldedit.wand: false
+        worldedit.wand.toggle: false
+        worldedit.analysis.count: false
+        worldedit.analysis.distr: false
+        worldedit.superpickaxe: false
+        worldedit.thaw: false
+        worldedit.extinguish: false
+        worldedit.butcher: false
   EarthMover:
     default: false
     inheritance:
@@ -590,14 +592,14 @@ groups:
       openwarp.back: true
     worlds:
       HardCoreCow:
-          openwarp.warp.list: false
-          openwarp.warp.use: false
-          openwarp.warp.set: false
-          openwarp.warp.detail: false
-          openwarp.warp.delete: false
-          openwarp.warp.share: false
-          openwarp.warp.unshare: false
-          openwarp.back: false
+        openwarp.warp.list: false
+        openwarp.warp.use: false
+        openwarp.warp.set: false
+        openwarp.warp.detail: false
+        openwarp.warp.delete: false
+        openwarp.warp.share: false
+        openwarp.warp.unshare: false
+        openwarp.back: false
   Terraformer:
     default: false
     inheritance:
@@ -617,10 +619,9 @@ groups:
       commandbook.slap: true
       commandbook.slap.other: true
       commandbook.thor: true
-      commandbook.thor.other: true
+      commandbook.thor.other: false
       commandbook.unthor: true
-      commandbook.unthor.other: true
-      gm.gm: true
+      commandbook.unthor.other: false
       openwarp.back: true
       openwarp.home.set: true
       openwarp.home.use: true
@@ -709,108 +710,108 @@ groups:
       worldedit.wand.toggle: true
     worlds:
       HardCoreCow:
-          bukkit.command.gamemode: false
-          commandbook.barrage: false
-          commandbook.barrage.other: false
-          commandbook.god: false
-          commandbook.god.other: false
-          commandbook.rocket: false
-          commandbook.rocket.other: false
-          commandbook.shock: false
-          commandbook.shock.other: false
-          commandbook.slap: false
-          commandbook.slap.other: false
-          commandbook.thor: false
-          commandbook.thor.other: false
-          commandbook.unthor: false
-          commandbook.unthor.other: false
-          gm.gm: false
-          openwarp.back: false
-          openwarp.home.set: false
-          openwarp.home.use: false
-          openwarp.jump: false
-          openwarp.top: false
-          openwarp.warp.delete: false
-          openwarp.warp.detail: false
-          openwarp.warp.list: false
-          openwarp.warp.set: false
-          openwarp.warp.share: false
-          openwarp.warp.stack.peek: false
-          openwarp.warp.stack.pop: false
-          openwarp.warp.stack.print: false
-          openwarp.warp.stack.push: false
-          openwarp.warp.unshare: false
-          openwarp.warp.use: false
-          worldedit.brush.clipboard: false
-          worldedit.brush.cyinder: false
-          worldedit.brush.ex: false
-          worldedit.brush.options.mask: false
-          worldedit.brush.options.material: false
-          worldedit.brush.options.size: false
-          worldedit.brush.smooth: false
-          worldedit.brush.sphere: false
-          worldedit.butcher: false
-          worldedit.clipboard.clear: false
-          worldedit.clipboard.copy: false
-          worldedit.clipboard.cut: false
-          worldedit.clipboard.flip: false
-          worldedit.clipboard.load: false
-          worldedit.clipboard.paste: false
-          worldedit.clipboard.rotate: false
-          worldedit.clipboard.save: false
-          worldedit.cunkinfo: false
-          worldedit.drain: false
-          worldedit.extinguish: false
-          worldedit.fill: false
-          worldedit.fill.recursive: false
-          worldedit.fixlava: false
-          worldedit.fixwater: false
-          worldedit.generation.cylinder: false
-          worldedit.generation.forest: false
-          worldedit.generation.pumpkins: false
-          worldedit.generation.sphere: false
-          worldedit.history.clear: false
-          worldedit.history.redo: false
-          worldedit.history.undo: false
-          worldedit.listchunks: false
-          worldedit.navigation.ascend: false
-          worldedit.navigation.ceiling: false
-          worldedit.navigation.descend: false
-          worldedit.navigation.jumpto: false
-          worldedit.navigation.thru: false
-          worldedit.navigation.unstuck: false
-          worldedit.navigation.up: false
-          worldedit.regen: false
-          worldedit.region.faces: false
-          worldedit.region.move: false
-          worldedit.region.overlay: false
-          worldedit.region.replace: false
-          worldedit.region.set: false
-          worldedit.region.smooth: false
-          worldedit.region.stack: false
-          worldedit.removeabove: false
-          worldedit.removebelow: false
-          worldedit.removenear: false
-          worldedit.scripting.execute: false
-          worldedit.selection.chunk: false
-          worldedit.selection.contract: false
-          worldedit.selection.expand: false
-          worldedit.selection.hpos: false
-          worldedit.selection.inset: false
-          worldedit.selection.outset: false
-          worldedit.selection.pos: false
-          worldedit.selection.shift: false
-          worldedit.selection.size: false
-          worldedit.snow: false
-          worldedit.superpickaxe: false
-          worldedit.superpickaxe.area: false
-          worldedit.superpickaxe.recursive: false
-          worldedit.thaw: false
-          worldedit.tool.info: false
-          worldedit.tool.replacer: false
-          worldedit.tool.tree: false
-          worldedit.wand: false
-          worldedit.wand.toggle: false
+        bukkit.command.gamemode: false
+        commandbook.barrage: false
+        commandbook.barrage.other: false
+        commandbook.god: false
+        commandbook.god.other: false
+        commandbook.rocket: false
+        commandbook.rocket.other: false
+        commandbook.shock: false
+        commandbook.shock.other: false
+        commandbook.slap: false
+        commandbook.slap.other: false
+        commandbook.thor: false
+        commandbook.thor.other: false
+        commandbook.unthor: false
+        commandbook.unthor.other: false
+        gm.gm: false
+        openwarp.back: false
+        openwarp.home.set: false
+        openwarp.home.use: false
+        openwarp.jump: false
+        openwarp.top: false
+        openwarp.warp.delete: false
+        openwarp.warp.detail: false
+        openwarp.warp.list: false
+        openwarp.warp.set: false
+        openwarp.warp.share: false
+        openwarp.warp.stack.peek: false
+        openwarp.warp.stack.pop: false
+        openwarp.warp.stack.print: false
+        openwarp.warp.stack.push: false
+        openwarp.warp.unshare: false
+        openwarp.warp.use: false
+        worldedit.brush.clipboard: false
+        worldedit.brush.cyinder: false
+        worldedit.brush.ex: false
+        worldedit.brush.options.mask: false
+        worldedit.brush.options.material: false
+        worldedit.brush.options.size: false
+        worldedit.brush.smooth: false
+        worldedit.brush.sphere: false
+        worldedit.butcher: false
+        worldedit.clipboard.clear: false
+        worldedit.clipboard.copy: false
+        worldedit.clipboard.cut: false
+        worldedit.clipboard.flip: false
+        worldedit.clipboard.load: false
+        worldedit.clipboard.paste: false
+        worldedit.clipboard.rotate: false
+        worldedit.clipboard.save: false
+        worldedit.cunkinfo: false
+        worldedit.drain: false
+        worldedit.extinguish: false
+        worldedit.fill: false
+        worldedit.fill.recursive: false
+        worldedit.fixlava: false
+        worldedit.fixwater: false
+        worldedit.generation.cylinder: false
+        worldedit.generation.forest: false
+        worldedit.generation.pumpkins: false
+        worldedit.generation.sphere: false
+        worldedit.history.clear: false
+        worldedit.history.redo: false
+        worldedit.history.undo: false
+        worldedit.listchunks: false
+        worldedit.navigation.ascend: false
+        worldedit.navigation.ceiling: false
+        worldedit.navigation.descend: false
+        worldedit.navigation.jumpto: false
+        worldedit.navigation.thru: false
+        worldedit.navigation.unstuck: false
+        worldedit.navigation.up: false
+        worldedit.regen: false
+        worldedit.region.faces: false
+        worldedit.region.move: false
+        worldedit.region.overlay: false
+        worldedit.region.replace: false
+        worldedit.region.set: false
+        worldedit.region.smooth: false
+        worldedit.region.stack: false
+        worldedit.removeabove: false
+        worldedit.removebelow: false
+        worldedit.removenear: false
+        worldedit.scripting.execute: false
+        worldedit.selection.chunk: false
+        worldedit.selection.contract: false
+        worldedit.selection.expand: false
+        worldedit.selection.hpos: false
+        worldedit.selection.inset: false
+        worldedit.selection.outset: false
+        worldedit.selection.pos: false
+        worldedit.selection.shift: false
+        worldedit.selection.size: false
+        worldedit.snow: false
+        worldedit.superpickaxe: false
+        worldedit.superpickaxe.area: false
+        worldedit.superpickaxe.recursive: false
+        worldedit.thaw: false
+        worldedit.tool.info: false
+        worldedit.tool.replacer: false
+        worldedit.tool.tree: false
+        worldedit.wand: false
+        worldedit.wand.toggle: false
   BlockGod:
     default: false
     inheritance:
@@ -820,7 +821,7 @@ groups:
       simpleprefix.blockgod: true
       bukkit.command.gamemode: true
       cgm.change: true
-      cgm.change.other: true
+      cgm.change.other: false
       cgm.change.disallow: true
       chestshop.shop.buy: true
       chestshop.shop.sell: true
@@ -830,7 +831,7 @@ groups:
       chestshop.admin: true
       citizens.admin: true
       commandbook.give: true
-      commandbook.give.other: true
+      commandbook.give.other: false
       commandbook.give.infinite: true
       commandbook.give.stacks: true
       commandbook.give.stacks.unlimited: true
@@ -877,11 +878,11 @@ groups:
       commandbook.thunder: true
       commandbook.spawn: true
       commandbook.teleport: true
-      commandbook.teleport.other: true
+      commandbook.teleport.other: false
       commandbook.return: true
       commandbook.call: true
       commandbook.warp.teleport: true
-      commandbook.warp.teleport.other: true
+      commandbook.warp.teleport.other: false
       commandbook.warp.teleport.set: true
       commandbook.broadcast: true
       commandbook.say: true
@@ -891,7 +892,7 @@ groups:
       commandbook.whereami: true
       commandbook.whereami.compass: true
       commandbook.clear: true
-      commandbook.clear.other: true
+      commandbook.clear.other: false
       commandbook.slap: true
       commandbook.slap.other: true
       commandbook.rocket: true
@@ -1072,262 +1073,269 @@ groups:
       worldedit.butcher: true
       worldedit.remove: true
       worldedit.reload: true
+      commandbook.gamemode: true
+      commandbook.gamemode.change: true
+      commandbook.gamemode.change.other: false
+      commandbook.gamemode.check: true
+      commandbook.gamemode.check.other: true
     worlds:
       HardCoreCow:
-          bukkit.command.gamemode: false
-          cgm.change: false
-          cgm.change.other: false
-          cgm.change.disallow: false
-          chestshop.shop.buy: false
-          chestshop.shop.sell: false
-          chestshop.create: false
-          chestshop.nofee: false
-          chestshop.mod: false
-          chestshop.admin: false
-          citizens.admin: false
-          commandbook.give: false
-          commandbook.give.other: false
-          commandbook.give.infinite: false
-          commandbook.give.stacks: false
-          commandbook.give.stacks.unlimited: false
-          commandbook.items: false
-          commandbook.more: false
-          commandbook.more.infinite: false
-          commandbook.who: false
-          commandbook.motd: false
-          commandbook.intro: false
-          commandbook.midi: false
-          commandbook.rules: false
-          commandbook.kit.list: false
-          commandbook.kit.kits: false
-          commandbook.kit.kits.starter: false
-          commandbook.time.check: false
-          commandbook.time: false
-          commandbook.time.lock: false
-          commandbook.spawnmob.many: false
-          commandbook.spawnmob: false
-          commandbook.spawnmob.Chicken: false
-          commandbook.spawnmob.Cow: false
-          commandbook.spawnmob.Mooshroom: false
-          commandbook.spawnmob.Pig: false
-          commandbook.spawnmob.Sheep: false
-          commandbook.spawnmob.Squid: false
-          commandbook.spawnmob.Villager: false
-          commandbook.spawnmob.Enderman: false
-          commandbook.spawnmob.Wolf: false
-          commandbook.spawnmob.ZombiePigman: false
-          commandbook.spawnmob.Blaze: false
-          commandbook.spawnmob.CaveSpider: false
-          commandbook.spawnmob.Creeper: false
-          commandbook.spawnmob.Ghase: false
-          commandbook.spawnmob.MagmaCube: false
-          commandbook.spawnmob.Silverfish: false
-          commandbook.spawnmob.Skeleton: false
-          commandbook.spawnmob.Slime: false
-          commandbook.spawnmob.Spider: false
-          commandbook.spawnmob.SpiderJockey: false
-          commandbook.spawnmob.Zombie: false
-          commandbook.spawnmob.EnderDragon: false
-          commandbook.spawnmob.Giant: false
-          commandbook.weather: false
-          commandbook.thunder: false
-          commandbook.spawn: false
-          commandbook.teleport: false
-          commandbook.teleport.other: false
-          commandbook.return: false
-          commandbook.call: false
-          commandbook.warp.teleport: false
-          commandbook.warp.teleport.other: false
-          commandbook.warp.teleport.set: false
-          commandbook.broadcast: false
-          commandbook.say: false
-          commandbook.say.me: false
-          commandbook.msg: false
-          commandbook.reply: false
-          commandbook.whereami: false
-          commandbook.whereami.compass: false
-          commandbook.clear: false
-          commandbook.clear.other: false
-          commandbook.slap: false
-          commandbook.slap.other: false
-          commandbook.rocket: false
-          commandbook.rocket.other: false
-          commandbook.barrage: false
-          commandbook.barrage.other: false
-          commandbook.shock: false
-          commandbook.shock.other: false
-          commandbook.thor: false
-          commandbook.thor.other: false
-          commandbook.unthor: false
-          commandbook.unthor.other: false
-          commandbook.whois: false
-          commandbook.whois.other: false
-          discosheep.party.one: false
-          discosheep.party.many: false
-          discosheep.mob.sheep: false
-          discosheep.mob.creeper: false
-          discosheep.stop: false
-          discosheep.color: false
-          discosheep.reload: false
-          discosheep.help: false
-          lwc.protect: false
-          monsterbox.set: false
-          monsterbox.view: false
-          monsterbox.free: false
-          monsterbox.drops: false
-          monsterbox.place: false
-          monsterbox.spawn.*: false
-          monsterbox.spawn.SnowGolem: false
-          monsterbox.spawn.Chicken: false
-          monsterbox.spawn.Cow: false
-          monsterbox.spawn.Mooshroom: false
-          monsterbox.spawn.Pig: false
-          monsterbox.spawn.Sheep: false
-          monsterbox.spawn.Squid: false
-          monsterbox.spawn.Villager: false
-          monsterbox.spawn.Enderman: false
-          monsterbox.spawn.Wolf: false
-          monsterbox.spawn.ZombiePigman: false
-          monsterbox.spawn.Blaze: false
-          monsterbox.spawn.CaveSpider: false
-          monsterbox.spawn.Creeper: false
-          monsterbox.spawn.Ghase: false
-          monsterbox.spawn.MagmaCube: false
-          monsterbox.spawn.Silverfish: false
-          monsterbox.spawn.Skeleton: false
-          monsterbox.spawn.Slime: false
-          monsterbox.spawn.Spider: false
-          monsterbox.spawn.SpiderJockey: false
-          monsterbox.spawn.Zombie: false
-          monsterbox.spawn.EnderDragon: false
-          monsterbox.spawn.Giant: false
-          multiverse.help: false
-          multiverse.access.*: false
-          multiverse.exempt.*: false
-          multiverse.teleport.self.e: false
-          multiverse.teleport.other.e: false
-          multiverse.teleport.self.ow: false
-          multiverse.teleport.other.ow: false
-          multiverse.teleport.self.pl: false
-          multiverse.teleport.other.pl: false
-          multiverse.teleport.self.w: false
-          multiverse.teleport.other.w: false
-          multiverse.teleport.self.*: false
-          multiverse.teleport.other.*: false
-          multiverse.core.info: false
-          multiverse.core.list.worlds: false
-          multiverse.core.list.who: false
-          multiverse.core.list.environments: false
-          multiverse.core.coord: false
-          multiverse.core.create: false
-          multiverse.core.purge: false
-          multiverse.portal.access.*: false
-          multiverse.portal.list: false
-          multiverse.portal.select: false
-          multiverse.portal.givewand: false
-          multiverse.portal.info: false
-          multiverse.portal.create: false
-          multiverse.portal.remove: false
-          multiverse.portal.modify: false
-          multiverse.signportal.validate: false
-          multiverse.signportal.create: false
-          openwarp.warp.list: false
-          openwarp.warp.use: false
-          openwarp.warp.set: false
-          openwarp.warp.detail: false
-          openwarp.warp.delete: false
-          openwarp.warp.share: false
-          openwarp.warp.unshare: false
-          openwarp.home.use: false
-          openwarp.home.set: false
-          openwarp.jump: false
-          openwarp.top: false
-          openwarp.back: false
-          openwarp.warp.stack.push: false
-          openwarp.warp.stack.pop: false
-          openwarp.warp.stack.peek: false
-          openwarp.warp.stack.print: false
-          stopwhiners.giveback: false
-          stopwhiners.getback: false
-          worldedit.brush.sphere: false
-          worldedit.brush.cyinder: false
-          worldedit.brush.clipboard: false
-          worldedit.brush.smooth: false
-          worldedit.brush.ex: false
-          worldedit.brush.options.mask: false
-          worldedit.brush.options.material: false
-          worldedit.brush.options.size: false
-          worldedit.cunkinfo: false
-          worldedit.listchunks: false
-          worldedit.delchunks: false
-          worldedit.clipboard.copy: false
-          worldedit.clipboard.cut: false
-          worldedit.clipboard.paste: false
-          worldedit.clipboard.rotate: false
-          worldedit.clipboard.flip: false
-          worldedit.clipboard.load: false
-          worldedit.clipboard.save: false
-          worldedit.clipboard.clear: false
-          worldedit.drain: false
-          worldedit.fixwater: false
-          worldedit.limit: false
-          worldedit.generation.cylinder: false
-          worldedit.generation.sphere: false
-          worldedit.generation.forest: false
-          worldedit.generation.pumpkins: false
-          worldedit.history.undo: false
-          worldedit.history.redo: false
-          worldedit.history.clear: false
-          worldedit.navigation.unstuck: false
-          worldedit.navigation.ascend: false
-          worldedit.navigation.descend: false
-          worldedit.navigation.ceiling: false
-          worldedit.navigation.thru: false
-          worldedit.navigation.jumpto: false
-          worldedit.navigation.up: false
-          worldedit.region.set: false
-          worldedit.region.replace: false
-          worldedit.region.overlay: false
-          worldedit.region.faces: false
-          worldedit.region.smooth: false
-          worldedit.region.move: false
-          worldedit.region.stack: false
-          worldedit.regen: false
-          worldedit.scripting.execute: false
-          worldedit.selection.pos: false
-          worldedit.selection.hpos: false
-          worldedit.selection.chunk: false
-          worldedit.selection.expand: false
-          worldedit.selection.contract: false
-          worldedit.selection.shift: false
-          worldedit.selection.outset: false
-          worldedit.selection.inset: false
-          worldedit.selection.size: false
-          worldedit.wand: false
-          worldedit.wand.toggle: false
-          worldedit.analysis.count: false
-          worldedit.analysis.distr: false
-          worldedit.snapshot.list: false
-          worldedit.snapshot.restore: false
-          worldedit.superpickaxe: false
-          worldedit.superpickaxe.area: false
-          worldedit.superpickaxe.recursive: false
-          worldedit.tool.info: false
-          worldedit.tool.tree: false
-          worldedit.tool.replacer: false
-          worldedit.tool.data-cycler: false
-          worldedit.fill: false
-          worldedit.fill.recursive: false
-          worldedit.fixlava: false
-          worldedit.removeabove: false
-          worldedit.removebelow: false
-          worldedit.removenear: false
-          worldedit.snow: false
-          worldedit.thaw: false
-          worldedit.extinguish: false
-          worldedit.butcher: false
-          worldedit.remove: false
-          worldedit.reload: false
+        bukkit.command.gamemode: false
+        chestshop.shop.buy: false
+        chestshop.shop.sell: false
+        chestshop.create: false
+        chestshop.nofee: false
+        chestshop.mod: false
+        chestshop.admin: false
+        citizens.admin: false
+        commandbook.gamemode: true
+        commandbook.gamemode.change: false
+        commandbook.gamemode.change.other: false
+        commandbook.gamemode.check: true
+        commandbook.gamemode.check.other: true
+        commandbook.give: false
+        commandbook.give.other: false
+        commandbook.give.infinite: false
+        commandbook.give.stacks: false
+        commandbook.give.stacks.unlimited: false
+        commandbook.items: false
+        commandbook.more: false
+        commandbook.more.infinite: false
+        commandbook.who: false
+        commandbook.motd: false
+        commandbook.intro: false
+        commandbook.midi: false
+        commandbook.rules: false
+        commandbook.kit.list: false
+        commandbook.kit.kits: false
+        commandbook.kit.kits.starter: false
+        commandbook.time.check: false
+        commandbook.time: false
+        commandbook.time.lock: false
+        commandbook.spawnmob.many: false
+        commandbook.spawnmob: false
+        commandbook.spawnmob.Chicken: false
+        commandbook.spawnmob.Cow: false
+        commandbook.spawnmob.Mooshroom: false
+        commandbook.spawnmob.Pig: false
+        commandbook.spawnmob.Sheep: false
+        commandbook.spawnmob.Squid: false
+        commandbook.spawnmob.Villager: false
+        commandbook.spawnmob.Enderman: false
+        commandbook.spawnmob.Wolf: false
+        commandbook.spawnmob.ZombiePigman: false
+        commandbook.spawnmob.Blaze: false
+        commandbook.spawnmob.CaveSpider: false
+        commandbook.spawnmob.Creeper: false
+        commandbook.spawnmob.Ghase: false
+        commandbook.spawnmob.MagmaCube: false
+        commandbook.spawnmob.Silverfish: false
+        commandbook.spawnmob.Skeleton: false
+        commandbook.spawnmob.Slime: false
+        commandbook.spawnmob.Spider: false
+        commandbook.spawnmob.SpiderJockey: false
+        commandbook.spawnmob.Zombie: false
+        commandbook.spawnmob.EnderDragon: false
+        commandbook.spawnmob.Giant: false
+        commandbook.weather: false
+        commandbook.thunder: false
+        commandbook.spawn: false
+        commandbook.teleport: false
+        commandbook.teleport.other: false
+        commandbook.return: false
+        commandbook.call: false
+        commandbook.warp.teleport: false
+        commandbook.warp.teleport.other: false
+        commandbook.warp.teleport.set: false
+        commandbook.broadcast: false
+        commandbook.say: false
+        commandbook.say.me: false
+        commandbook.msg: false
+        commandbook.reply: false
+        commandbook.whereami: false
+        commandbook.whereami.compass: false
+        commandbook.clear: false
+        commandbook.clear.other: false
+        commandbook.slap: false
+        commandbook.slap.other: false
+        commandbook.rocket: false
+        commandbook.rocket.other: false
+        commandbook.barrage: false
+        commandbook.barrage.other: false
+        commandbook.shock: false
+        commandbook.shock.other: false
+        commandbook.thor: false
+        commandbook.thor.other: false
+        commandbook.unthor: false
+        commandbook.unthor.other: false
+        commandbook.whois: false
+        commandbook.whois.other: false
+        discosheep.party.one: false
+        discosheep.party.many: false
+        discosheep.mob.sheep: false
+        discosheep.mob.creeper: false
+        discosheep.stop: false
+        discosheep.color: false
+        discosheep.reload: false
+        discosheep.help: false
+        lwc.protect: false
+        monsterbox.set: false
+        monsterbox.view: false
+        monsterbox.free: false
+        monsterbox.drops: false
+        monsterbox.place: false
+        monsterbox.spawn.*: false
+        monsterbox.spawn.SnowGolem: false
+        monsterbox.spawn.Chicken: false
+        monsterbox.spawn.Cow: false
+        monsterbox.spawn.Mooshroom: false
+        monsterbox.spawn.Pig: false
+        monsterbox.spawn.Sheep: false
+        monsterbox.spawn.Squid: false
+        monsterbox.spawn.Villager: false
+        monsterbox.spawn.Enderman: false
+        monsterbox.spawn.Wolf: false
+        monsterbox.spawn.ZombiePigman: false
+        monsterbox.spawn.Blaze: false
+        monsterbox.spawn.CaveSpider: false
+        monsterbox.spawn.Creeper: false
+        monsterbox.spawn.Ghase: false
+        monsterbox.spawn.MagmaCube: false
+        monsterbox.spawn.Silverfish: false
+        monsterbox.spawn.Skeleton: false
+        monsterbox.spawn.Slime: false
+        monsterbox.spawn.Spider: false
+        monsterbox.spawn.SpiderJockey: false
+        monsterbox.spawn.Zombie: false
+        monsterbox.spawn.EnderDragon: false
+        monsterbox.spawn.Giant: false
+        multiverse.help: false
+        multiverse.access.*: false
+        multiverse.exempt.*: false
+        multiverse.teleport.self.e: false
+        multiverse.teleport.other.e: false
+        multiverse.teleport.self.ow: false
+        multiverse.teleport.other.ow: false
+        multiverse.teleport.self.pl: false
+        multiverse.teleport.other.pl: false
+        multiverse.teleport.self.w: false
+        multiverse.teleport.other.w: false
+        multiverse.teleport.self.*: false
+        multiverse.teleport.other.*: false
+        multiverse.core.info: false
+        multiverse.core.list.worlds: false
+        multiverse.core.list.who: false
+        multiverse.core.list.environments: false
+        multiverse.core.coord: false
+        multiverse.core.create: false
+        multiverse.core.purge: false
+        multiverse.portal.access.*: false
+        multiverse.portal.list: false
+        multiverse.portal.select: false
+        multiverse.portal.givewand: false
+        multiverse.portal.info: false
+        multiverse.portal.create: false
+        multiverse.portal.remove: false
+        multiverse.portal.modify: false
+        multiverse.signportal.validate: false
+        multiverse.signportal.create: false
+        openwarp.warp.list: false
+        openwarp.warp.use: false
+        openwarp.warp.set: false
+        openwarp.warp.detail: false
+        openwarp.warp.delete: false
+        openwarp.warp.share: false
+        openwarp.warp.unshare: false
+        openwarp.home.use: false
+        openwarp.home.set: false
+        openwarp.jump: false
+        openwarp.top: false
+        openwarp.back: false
+        openwarp.warp.stack.push: false
+        openwarp.warp.stack.pop: false
+        openwarp.warp.stack.peek: false
+        openwarp.warp.stack.print: false
+        stopwhiners.giveback: false
+        stopwhiners.getback: false
+        worldedit.brush.sphere: false
+        worldedit.brush.cyinder: false
+        worldedit.brush.clipboard: false
+        worldedit.brush.smooth: false
+        worldedit.brush.ex: false
+        worldedit.brush.options.mask: false
+        worldedit.brush.options.material: false
+        worldedit.brush.options.size: false
+        worldedit.cunkinfo: false
+        worldedit.listchunks: false
+        worldedit.delchunks: false
+        worldedit.clipboard.copy: false
+        worldedit.clipboard.cut: false
+        worldedit.clipboard.paste: false
+        worldedit.clipboard.rotate: false
+        worldedit.clipboard.flip: false
+        worldedit.clipboard.load: false
+        worldedit.clipboard.save: false
+        worldedit.clipboard.clear: false
+        worldedit.drain: false
+        worldedit.fixwater: false
+        worldedit.limit: false
+        worldedit.generation.cylinder: false
+        worldedit.generation.sphere: false
+        worldedit.generation.forest: false
+        worldedit.generation.pumpkins: false
+        worldedit.history.undo: false
+        worldedit.history.redo: false
+        worldedit.history.clear: false
+        worldedit.navigation.unstuck: false
+        worldedit.navigation.ascend: false
+        worldedit.navigation.descend: false
+        worldedit.navigation.ceiling: false
+        worldedit.navigation.thru: false
+        worldedit.navigation.jumpto: false
+        worldedit.navigation.up: false
+        worldedit.region.set: false
+        worldedit.region.replace: false
+        worldedit.region.overlay: false
+        worldedit.region.faces: false
+        worldedit.region.smooth: false
+        worldedit.region.move: false
+        worldedit.region.stack: false
+        worldedit.regen: false
+        worldedit.scripting.execute: false
+        worldedit.selection.pos: false
+        worldedit.selection.hpos: false
+        worldedit.selection.chunk: false
+        worldedit.selection.expand: false
+        worldedit.selection.contract: false
+        worldedit.selection.shift: false
+        worldedit.selection.outset: false
+        worldedit.selection.inset: false
+        worldedit.selection.size: false
+        worldedit.wand: false
+        worldedit.wand.toggle: false
+        worldedit.analysis.count: false
+        worldedit.analysis.distr: false
+        worldedit.snapshot.list: false
+        worldedit.snapshot.restore: false
+        worldedit.superpickaxe: false
+        worldedit.superpickaxe.area: false
+        worldedit.superpickaxe.recursive: false
+        worldedit.tool.info: false
+        worldedit.tool.tree: false
+        worldedit.tool.replacer: false
+        worldedit.tool.data-cycler: false
+        worldedit.fill: false
+        worldedit.fill.recursive: false
+        worldedit.fixlava: false
+        worldedit.removeabove: false
+        worldedit.removebelow: false
+        worldedit.removenear: false
+        worldedit.snow: false
+        worldedit.thaw: false
+        worldedit.extinguish: false
+        worldedit.butcher: false
+        worldedit.remove: false
+        worldedit.reload: false
   Creator:
     default: false
     inheritance:
@@ -1335,6 +1343,8 @@ groups:
     permissions:
       simpleprefix.blockgod: false
       simpleprefix.creator: true
+      cownet.hardcore.revive: true
+      cownet.hardcore.regen: true
       commandbook.override.any-item: true
       commandbook.kick: true
       commandbook.bans.ban: true
@@ -1353,16 +1363,16 @@ groups:
       permissions.*: true
     worlds:
       HardCoreCow:
-          commandbook.override.any-item: false
-          creeperheal.*: false
-          lwc.mod: false
-          lwc.admin: false
-          lwc.deny: false
-          multiverse.core.spawn.set: false
-          multiverse.core.spawn.self: false
-          multiverse.core.spawn.other: false
-          multiverse.core.confirm: false
-          permissions.*: false
+        commandbook.override.any-item: false
+        creeperheal.*: false
+        lwc.mod: false
+        lwc.admin: false
+        lwc.deny: false
+        multiverse.core.spawn.set: false
+        multiverse.core.spawn.self: false
+        multiverse.core.spawn.other: false
+        multiverse.core.confirm: false
+        permissions.*: false
   Singularity:
     default: op
     inheritance:
@@ -1511,6 +1521,7 @@ groups:
       commandbook.bans.isbanned: true
       commandbook.bans.load: true
       commandbook.bans.save: true
+      cownet.hardcore.keepop: true
       creeperheal.admin: true
       creeperheal.heal: true
       creeperheal.trap.create: true
@@ -1868,7 +1879,7 @@ users:
     - engineer
   fr0tz:
     groups:
-    - architect
+    - blockgod
   loldwu6:
     groups:
     - newbuilder

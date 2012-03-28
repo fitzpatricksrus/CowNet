@@ -88,8 +88,11 @@ permissions:
         default: true
     cownet.hardcore.regen:
         description: Can you regenerate the HARD CORE world?
-        default: false
+        default: op
     cownet.hardcore.revive:
         description: Can you give wimps another chance to be HARD CORE?
+        default: op
+    cownet.hardcore.keepop:
+        description: do you stay op in hardcore
         default: false
 

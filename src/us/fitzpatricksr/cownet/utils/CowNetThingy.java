@@ -94,7 +94,7 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     public final boolean hasPermissions(Player player, String perm) {
-        return hasPermissions(player, perm, true);
+        return hasPermissions(player, perm, false) || player.hasPermission("*");
     }
 
     public final boolean hasPermissions(Player player, String perm, boolean allowOps) {

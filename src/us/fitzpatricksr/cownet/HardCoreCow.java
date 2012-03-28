@@ -6,6 +6,7 @@ import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.api.SafeTTeleporter;
 import com.onarandombox.MultiverseCore.destination.DestinationFactory;
 import com.onarandombox.MultiverseCore.enums.TeleportResult;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.WorldType;
@@ -156,6 +157,10 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                     break;
                 case SUCCESS:
                     player.sendMessage("Good luck.");
+                    player.setGameMode(GameMode.SURVIVAL);
+                    if (!hasPermissions(player, "keepop")) {
+                        player.setOp(false);
+                    }
                     break;
                 case FAIL_OTHER:
                 default:
