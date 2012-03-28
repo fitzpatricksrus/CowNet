@@ -6,6 +6,7 @@ import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.api.SafeTTeleporter;
 import com.onarandombox.MultiverseCore.destination.DestinationFactory;
 import com.onarandombox.MultiverseCore.enums.TeleportResult;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.WorldType;
 import org.bukkit.command.Command;
@@ -33,7 +34,10 @@ import java.util.*;
 public class HardCoreCow extends CowNetThingy implements Listener {
     private HardCoreState config;
     private String worldName = "HardCoreCow";
+    private int safeDistance = 5;
     private MultiverseCore mvPlugin;
+
+    private boolean regenIsAlreadyScheduled = false;
 
     public HardCoreCow(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
@@ -49,6 +53,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         if (mvPlugin != null) mvPlugin.decrementPluginCount();
         try {
             worldName = getConfigString("worldname", worldName);
+            safeDistance = getConfigInt("safedistance", safeDistance);
             config = new HardCoreState(getPlugin(), getTrigger() + ".yml");
             config.loadConfig();
             mvPlugin = (MultiverseCore) getPlugin().getServer().getPluginManager().getPlugin("Multiverse-Core");
@@ -106,40 +111,57 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             return true;
         }
         if (player.getWorld().getName().equalsIgnoreCase(worldName)) {
-            player.sendMessage("You are already HARD CORE.");
-            return true;
-        }
-        MVWorldManager mgr = mvPlugin.getMVWorldManager();
-        if (!mgr.isMVWorld(worldName) && !generateNewWorld()) {
-            return true;
-        }
-        if (config.playerIsDead(player.getName())) {
-            player.sendMessage("You're dead, so you will roam the world as a ghost.");
-        }
-        SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
-        DestinationFactory destFactory = mvPlugin.getDestFactory();
-        MVDestination destination = destFactory.getDestination(worldName);
-        TeleportResult result = teleporter.safelyTeleport(player, player, destination);
-        switch (result) {
-            case FAIL_PERMISSION:
-                player.sendMessage("You don't have permissions to go to " + worldName);
-                break;
-            case FAIL_UNSAFE:
-                player.sendMessage("Can't find a safe spawn location for you.");
-                break;
-            case FAIL_TOO_POOR:
-                player.sendMessage("You don't have enough money.");
-                break;
-            case FAIL_INVALID:
-                player.sendMessage(worldName + " is temporarily out of service.");
-                break;
-            case SUCCESS:
-                player.sendMessage("Good luck.");
-                break;
-            case FAIL_OTHER:
-            default:
-                player.sendMessage("Something went wrong.  Something.  Stuff.");
-                break;
+            //Player is on HARD CORE world aleady.
+            //if they are close to spawn we will rescue them
+            World world = player.getWorld();
+            Location spawn = world.getSpawnLocation();
+            Location loc = player.getLocation();
+            double diff = spawn.distance(loc);
+            if ((diff > safeDistance) && config.playerIsLive(player)) {
+                player.sendMessage("You need to make a HARD CORE effort to get closer to the spawn point.");
+            } else {
+                for (World w : mvPlugin.getServer().getWorlds()) {
+                    if (!w.getName().equalsIgnoreCase(worldName)) {
+                        SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
+                        teleporter.safelyTeleport(null, player, w.getSpawnLocation(), true);
+                        break;
+                    }
+                }
+            }
+        } else {
+            // player is in some other world and wants to go HARD CORE
+            MVWorldManager mgr = mvPlugin.getMVWorldManager();
+            if (!mgr.isMVWorld(worldName) && !generateNewWorld()) {
+                return true;
+            }
+            if (config.playerIsDead(player.getName())) {
+                player.sendMessage("You're dead, so you will roam the world as a ghost.");
+            }
+            SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
+            DestinationFactory destFactory = mvPlugin.getDestFactory();
+            MVDestination destination = destFactory.getDestination(worldName);
+            TeleportResult result = teleporter.safelyTeleport(player, player, destination);
+            switch (result) {
+                case FAIL_PERMISSION:
+                    player.sendMessage("You don't have permissions to go to " + worldName);
+                    break;
+                case FAIL_UNSAFE:
+                    player.sendMessage("Can't find a safe spawn location for you.");
+                    break;
+                case FAIL_TOO_POOR:
+                    player.sendMessage("You don't have enough money.");
+                    break;
+                case FAIL_INVALID:
+                    player.sendMessage(worldName + " is temporarily out of service.");
+                    break;
+                case SUCCESS:
+                    player.sendMessage("Good luck.");
+                    break;
+                case FAIL_OTHER:
+                default:
+                    player.sendMessage("Something went wrong.  Something.  Stuff.");
+                    break;
+            }
         }
         return true;
     }
@@ -175,30 +197,38 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     private boolean generateNewWorld() {
-        MVWorldManager mgr = mvPlugin.getMVWorldManager();
-        if (mgr.isMVWorld(worldName)) {
-            if (!mgr.deleteWorld(worldName)) {
-                logInfo("Agh!  Can't regen " + worldName);
+        if (regenIsAlreadyScheduled) return true;
+        try {
+            regenIsAlreadyScheduled = true;
+            MVWorldManager mgr = mvPlugin.getMVWorldManager();
+            if (mgr.isMVWorld(worldName)) {
+                mgr.removePlayersFromWorld(worldName);
+                if (!mgr.deleteWorld(worldName)) {
+                    logInfo("Agh!  Can't regen " + worldName);
+                    return false;
+                }
+            }
+            //TODO hey jf - can we create this world in another thread?
+            if (mgr.addWorld(worldName,
+                    World.Environment.NORMAL,
+                    "" + (new Random().nextLong()),
+                    WorldType.NORMAL,
+                    true,
+                    null,
+                    true)) {
+                try {
+                    config.resetWorldState();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                logInfo(worldName + " has been regenerated.");
+                return true;
+            } else {
+                logInfo("Oh No's! " + worldName + " don wurk.");
                 return false;
             }
-        }
-        if (mgr.addWorld(worldName,
-                World.Environment.NORMAL,
-                "" + (new Random().nextLong()),
-                WorldType.NORMAL,
-                true,
-                null,
-                true)) {
-            try {
-                config.resetWorldState();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            logInfo(worldName + " has been regenerated.");
-            return true;
-        } else {
-            logInfo("Oh No's! " + worldName + " don wurk.");
-            return false;
+        } finally {
+            regenIsAlreadyScheduled = false;
         }
     }
 
@@ -269,6 +299,15 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         public boolean playerIsDead(String player) {
             player = player.toLowerCase();
             return deadPlayers.contains(player);
+        }
+
+        public boolean playerIsLive(Player player) {
+            return playerIsLive(player.getName());
+        }
+
+        public boolean playerIsLive(String player) {
+            player = player.toLowerCase();
+            return livePlayers.contains(player);
         }
 
         public Set<String> getLivePlayers() {
@@ -350,6 +389,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             return;
         }
         if (config.playerIsDead(event.getPlayer())) {
+            logInfo("Ghost event");
             event.setCancelled(true);
         } else {
             config.markPlayerLive(event.getPlayer());
@@ -361,6 +401,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         if (event.isCancelled()) return;
         if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) return;
         if (config.playerIsDead(event.getPlayer())) {
+            logInfo("Ghost event");
             event.setCancelled(true);
         } else {
             config.markPlayerLive(event.getPlayer());
@@ -372,6 +413,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         if (event.isCancelled()) return;
         if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) return;
         if (config.playerIsDead(event.getPlayer())) {
+            logInfo("Ghost event");
             event.setCancelled(true);
         } else {
             config.markPlayerLive(event.getPlayer());
@@ -389,12 +431,16 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
+        if (regenIsAlreadyScheduled) return;
         if (config.getDeadPlayers().size() > 0 && config.getLivePlayers().size() == 0) {
-            logInfo("Everyone's dead.  Generating a new world.   Please wait...");
-            if (generateNewWorld()) {
-                getPlugin().getServer().broadcastMessage("Seems " + worldName + " was too HARD CORE.  " +
-                        "It's been regenerated to be a bit more fluffy for you softies.");
-            }
+            logInfo("Everyone's dead.  This world was too HARD CORE.  Generating a new world in 2 seconds.  Please wait...");
+            getPlugin().getServer().getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
+                public void run() {
+                    generateNewWorld();
+                    getPlugin().getServer().broadcastMessage("Seems like " + worldName + " was too HARD CORE.  " +
+                            "It's been regenerated to be a bit more fluffy for you softies.");
+                }// end of run
+            }, 40);
         }
     }
 

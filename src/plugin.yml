@@ -1,6 +1,6 @@
 name: CowNetPlugin
 main: us.fitzpatricksr.cownet.CowNetMod
-version: 1.0.0
+version: 1.0.1
 load: startup
 commands:
   starve:
@@ -31,6 +31,7 @@ commands:
       description: Yeah.  It's about trees
       usage: Use "/timber help"
   hardcore:
+      aliases: [ hc ]
       description: Go to the Hard Core world.
       usage: Use "/hardcore help"
 permissions:

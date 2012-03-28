@@ -53,3 +53,4 @@ rank:
 hardcore:
   enable: true
   worldname: HardCoreCow
+  safedistance: 5
