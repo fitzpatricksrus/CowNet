@@ -6,10 +6,7 @@ import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.api.SafeTTeleporter;
 import com.onarandombox.MultiverseCore.destination.DestinationFactory;
 import com.onarandombox.MultiverseCore.enums.TeleportResult;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.WorldType;
+import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.entity.Player;
@@ -38,6 +35,9 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     private String worldName = "HardCoreCow";
     private int safeDistance = 5;
     private MultiverseCore mvPlugin;
+    private int timeOut = 3 * 24 * 60;  //default time before you are removed from game in minutes.
+    private Difficulty difficulty = Difficulty.HARD;
+    private double monsterBoost = 1.0d;
 
     private boolean regenIsAlreadyScheduled = false;
 
@@ -56,6 +56,9 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         try {
             worldName = getConfigString("worldname", worldName);
             safeDistance = getConfigInt("safedistance", safeDistance);
+            timeOut = getConfigInt("timeout", timeOut);
+            difficulty = Difficulty.valueOf(getConfigString("dificulty", difficulty.toString()));
+            monsterBoost = Double.valueOf(getConfigString("monsterBoost", Double.toString(monsterBoost)));
             config = new HardCoreState(getPlugin(), getTrigger() + ".yml");
             config.loadConfig();
             mvPlugin = (MultiverseCore) getPlugin().getServer().getPluginManager().getPlugin("Multiverse-Core");
@@ -77,7 +80,16 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     @Override
     protected String getHelpString(Player player) {
-        return "usage: hardcore (go | info | revive <player> | regen)";
+        return "usage: hardcore (go | info | revive <player> | regen)\n" +
+                "HardCore is played with no mods.  You're on your own.\n" +
+                "Type /HardCore (or /hc) to enter and exit HardCore world.\n" +
+                "The leave, you must be close to the spawn point.\n" +
+                "You're officially in the game once you interact with something.\n" +
+                "Until then you are an observer.  After you die,\n" +
+                "you can come back and observe, but not change things\n" +
+                "Last person dies, the world regens.  If you don't\n" +
+                "play for " + timeOut + " days, you're removed from the game\n" +
+                "and you can re-enter if you previously died.";
     }
 
     @Override
@@ -122,13 +134,9 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             if ((diff > safeDistance) && config.playerIsLive(player)) {
                 player.sendMessage("You need to make a HARD CORE effort to get closer to the spawn point.");
             } else {
-                for (World w : mvPlugin.getServer().getWorlds()) {
-                    if (!w.getName().equalsIgnoreCase(worldName)) {
-                        SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
-                        teleporter.safelyTeleport(null, player, w.getSpawnLocation(), true);
-                        break;
-                    }
-                }
+                World exitPlace = mvPlugin.getMVWorldManager().getSpawnWorld().getCBWorld();
+                SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
+                teleporter.safelyTeleport(null, player, exitPlace.getSpawnLocation(), true);
             }
         } else {
             // player is in some other world and wants to go HARD CORE
@@ -227,6 +235,9 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                World w = mgr.getMVWorld(worldName).getCBWorld();
+                w.setDifficulty(difficulty);
+                w.setTicksPerMonsterSpawns((int) (w.getTicksPerMonsterSpawns() * monsterBoost) + 1);
                 logInfo(worldName + " has been regenerated.");
                 return true;
             } else {

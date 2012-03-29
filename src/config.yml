@@ -54,3 +54,6 @@ hardcore:
   enable: true
   worldname: HardCoreCow
   safedistance: 5
+  timeout: 4320
+  difficulty: HARD
+  monsterBoost: 1.0
