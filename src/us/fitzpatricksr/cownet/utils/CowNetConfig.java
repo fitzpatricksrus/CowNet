@@ -8,6 +8,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CowNetConfig extends YamlConfiguration {
     private JavaPlugin plugin;
@@ -45,5 +48,40 @@ public class CowNetConfig extends YamlConfiguration {
             file.createNewFile();
         }
         return file;
+    }
+
+    /*
+        Utility routines for saving state.
+     */
+
+    public static void deserialize(Object dest, Map<String, Object> map) {
+        Class<?> c = dest.getClass();
+        for (Field f : c.getFields()) {
+            String key = f.getName();
+            Object value = map.get(key);
+            if (value != null) {
+                try {
+                    f.set(dest, value);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+            }
+        }
+    }
+
+    public static Map<String, Object> serialize(Object source) {
+        HashMap<String, Object> result = new HashMap<String, Object>();
+        Class<?> c = source.getClass();
+        for (Field f : c.getFields()) {
+            String key = f.getName();
+            Object value = null;
+            try {
+                value = f.get(source);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            result.put(key, value);
+        }
+        return result;
     }
 }

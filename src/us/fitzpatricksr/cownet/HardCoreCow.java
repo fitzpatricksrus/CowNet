@@ -9,6 +9,10 @@ import com.onarandombox.MultiverseCore.enums.TeleportResult;
 import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.MemorySection;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.configuration.serialization.SerializableAs;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -16,14 +20,15 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetConfig;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
-import us.fitzpatricksr.cownet.utils.StringUtils;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -31,6 +36,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class HardCoreCow extends CowNetThingy implements Listener {
+    private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private HardCoreState config;
     private String worldName = "HardCoreCow";
     private int safeDistance = 5;
@@ -38,7 +44,6 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     private int timeOut = 3 * 24 * 60;  //default time before you are removed from game in minutes.
     private Difficulty difficulty = Difficulty.HARD;
     private double monsterBoost = 1.0d;
-
     private boolean regenIsAlreadyScheduled = false;
 
     public HardCoreCow(JavaPlugin plugin, String permissionRoot, String trigger) {
@@ -73,22 +78,34 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             e.printStackTrace();
             disable();
         } catch (InvalidConfigurationException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
             disable();
+        }
+    }
+
+    @EventHandler
+    protected void handlePluginDisabled(PluginDisableEvent event) {
+        if (event.getPlugin() == getPlugin()) {
+            mvPlugin.decrementPluginCount();
+            try {
+                config.saveConfig();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     @Override
     protected String getHelpString(Player player) {
-        return "usage: hardcore (go | info | revive <player> | regen)\n" +
-                "HardCore is played with no mods.  You're on your own.\n" +
-                "Type /HardCore (or /hc) to enter and exit HardCore world.\n" +
-                "The leave, you must be close to the spawn point.\n" +
-                "You're officially in the game once you interact with something.\n" +
-                "Until then you are an observer.  After you die,\n" +
-                "you can come back and observe, but not change things\n" +
-                "Last person dies, the world regens.  If you don't\n" +
-                "play for " + timeOut + " days, you're removed from the game\n" +
+        return "usage: hardcore (go | info | revive <player> | regen)  " +
+                "HardCore is played with no mods.  You're on your own.  " +
+                "Type /HardCore (or /hc) to enter and exit HardCore world.  " +
+                "The leave, you must be close to the spawn point.  " +
+                "You're officially in the game once you interact with something.  " +
+                "Until then you are an observer.  After you die,  " +
+                "you can come back and observe, but not change things.  You're a ghost.  " +
+                "Last person dies, the world regens.  If you don't " +
+                "play for " + timeOut + " minutes, you're removed from the game " +
                 "and you can re-enter if you previously died.";
     }
 
@@ -131,7 +148,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             Location spawn = world.getSpawnLocation();
             Location loc = player.getLocation();
             double diff = spawn.distance(loc);
-            if ((diff > safeDistance) && config.playerIsLive(player)) {
+            if ((diff > safeDistance) && config.playerIsLive(player) && !hasPermissions(player, "canalwaysescape")) {
                 player.sendMessage("You need to make a HARD CORE effort to get closer to the spawn point.");
             } else {
                 World exitPlace = mvPlugin.getMVWorldManager().getSpawnWorld().getCBWorld();
@@ -166,10 +183,6 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                     break;
                 case SUCCESS:
                     player.sendMessage("Good luck.");
-                    player.setGameMode(GameMode.SURVIVAL);
-                    if (!hasPermissions(player, "keepop")) {
-                        player.setOp(false);
-                    }
                     break;
                 case FAIL_OTHER:
                 default:
@@ -192,8 +205,14 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
         player.sendMessage("  World: " + worldName);
         player.sendMessage("  Created: " + config.getCreationDate());
-        player.sendMessage("  Dead players: " + StringUtils.flatten(config.getDeadPlayers()));
-        player.sendMessage("  Live players: " + StringUtils.flatten(config.getLivePlayers()));
+        player.sendMessage("  Dead players: ");
+        for (String p : config.getDeadPlayers()) {
+            player.sendMessage("    " + p + "  -  " + dateFormat.format(new Date(config.getPlayerLastActiveTime(p))));
+        }
+        player.sendMessage("  Live players: ");
+        for (String p : config.getLivePlayers()) {
+            player.sendMessage("    " + p + "  -  " + dateFormat.format(new Date(config.getPlayerLastActiveTime(p))));
+        }
         return true;
     }
 
@@ -254,17 +273,38 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             player.sendMessage("Sorry, you're not HARD CORE enough.");
         } else if (!config.playerIsDead(arg)) {
             player.sendMessage(arg + " is still going at it HARD CORE and isn't dead.");
-        } else if (config.markPlayerLive(arg)) {
-            player.sendMessage("We'll give " + arg + " a second chance to be HARD CORE.");
         } else {
-            player.sendMessage(arg + " just isn't HARD CORE enough to be given another chance right now.");
+            config.markPlayerLive(arg);
         }
         return true;
     }
 
-    // --- Stop Ghosts from doing things
+    @EventHandler
+    public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
+        // set up the proper player settings for HARD CORE
+        Player player = event.getPlayer();
+        if (event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) {
+            // teleported to hardcore
+            if (!hasPermissions(player, "keepop")) {
+                player.setOp(false);
+                player.setAllowFlight(false);
+                player.setGameMode(GameMode.SURVIVAL);
+                //hey jf - this is where you want to disable zombe mod
+            }
+        } else if (event.getFrom().getName().equalsIgnoreCase(worldName)) {
+            // teleported from hardcore
+            player.setAllowFlight(true);
+            if (hasPermissions(player, "keepop")) {
+                player.setOp(true);
+            } else {
+                player.setOp(false);
+            }
+        }
+    }
+
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
+        // --- Stop Ghosts from doing things
         if (event.isCancelled()) return;
         if (!event.getPlayer().getWorld().getName().equalsIgnoreCase(worldName)) return;
         if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_AIR) {
@@ -339,7 +379,6 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     //
     // Persistent state methods (ex. live vs. dead)
     //
-    private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /*
        Configuration looks like this:
@@ -348,8 +387,9 @@ public class HardCoreCow extends CowNetThingy implements Listener {
        hardcorecow.deadplayers: player1,player2,player3
     */
     private class HardCoreState extends CowNetConfig {
-        private HashSet<String> livePlayers = new HashSet<String>();
-        private HashSet<String> deadPlayers = new HashSet<String>();
+        private HashMap<String, PlayerState> livePlayers = new HashMap<String, PlayerState>();
+        private HashMap<String, PlayerState> deadPlayers = new HashMap<String, PlayerState>();
+        private Map<String, PlayerState> allPlayers = new HashMap<String, PlayerState>();
         private String creationDate = "unknown";
 
         //TODO hey jf - it would be nice if live players expired after a while so they
@@ -363,21 +403,33 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             super.loadConfig();
             creationDate = getString("creationdate", creationDate);
 
-            String liveString = getString("liveplayers", "");
+            allPlayers.clear();
             livePlayers.clear();
-            livePlayers.addAll(Arrays.asList(StringUtils.unflatten(liveString)));
-
-            String deadString = getString("deadplayers", "");
             deadPlayers.clear();
-            deadPlayers.addAll(Arrays.asList(StringUtils.unflatten(deadString)));
 
-            debug("Restored:");
+            Object lp = get("players");
+            System.err.println(lp.getClass());
+            if (get("players") instanceof MemorySection) {
+                MemorySection section = (MemorySection) get("players");
+                for (String key : section.getKeys(false)) {
+                    PlayerState ps = (PlayerState) section.get(key);
+                    allPlayers.put(key, ps);
+                    if (ps.isLive) {
+                        livePlayers.put(ps.name, ps);
+                        System.err.println("live: " + ps.name);
+                    } else {
+                        deadPlayers.put(ps.name, ps);
+                        System.err.println("dead: " + ps.name);
+                    }
+                }
+            }
         }
 
         public void saveConfig() throws IOException {
+            System.err.println("saveConfig()");
             set("creationdate", creationDate);
-            set("liveplayers", StringUtils.flatten(livePlayers));
-            set("deadplayers", StringUtils.flatten(deadPlayers));
+            set("players", allPlayers);
+            System.err.println(get("players"));
             super.saveConfig();
             debug("Saving...");
         }
@@ -388,7 +440,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
         public boolean playerIsDead(String player) {
             player = player.toLowerCase();
-            return deadPlayers.contains(player);
+            return deadPlayers.get(player) != null;
         }
 
         public boolean playerIsLive(Player player) {
@@ -397,54 +449,68 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
         public boolean playerIsLive(String player) {
             player = player.toLowerCase();
-            return livePlayers.contains(player);
+            return livePlayers.get(player) != null;
         }
 
         public Set<String> getLivePlayers() {
-            return livePlayers;
+            return livePlayers.keySet();
         }
 
         public Set<String> getDeadPlayers() {
-            return deadPlayers;
+            return deadPlayers.keySet();
         }
 
-        public boolean markPlayerDead(Player p) {
-            return markPlayerDead(p.getName());
-        }
-
-        public boolean markPlayerDead(String p) {
-            p = p.toLowerCase();
-            if (deadPlayers.contains(p)) return true;
-            deadPlayers.add(p);
-            livePlayers.remove(p);
-            try {
-                saveConfig();
-                return true;
-            } catch (IOException e) {
-                e.printStackTrace();
-                deadPlayers.remove(p);
-                livePlayers.add(p);
-                return false;
+        public long getPlayerLastActiveTime(String player) {
+            PlayerState ps = allPlayers.get(player);
+            if (ps == null) {
+                return 0;
+            } else {
+                return ps.lastHardCore;
             }
         }
 
-        public boolean markPlayerLive(Player p) {
-            return markPlayerLive(p.getName());
+        public void markPlayerDead(Player p) {
+            markPlayerDead(p.getName());
         }
 
-        private boolean markPlayerLive(String p) {
+        public void markPlayerDead(String p) {
             p = p.toLowerCase();
-            if (livePlayers.contains(p)) return true;
-            deadPlayers.remove(p);
-            livePlayers.add(p);
+            if (deadPlayers.keySet().contains(p)) return;
+            PlayerState state = livePlayers.get(p);
+            state.setIsLive(false);
+            deadPlayers.put(p, state);
+            livePlayers.remove(p);
             try {
                 saveConfig();
-                return true;
             } catch (IOException e) {
                 e.printStackTrace();
-                deadPlayers.add(p);
-                livePlayers.remove(p);
-                return false;
+                // OK, we didn't save it.  No biggie.
+            }
+        }
+
+        public void markPlayerLive(Player p) {
+            markPlayerLive(p.getName());
+        }
+
+        private void markPlayerLive(String p) {
+            p = p.toLowerCase();
+            PlayerState state = allPlayers.get(p);
+            if (state == null) {
+                state = new PlayerState(p);
+                allPlayers.put(p, state);
+                livePlayers.put(p, state);
+            } else {
+                state.setIsLive(true);
+                if (!state.isLive) {
+                    deadPlayers.remove(p);
+                    livePlayers.put(p, state);
+                    try {
+                        saveConfig();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        // we didn't save, but whatever
+                    }
+                }
             }
         }
 
@@ -456,7 +522,6 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             livePlayers.clear();
             deadPlayers.clear();
             creationDate = dateFormat.format(new Date());
-            //worldName = worldName;
             saveConfig();
         }
 
@@ -464,9 +529,74 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             logInfo(msg);
             logInfo("  World: " + worldName);
             logInfo("  Created: " + creationDate);
-            logInfo("  Dead players: " + StringUtils.flatten(deadPlayers));
-            logInfo("  Live players: " + StringUtils.flatten(livePlayers));
+            logInfo("  Players: ");
+            for (String name : allPlayers.keySet()) {
+                PlayerState ps = allPlayers.get(name);
+                logInfo("    " + ps.toString());
+            }
         }
+    }
+
+    {
+        ConfigurationSerialization.registerClass(PlayerState.class);
+    }
+
+    @SerializableAs("PlayerState")
+    public static class PlayerState implements ConfigurationSerializable {
+        public String name;
+        public long lastHardCore;
+        public boolean isLive;
+
+        public void setIsLive(boolean live) {
+            isLive = live;
+            lastHardCore = new Date().getTime();
+        }
+
+        public PlayerState(String name) {
+            this.name = name;
+            this.lastHardCore = new Date().getTime();
+            this.isLive = true;
+        }
+
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append(name);
+            builder.append("  ");
+            builder.append((isLive) ? "live  " : "dead  ");
+            builder.append(dateFormat.format(new Date(lastHardCore)));
+            return builder.toString();
+        }
+
+        // --- serialize/deserialize support
+        public static PlayerState deserialize(Map<String, Object> args) {
+            return new PlayerState(args);
+        }
+
+        public static PlayerState valueOf(Map<String, Object> map) {
+            return new PlayerState(map);
+        }
+
+        public PlayerState(Map<String, Object> map) {
+            CowNetConfig.deserialize(this, map);
+        }
+
+        @Override
+        public Map<String, Object> serialize() {
+            return CowNetConfig.serialize(this);
+        }
+    }
+
+    // --- Hachky test
+    public static void main(String[] args) {
+        PlayerState test = new PlayerState("Player1");
+        Map<String, Object> map = test.serialize();
+        for (String key : map.keySet()) {
+            System.out.println(key);
+            System.out.println("  " + map.get(key));
+        }
+        test = new PlayerState(map);
+        System.out.println(test);
+
     }
 }
 
