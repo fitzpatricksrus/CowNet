@@ -80,9 +80,6 @@ permissions:
     cownet.hardcore:
         description: If true, allows access to the HardCore command
         default: true
-    cownet.hardcore.go:
-        description: Are you HARD CORE enough?
-        default: true
     cownet.hardcore.info:
         description: Do you know HARD CORE when you see it?
         default: true

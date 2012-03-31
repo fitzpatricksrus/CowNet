@@ -28,7 +28,6 @@ public class Hide extends CowNetThingy implements Listener {
     //chat
     //interactions
 
-    private static final boolean DEBUG = true;
     private Map<String, Player> invisiblePlayers = new HashMap<String, Player>();
     private Random rand = new Random();
 
@@ -110,7 +109,7 @@ public class Hide extends CowNetThingy implements Listener {
             event.setCancelled(true);
             debugInfo("Canceled target.");
         } else {
-            if (DEBUG) {
+            if (isDebug()) {
                 if (!(event.getTarget() instanceof Player)) {
                     debugInfo("Didn't cancel TARGET - not a player: " + event.getTarget().getClass().getName());
                 } else {
@@ -267,9 +266,4 @@ public class Hide extends CowNetThingy implements Listener {
         getPlugin().getServer().broadcastMessage(ChatColor.YELLOW + player.getName() + " left the game.");
         hidePlayer(player, false);
     }
-
-    private void debugInfo(String msg) {
-        if (DEBUG) logInfo(msg);
-    }
 }
-

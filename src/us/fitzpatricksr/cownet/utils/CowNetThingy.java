@@ -15,6 +15,7 @@ public class CowNetThingy implements CommandExecutor {
     private String trigger;
     private String permissionNode;
     private boolean isEnabled;
+    private boolean isDebug;
 
     public CowNetThingy(JavaPlugin plugin, String permissionRoot, String trigger) {
         this.plugin = plugin;
@@ -25,6 +26,7 @@ public class CowNetThingy implements CommandExecutor {
             //allow this common alias
             this.isEnabled = getConfigBoolean("enabled", true);
         }
+        this.isDebug = getConfigBoolean("debug", false);
         if (isEnabled) {
             plugin.getCommand(trigger).setExecutor(this);
             logInfo(trigger + " enabled");
@@ -72,6 +74,14 @@ public class CowNetThingy implements CommandExecutor {
         return plugin.getConfig().getInt(trigger + "." + key, def);
     }
 
+    public final long getConfigLong(String key, long def) {
+        return plugin.getConfig().getLong(trigger + "." + key, def);
+    }
+
+    public final double getConfigDouble(String key, double def) {
+        return plugin.getConfig().getDouble(trigger + "." + key, def);
+    }
+
     public final boolean getConfigBoolean(String key, boolean def) {
         return plugin.getConfig().getBoolean(trigger + "." + key, def);
     }
@@ -114,8 +124,18 @@ public class CowNetThingy implements CommandExecutor {
         logger.info(permissionNode + ": " + msg);
     }
 
+    public final void debugInfo(String msg) {
+        if (isDebug) {
+            logger.info("[" + permissionNode + "]: " + msg);
+        }
+    }
+
     public final boolean isEnabled() {
         return isEnabled;
+    }
+
+    public final boolean isDebug() {
+        return isDebug;
     }
 
     // disable the plugin if there was some critical startup error.

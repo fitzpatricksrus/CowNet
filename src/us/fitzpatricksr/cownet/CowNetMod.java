@@ -13,7 +13,8 @@ public class CowNetMod extends JavaPlugin {
     @Override
     public void onDisable() {
         logger.info("CowNetMod is now disabled!");
-        getServer().getScheduler().cancelAllTasks();
+        // cancel all tasks for this plugin
+        getServer().getScheduler().cancelTasks(this);
     }
 
     @Override

@@ -52,8 +52,11 @@ rank:
 
 hardcore:
   enable: true
+  debug: false
   worldname: HardCoreCow
   safedistance: 5
-  timeout: 4320
+  livetimeout: 518400
+  deathDuration: 60
+  timeoutgrowth: 2.0
   difficulty: HARD
   monsterBoost: 1.0
