@@ -38,7 +38,7 @@ public class CowNetConfig extends YamlConfiguration {
         return null;
     }
 
-    private File getConfigFile() throws IOException {
+    protected File getConfigFile() throws IOException {
         File folder = plugin.getDataFolder();
         if (!folder.exists()) {
             folder.mkdir();
