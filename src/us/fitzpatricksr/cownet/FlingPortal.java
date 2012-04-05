@@ -3,6 +3,7 @@ package us.fitzpatricksr.cownet;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -33,7 +34,7 @@ public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listen
     }
 
     @Override
-    protected String getHelpString(Player player) {
+    protected String getHelpString(CommandSender sender) {
         return "usage: put a redstone torch below a glass block and stand on it.";
     }
 

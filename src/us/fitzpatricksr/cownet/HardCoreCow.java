@@ -8,6 +8,7 @@ import com.onarandombox.MultiverseCore.destination.DestinationFactory;
 import com.onarandombox.MultiverseCore.enums.TeleportResult;
 import org.bukkit.*;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
@@ -136,7 +137,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     @Override
-    protected String getHelpString(Player player) {
+    protected String getHelpString(CommandSender player) {
         PlayerState ps = config.getPlayerState(player.getName());
         long timeOut = (ps != null) ? ps.getSecondsTillTimeout() : deathDuration;
         return "usage: hardcore (go | info | stats | revive <player> | regen)  " +
@@ -152,31 +153,37 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     @Override
-    protected boolean handleCommand(Player player, Command cmd, String[] args) {
+    protected boolean handleCommand(CommandSender sender, Command cmd, String[] args) {
         // subcommands
         //  regen
         //  revive <player>
         //  info
         //  go
         //  --- empty takes you to the hardcore world
-        if (args.length == 0) {
-            return goHardCore(player);
-        } else if (args.length == 1) {
+        if (args.length == 1) {
             if ("info".equalsIgnoreCase(args[0])
                     || "list".equalsIgnoreCase(args[0])
                     || "stats".equalsIgnoreCase(args[0])) {
-                return goInfo(player);
+                return goInfo(sender);
             } else if ("regen".equalsIgnoreCase(args[0])) {
-                return goRegen(player);
-            } else if ("go".equalsIgnoreCase((args[0]))) {
-                return goHardCore(player);
+                return goRegen(sender);
             }
         } else if (args.length == 2) {
             if ("revive".equalsIgnoreCase(args[0])) {
-                return goRevive(player, args[1]);
+                return goRevive(sender, args[1]);
             }
         }
+        return super.handleCommand(sender, cmd, args);
+    }
 
+    @Override
+    protected boolean handleCommand(Player player, Command cmd, String[] args) {
+        // handle commands that operate on the player who issued the command
+        if (args.length == 0) {
+            return goHardCore(player);
+        } else if ((args.length == 1) && ("go".equalsIgnoreCase((args[0])))) {
+            return goHardCore(player);
+        }
         return false;
     }
 
@@ -238,7 +245,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean goInfo(Player player) {
+    private boolean goInfo(CommandSender player) {
         if (!hasPermissions(player, "info")) {
             player.sendMessage("Sorry, you don't have permission.");
             return true;
@@ -270,7 +277,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean goRegen(Player player) {
+    private boolean goRegen(CommandSender player) {
         if (!hasPermissions(player, "regen")) {
             player.sendMessage("Sorry, you're not HARD CORE enough.  Come back when you're more HARD CORE.");
             return true;
@@ -284,7 +291,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean goRevive(Player player, String arg) {
+    private boolean goRevive(CommandSender player, String arg) {
         if (!hasPermissions(player, "revive")) {
             player.sendMessage("Sorry, you're not HARD CORE enough to revive other players.");
         } else if (!config.isDead(arg)) {
@@ -305,15 +312,14 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         Player player = event.getPlayer();
         if (isHardCoreWorld(event.getPlayer().getWorld())) {
             // teleported to hardcore
-            config.setIsOp(player.getName(), player.isOp());
+            config.setWasOp(player.getName(), player.isOp());
             if (!hasPermissions(player, "keepop")) {
                 player.setOp(false);
                 player.setAllowFlight(false);
                 player.setGameMode(GameMode.SURVIVAL);
-                //TODO hey jf - this is where you want to disable zombe mod
                 CowZombeControl.setAllowMods(player, false);
             }
-            logFile.log(player.getName() + " entered " + worldName);
+            logFile.log(player.getName() + " entered " + worldName + "  op = ");
         } else if (isHardCoreWorld(event.getFrom())) {
             // teleported from hardcore
             player.setAllowFlight(true);
@@ -321,7 +327,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             if (hasPermissions(player, "keepop")) {
                 player.setOp(true);
             } else {
-                player.setOp(config.isOp(player.getName()));
+                player.setOp(config.wasOp(player.getName()));
             }
             logFile.log(player.getName() + " left " + worldName);
         }
@@ -445,7 +451,11 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     private static String durationString(long duration) {
-        return String.format("%02d hours %02d minutes and %02d seconds", duration / 3600, (duration % 3600) / 60, (duration % 60));
+        if (duration <= 0) {
+            return "just a few more seconds";
+        } else {
+            return String.format("%02d hours %02d minutes and %02d seconds", duration / 3600, (duration % 3600) / 60, (duration % 60));
+        }
     }
 
     //
@@ -558,14 +568,14 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             return getPlayerState(player) == null;
         }
 
-        public boolean isOp(String player) {
+        public boolean wasOp(String player) {
             PlayerState state = getPlayerState(player);
-            return ((state != null) && state.isOp);
+            return ((state != null) && state.wasOp);
         }
 
-        public void setIsOp(String player, boolean isOp) {
-            if (isOp(player) != isOp) {
-                getOrCreatePlayerState(player).setIsOp(isOp);
+        public void setWasOp(String player, boolean isOp) {
+            if (wasOp(player) != isOp) {
+                getOrCreatePlayerState(player).setWasOp(isOp);
                 saveConfig();
             }
         }
@@ -650,6 +660,10 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 } else {
                     ps.setIsLive();
                     logFile.log(playerName + " death penalty complete.  Now alive.");
+                    Player player = getPlugin().getServer().getPlayer(ps.name);
+                    if (player != null) {
+                        player.sendMessage("You are now alive again in HARD CORE.  Got to it soldier!");
+                    }
                 }
             }
             config.saveConfig();
@@ -720,11 +734,11 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     @SerializableAs("PlayerState")
     public static class PlayerState implements ConfigurationSerializable {
-        public String name;
-        public long lastActivity;    // either time when player should be removed from allPlayers list
-        public boolean isLive;
-        public int deathCount;
-        public boolean isOp;
+        public String name;         // come si chiama
+        public long lastActivity;   // either time when player should be removed from allPlayers list
+        public boolean isLive;      // hey?  You still there?
+        public int deathCount;      // you died how many times?
+        public boolean wasOp;       // was this player an op outside hardcore
 
         public void setIsLive() {
             // state has changed
@@ -737,8 +751,8 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             noteActivity();
         }
 
-        public void setIsOp(boolean isOp) {
-            this.isOp = isOp;
+        public void setWasOp(boolean wasOp) {
+            this.wasOp = wasOp;
         }
 
         public void noteActivity() {

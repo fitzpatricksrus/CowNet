@@ -5,6 +5,7 @@ import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -44,7 +45,7 @@ public class Hide extends CowNetThingy implements Listener {
     }
 
     @Override
-    protected String getHelpString(Player player) {
+    protected String getHelpString(CommandSender sender) {
         return "usage: hide [ on | off | check | join | quit ]";
     }
 

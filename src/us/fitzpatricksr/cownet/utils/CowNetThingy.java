@@ -37,18 +37,18 @@ public class CowNetThingy implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        if (args.length == 1) {
+            if ("help".equalsIgnoreCase(args[0])) {
+                sender.sendMessage(getHelpString(sender));
+                return true;
+            } else if ("reload".equalsIgnoreCase(args[0])) {
+                reload();
+                sender.sendMessage("Reloaded...");
+                return true;
+            }
+        }
         if (sender instanceof Player) {
             Player player = (Player) sender;
-            if (args.length == 1) {
-                if ("help".equalsIgnoreCase(args[0])) {
-                    player.sendMessage(getHelpString(player));
-                    return true;
-                } else if ("reload".equalsIgnoreCase(args[0])) {
-                    reload();
-                    player.sendMessage("Reloaded...");
-                    return true;
-                }
-            }
             if (!hasPermissions(player)) {
                 player.sendMessage("Sorry, you don't have permission");
                 return false;
@@ -58,6 +58,7 @@ public class CowNetThingy implements CommandExecutor {
             // commands from the console
             return handleCommand(sender, cmd, args);
         } else {
+            logInfo("Could not handle command from " + sender);
             return false;
         }
     }
@@ -103,11 +104,11 @@ public class CowNetThingy implements CommandExecutor {
         }
     }
 
-    public final boolean hasPermissions(Player player, String perm) {
+    public final boolean hasPermissions(CommandSender player, String perm) {
         return hasPermissions(player, perm, false) || player.hasPermission("*");
     }
 
-    public final boolean hasPermissions(Player player, String perm, boolean allowOps) {
+    public final boolean hasPermissions(CommandSender player, String perm, boolean allowOps) {
         if ((allowOps && player.isOp()) || player.hasPermission(permissionNode + "." + perm)) {
             return true;
         } else {
@@ -147,7 +148,7 @@ public class CowNetThingy implements CommandExecutor {
     protected void reload() {
     }
 
-    protected String getHelpString(Player player) {
+    protected String getHelpString(CommandSender sender) {
         return "There isn't any help for you...";
     }
 

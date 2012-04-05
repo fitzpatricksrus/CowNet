@@ -1,6 +1,7 @@
 package us.fitzpatricksr.cownet;
 
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -33,7 +34,7 @@ public class BounceCommand extends CowNetThingy {
     }
 
     @Override
-    protected String getHelpString(Player player) {
+    protected String getHelpString(CommandSender sender) {
         return "usage: bounce [radius] [velocity]";
     }
 

@@ -3,6 +3,7 @@ package us.fitzpatricksr.cownet;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -47,7 +48,7 @@ public class ExplodingSheep extends CowNetThingy {
     }
 
     @Override
-    protected String getHelpString(Player player) {
+    protected String getHelpString(CommandSender sender) {
         return "usage: tntsheep";
     }
 

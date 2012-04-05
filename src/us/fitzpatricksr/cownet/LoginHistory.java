@@ -57,7 +57,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
     }
 
     @Override
-    protected String getHelpString(Player player) {
+    protected String getHelpString(CommandSender sender) {
         return "usage: <command> [-in|-out|-inout] | [<filter>]";
     }
 
