@@ -33,6 +33,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetConfig;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.CowZombeControl;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -205,7 +206,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             String playerName = player.getName();
             if (config.isDead(playerName)) {
                 player.sendMessage("You're dead, so you will roam the world as a ghost for the next " +
-                        config.getSecondsTillTimeout(playerName) + " minutes.");
+                        durationString(config.getSecondsTillTimeout(playerName)) + ".");
             }
             SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
             DestinationFactory destFactory = mvPlugin.getDestFactory();
@@ -256,11 +257,15 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         player.sendMessage("  Created: " + config.getCreationDate());
         player.sendMessage("  Dead players: ");
         for (PlayerState p : config.getDeadPlayers()) {
-            player.sendMessage("    " + p.name + "  Deaths:" + p.deathCount);
+            player.sendMessage("    " + p.name
+                    + "  Deaths:" + p.deathCount
+                    + "  Last activity: " + dateFormat.format(new Date(p.lastActivity)));
         }
         player.sendMessage("  Live players: ");
         for (PlayerState p : config.getLivePlayers()) {
-            player.sendMessage("    " + p.name + "  Deaths:" + p.deathCount);
+            player.sendMessage("    " + p.name
+                    + "  Deaths:" + p.deathCount
+                    + "  Last activity: " + dateFormat.format(new Date(p.lastActivity)));
         }
         return true;
     }
@@ -300,20 +305,23 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         Player player = event.getPlayer();
         if (isHardCoreWorld(event.getPlayer().getWorld())) {
             // teleported to hardcore
+            config.setIsOp(player.getName(), player.isOp());
             if (!hasPermissions(player, "keepop")) {
                 player.setOp(false);
                 player.setAllowFlight(false);
                 player.setGameMode(GameMode.SURVIVAL);
                 //TODO hey jf - this is where you want to disable zombe mod
+                CowZombeControl.setAllowMods(player, false);
             }
             logFile.log(player.getName() + " entered " + worldName);
         } else if (isHardCoreWorld(event.getFrom())) {
             // teleported from hardcore
             player.setAllowFlight(true);
+            CowZombeControl.setAllowMods(player, true);
             if (hasPermissions(player, "keepop")) {
                 player.setOp(true);
             } else {
-                player.setOp(false);
+                player.setOp(config.isOp(player.getName()));
             }
             logFile.log(player.getName() + " left " + worldName);
         }
@@ -367,9 +375,9 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     @EventHandler
     public void onPlayerDeath(EntityDeathEvent event) {
+        if (!isHardCoreWorld(event.getEntity().getWorld())) return;
         if (event.getEntity() instanceof Player) {
             Player player = (Player) event.getEntity();
-            if (!isHardCoreWorld(player.getWorld())) return;
             String playerName = player.getName();
             config.markPlayerDead(playerName);
             logFile.log(player.getName() + " died ");
@@ -387,6 +395,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     public void onEntityDamage(EntityDamageEvent event) {
         if (event.isCancelled()) return;
+        if (!isHardCoreWorld(event.getEntity().getWorld())) return;
         Entity entity = event.getEntity();
         if (entity instanceof Player) {
             // ghosts can't be hurt
@@ -409,7 +418,8 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     @EventHandler
     public void onEntityTarget(EntityTargetEvent event) {
-        if (event.isCancelled()) return;
+        if (event.isCancelled() || event.getTarget() == null) return;
+        if (!isHardCoreWorld(event.getTarget().getWorld())) return;
         if (event.getTarget() instanceof Player) {
             String playerName = ((Player) event.getTarget()).getName();
             if (config.isDead(playerName)) {
@@ -421,7 +431,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     @EventHandler
     public void onVehicleEntityCollision(VehicleEntityCollisionEvent event) {
         if (event.isCancelled()) return;
-
+        if (!isHardCoreWorld(event.getEntity().getWorld())) return;
         if (event.getEntity() instanceof Player) {
             String playerName = ((Player) event.getEntity()).getName();
             if (config.isDead(playerName)) {
@@ -447,7 +457,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
         public HardCoreLog(JavaPlugin plugin, String name) throws IOException {
             super(plugin, name);
-            PrintWriter log = new PrintWriter(new BufferedWriter(new FileWriter(getConfigFile(), true)));
+            log = new PrintWriter(new BufferedWriter(new FileWriter(getConfigFile(), true)));
         }
 
         public void close() {
@@ -461,6 +471,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 log.flush();
             } catch (Exception e) {
                 //if we can't write log file, whatever
+                e.printStackTrace();
             }
         }
     }
@@ -547,23 +558,38 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             return getPlayerState(player) == null;
         }
 
+        public boolean isOp(String player) {
+            PlayerState state = getPlayerState(player);
+            return ((state != null) && state.isOp);
+        }
+
+        public void setIsOp(String player, boolean isOp) {
+            if (isOp(player) != isOp) {
+                getOrCreatePlayerState(player).setIsOp(isOp);
+                saveConfig();
+            }
+        }
+
         /*
         This is the primary way to put a player into the game and to
         keep them there.
          */
         public void playerActivity(String player) {
             if (isDead(player)) return;
-            PlayerState ps = getPlayerState(player);
-            if (ps == null) {
-                // automagically add players
-                allPlayers.put(player.toLowerCase(), new PlayerState(player));
-            } else {
-                ps.noteActivity();
-            }
+            getOrCreatePlayerState(player).noteActivity();
         }
 
         private PlayerState getPlayerState(String name) {
             return allPlayers.get(name.toLowerCase());
+        }
+
+        private PlayerState getOrCreatePlayerState(String name) {
+            PlayerState result = allPlayers.get(name.toLowerCase());
+            if (result == null) {
+                result = new PlayerState(name);
+                allPlayers.put(name.toLowerCase(), result);
+            }
+            return result;
         }
 
         public Set<PlayerState> getLivePlayers() {
@@ -698,6 +724,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         public long lastActivity;    // either time when player should be removed from allPlayers list
         public boolean isLive;
         public int deathCount;
+        public boolean isOp;
 
         public void setIsLive() {
             // state has changed
@@ -708,11 +735,10 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             isLive = false;
             deathCount++;
             noteActivity();
-            try {
-                throw new Exception();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        }
+
+        public void setIsOp(boolean isOp) {
+            this.isOp = isOp;
         }
 
         public void noteActivity() {
