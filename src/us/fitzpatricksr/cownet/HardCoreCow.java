@@ -17,6 +17,7 @@ import org.bukkit.configuration.serialization.SerializableAs;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -25,9 +26,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerGameModeChangeEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
 import org.bukkit.plugin.PluginManager;
@@ -266,13 +265,23 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         for (PlayerState p : config.getDeadPlayers()) {
             player.sendMessage("    " + p.name
                     + "  Deaths:" + p.deathCount
-                    + "  Last activity: " + dateFormat.format(new Date(p.lastActivity)));
+                    + "  Time in game: " + durationString(p.getSecondsInHardcore())
+                    + "  Blocks placed: " + p.blocksPlaced
+                    + "  Blocks broken: " + p.blocksBroken
+                    + "  Mobs killed: " + p.mobsKilled
+                    + "  Last activity: " + dateFormat.format(new Date(p.lastActivity))
+            );
         }
         player.sendMessage("  Live players: ");
         for (PlayerState p : config.getLivePlayers()) {
             player.sendMessage("    " + p.name
                     + "  Deaths:" + p.deathCount
-                    + "  Last activity: " + dateFormat.format(new Date(p.lastActivity)));
+                    + "  Time in game: " + durationString(p.getSecondsInHardcore())
+                    + "  Blocks placed: " + p.blocksPlaced
+                    + "  Blocks broken: " + p.blocksBroken
+                    + "  Mobs killed: " + p.mobsKilled
+                    + "  Last activity: " + dateFormat.format(new Date(p.lastActivity))
+            );
         }
         return true;
     }
@@ -308,9 +317,19 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     @EventHandler
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
+        debugInfo("onPlayerChangedWorld");
+        handleWorldChange(event.getPlayer(), event.getFrom());
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onPlayerTeleport(PlayerTeleportEvent event) {
+        if (event.isCancelled()) return;
+        handleWorldChange(event.getPlayer(), event.getFrom().getWorld());
+    }
+
+    private void handleWorldChange(Player player, World fromWorld) {
         // set up the proper player settings for HARD CORE
-        Player player = event.getPlayer();
-        if (isHardCoreWorld(event.getPlayer().getWorld())) {
+        if (isHardCoreWorld(player.getWorld())) {
             // teleported to hardcore
             config.setWasOp(player.getName(), player.isOp());
             if (!hasPermissions(player, "keepop")) {
@@ -319,8 +338,9 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 player.setGameMode(GameMode.SURVIVAL);
                 CowZombeControl.setAllowMods(player, false);
             }
+            config.playerEnteredHardCore(player.getName());
             logFile.log(player.getName() + " entered " + worldName + "  op = ");
-        } else if (isHardCoreWorld(event.getFrom())) {
+        } else if (isHardCoreWorld(fromWorld)) {
             // teleported from hardcore
             player.setAllowFlight(true);
             CowZombeControl.setAllowMods(player, true);
@@ -329,6 +349,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             } else {
                 player.setOp(config.wasOp(player.getName()));
             }
+            config.playerLeftHardCore(player.getName());
             logFile.log(player.getName() + " left " + worldName);
         }
     }
@@ -361,12 +382,28 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             event.getPlayer().sendMessage("Your're dead for " + durationString(config.getSecondsTillTimeout(playerName)));
             event.setCancelled(true);
         } else {
+            config.accrueBlockPlaced(playerName);
             config.playerActivity(playerName);
         }
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
+        if (event.isCancelled()) return;
+        if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
+        String playerName = event.getPlayer().getName();
+        if (config.isDead(playerName)) {
+            debugInfo("Ghost event");
+            event.getPlayer().sendMessage("Your're dead for " + durationString(config.getSecondsTillTimeout(playerName)));
+            event.setCancelled(true);
+        } else {
+            config.accrueBlockBroken(playerName);
+            config.playerActivity(playerName);
+        }
+    }
+
+    @EventHandler
+    public void onPickupItem(PlayerPickupItemEvent event) {
         if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
         String playerName = event.getPlayer().getName();
@@ -446,13 +483,34 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
     }
 
+    @EventHandler
+    public void onPlayerLogin(PlayerLoginEvent event) {
+        Player player = event.getPlayer();
+        debugInfo("onPlayerLogin: " + player.getName());
+        if (isHardCoreWorld(player.getWorld())) {
+            config.playerEnteredHardCore(player.getName());
+            debugInfo("  hardcore");
+        } else {
+            debugInfo("  softy (" + player.getWorld().getName() + ")");
+        }
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        debugInfo("onPlayerQuit");
+        Player player = event.getPlayer();
+        if (isHardCoreWorld(player.getWorld())) {
+            config.playerLeftHardCore(player.getName());
+        }
+    }
+
     private boolean isHardCoreWorld(World w) {
         return worldName.equalsIgnoreCase(w.getName());
     }
 
     private static String durationString(long duration) {
         if (duration <= 0) {
-            return "just a few more seconds";
+            return "just a few seconds";
         } else {
             return String.format("%02d hours %02d minutes and %02d seconds", duration / 3600, (duration % 3600) / 60, (duration % 60));
         }
@@ -639,6 +697,36 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             debug("resetWorldState");
         }
 
+        public void playerEnteredHardCore(String name) {
+            PlayerState ps = getOrCreatePlayerState(name);
+            ps.playerEnteredHardCore();
+            debugInfo("playerEnteredHardCore(" + name + ") -> " + ps.getSecondsInHardcore());
+        }
+
+        public void playerLeftHardCore(String name) {
+            PlayerState ps = getPlayerState(name);
+            if (ps != null) {
+                ps.playerLeftHardCore();
+                debugInfo("playerLeftHardCore(" + name + ") -> " + ps.getSecondsInHardcore());
+                saveConfig();
+            }
+        }
+
+        public void accrueBlockPlaced(String name) {
+            PlayerState ps = getPlayerState(name);
+            if (ps != null) ps.accrueBlockPlaced();
+        }
+
+        public void accrueBlockBroken(String name) {
+            PlayerState ps = getPlayerState(name);
+            if (ps != null) ps.accrueBlockBroken();
+        }
+
+        public void accrueMobKilled(String name) {
+            PlayerState ps = getPlayerState(name);
+            if (ps != null) ps.accrueMobKilled();
+        }
+
         private void reapDeadPlayers() {
             if (allPlayers.size() == 0) return;
             LinkedList<String> playersToStomp = new LinkedList<String>();
@@ -737,15 +825,25 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         public String name;         // come si chiama
         public long lastActivity;   // either time when player should be removed from allPlayers list
         public boolean isLive;      // hey?  You still there?
-        public int deathCount;      // you died how many times?
         public boolean wasOp;       // was this player an op outside hardcore
 
+        public int deathCount;      // you died how many times?
+        public long timeInGame;
+        public long blocksPlaced;
+        public long blocksBroken;
+        public long mobsKilled;
+        private volatile long lastEnteredWorld; //if in hardcore, then non-zero
+
         public void setIsLive() {
-            // state has changed
-            isLive = true;
+            if (!isLive) {
+                isLive = true;
+                // start accumulating game time again
+                playerEnteredHardCore();
+            }
         }
 
         public void setIsDead() {
+            playerLeftHardCore();
             isLive = false;
             deathCount++;
             noteActivity();
@@ -764,14 +862,50 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             if (isLive) {
                 long timeRequired = liveTimeout / (deathCount + 1);
                 long timeLeft = timeRequired - secondsElapsed;
-//                System.err.println(name + " LIVE elapsed time:" + secondsElapsed + "  time required: " + timeRequired + "  time left:" + timeLeft);
                 return Math.max(0, timeLeft);
             } else {
                 long timeRequired = (long) (deathDuration * Math.pow(timeOutGrowth, deathCount - 1));
                 long timeLeft = timeRequired - secondsElapsed;
-//                System.err.println(name + " DEAD elapsed time:" + secondsElapsed + "  time required: " + timeRequired + "  time left:" + timeLeft);
                 return Math.max(0, timeLeft);
             }
+        }
+
+        public long getSecondsInHardcore() {
+            if (lastEnteredWorld == 0) {
+                return timeInGame / 1000;
+            } else {
+                return (timeInGame + (System.currentTimeMillis() - lastEnteredWorld)) / 1000;
+            }
+        }
+
+        public void playerEnteredHardCore() {
+            if (isLive) {
+                // only accumulate time stats unless the player is alive
+                lastEnteredWorld = System.currentTimeMillis();
+            } else {
+                lastEnteredWorld = 0;
+            }
+        }
+
+        public void playerLeftHardCore() {
+            if (isLive) {
+                // only accumulate time stats unless the player is alive
+                timeInGame = timeInGame + (System.currentTimeMillis() - lastEnteredWorld);
+            } else {
+                lastEnteredWorld = 0;
+            }
+        }
+
+        public void accrueBlockPlaced() {
+            blocksPlaced++;
+        }
+
+        public void accrueBlockBroken() {
+            blocksBroken++;
+        }
+
+        public void accrueMobKilled() {
+            mobsKilled++;
         }
 
         public PlayerState(String name) {
@@ -785,9 +919,14 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             builder.append(name);
             builder.append("  ");
             builder.append((isLive) ? "live  " : "dead  ");
-            builder.append("deathCount:" + deathCount);
-            builder.append("  ");
+            builder.append("deathCount:");
+            builder.append(deathCount);
+            builder.append("  activity: ");
             builder.append(dateFormat.format(new Date(lastActivity)));
+            builder.append("  timeInGame: ");
+            builder.append(durationString(timeInGame / 1000));
+            builder.append("  lastEnteredWorld: ");
+            builder.append(dateFormat.format(new Date(lastEnteredWorld)));
             return builder.toString();
         }
 

@@ -9,6 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -73,14 +74,17 @@ public class CowNetConfig extends YamlConfiguration {
         HashMap<String, Object> result = new HashMap<String, Object>();
         Class<?> c = source.getClass();
         for (Field f : c.getFields()) {
-            String key = f.getName();
-            Object value = null;
-            try {
-                value = f.get(source);
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            int modifiers = f.getModifiers();
+            if (!Modifier.isVolatile(modifiers) && Modifier.isPublic(modifiers)) {
+                String key = f.getName();
+                Object value = null;
+                try {
+                    value = f.get(source);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+                result.put(key, value);
             }
-            result.put(key, value);
         }
         return result;
     }

@@ -115,6 +115,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerChat(PlayerChatEvent event) {
+        if (event.isCancelled()) return;
         if (log != null) {
             LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage(event.getMessage());
             log.println(entry.toString());
@@ -125,6 +126,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
 
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
+        if (event.isCancelled()) return;
         if (log != null) {
             LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage(event.getMessage());
             log.println(entry.toString());
@@ -135,6 +137,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
 
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerCommand(PlayerGameModeChangeEvent event) {
+        if (event.isCancelled()) return;
         if (log != null) {
             LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage("set game mode: " + event.getNewGameMode());
             log.println(entry.toString());
@@ -145,6 +148,7 @@ public class LoginHistory extends CowNetThingy implements Listener {
 
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
+        if (event.isCancelled()) return;
         if (log != null) {
             LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage("Teleported: " + event.getPlayer().getWorld().getName());
             log.println(entry.toString());
