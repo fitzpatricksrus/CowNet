@@ -14,6 +14,7 @@ import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.configuration.serialization.SerializableAs;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -417,17 +418,6 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     @EventHandler
-    public void onPlayerDeath(EntityDeathEvent event) {
-        if (!isHardCoreWorld(event.getEntity().getWorld())) return;
-        if (event.getEntity() instanceof Player) {
-            Player player = (Player) event.getEntity();
-            String playerName = player.getName();
-            config.markPlayerDead(playerName);
-            logFile.log(player.getName() + " died ");
-        }
-    }
-
-    @EventHandler
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
         if (event.isCancelled()) return;
         if (isHardCoreWorld(event.getPlayer().getWorld())) {
@@ -454,6 +444,36 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 String playerName = ((Player) entity).getName();
                 if (config.isDead(playerName)) {
                     event.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerDeath(EntityDeathEvent event) {
+        if (!isHardCoreWorld(event.getEntity().getWorld())) return;
+        Entity entity = event.getEntity();
+        if (entity instanceof Player) {
+            Player player = (Player) entity;
+            String playerName = player.getName();
+            config.markPlayerDead(playerName);
+            logFile.log(player.getName() + " died ");
+        } else {
+            // OK, something else was killed.  Not a player.
+            EntityDamageEvent lastDamageEvent = entity.getLastDamageCause();
+            if (lastDamageEvent != null && lastDamageEvent instanceof EntityDamageByEntityEvent) {
+                Entity damager = ((EntityDamageByEntityEvent) lastDamageEvent).getDamager();
+                Player killer = null;
+                if (damager instanceof Arrow) {
+                    Arrow arrow = (Arrow) damager;
+                    if (arrow.getShooter() instanceof Player) {
+                        killer = (Player) arrow.getShooter();
+                    }
+                } else if (damager instanceof Player) {
+                    killer = (Player) damager;
+                }
+                if (killer != null) {
+                    config.accrueMobKilled(killer.getName());
                 }
             }
         }
