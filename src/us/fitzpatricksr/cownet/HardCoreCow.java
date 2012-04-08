@@ -265,22 +265,22 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         for (PlayerState p : config.getDeadPlayers()) {
             player.sendMessage("    " + p.name
                     + "  Deaths:" + p.deathCount
-                    + "  Time in game: " + durationString(p.getSecondsInHardcore())
-                    + "  Blocks placed: " + p.blocksPlaced
-                    + "  Blocks broken: " + p.blocksBroken
-                    + "  Mobs killed: " + p.mobsKilled
-                    + "  Last activity: " + dateFormat.format(new Date(p.lastActivity))
+                    + "  Time: " + durationString(p.getSecondsInHardcore())
+                    + "  Placed: " + p.blocksPlaced
+                    + "  Broken: " + p.blocksBroken
+                    + "  Kills: " + p.mobsKilled
+                    + "  Last on: " + dateFormat.format(new Date(p.lastActivity))
             );
         }
         player.sendMessage("  Live players: ");
         for (PlayerState p : config.getLivePlayers()) {
             player.sendMessage("    " + p.name
                     + "  Deaths:" + p.deathCount
-                    + "  Time in game: " + durationString(p.getSecondsInHardcore())
-                    + "  Blocks placed: " + p.blocksPlaced
-                    + "  Blocks broken: " + p.blocksBroken
-                    + "  Mobs killed: " + p.mobsKilled
-                    + "  Last activity: " + dateFormat.format(new Date(p.lastActivity))
+                    + "  Time: " + durationString(p.getSecondsInHardcore())
+                    + "  Placed: " + p.blocksPlaced
+                    + "  Broken: " + p.blocksBroken
+                    + "  Kills: " + p.mobsKilled
+                    + "  Last on: " + dateFormat.format(new Date(p.lastActivity))
             );
         }
         return true;
