@@ -860,7 +860,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         public long blocksPlaced;
         public long blocksBroken;
         public long mobsKilled;
-        private volatile long lastEnteredWorld; //if in hardcore, then non-zero
+        private volatile long lastEnteredWorld; //if in hardcore, then non-zero.   Used to accumulate total time.
 
         public void setIsLive() {
             if (!isLive) {
