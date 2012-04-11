@@ -13,14 +13,14 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CowNetConfig extends YamlConfiguration {
+public abstract class CowNetConfig extends YamlConfiguration {
     private JavaPlugin plugin;
-    private String name;
 
-    public CowNetConfig(JavaPlugin plugin, String name) {
+    public CowNetConfig(JavaPlugin plugin) {
         this.plugin = plugin;
-        this.name = name;
     }
+
+    protected abstract String getFileName();
 
     public void loadConfig() throws IOException, InvalidConfigurationException {
         load(getConfigFile());
@@ -44,7 +44,7 @@ public class CowNetConfig extends YamlConfiguration {
         if (!folder.exists()) {
             folder.mkdir();
         }
-        File file = new File(folder, name);
+        File file = new File(folder, getFileName());
         if (!file.exists()) {
             file.createNewFile();
         }

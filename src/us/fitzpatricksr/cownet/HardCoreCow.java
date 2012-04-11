@@ -117,7 +117,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             logInfo("timeOutGrowth:" + timeOutGrowth);
             logInfo("difficulty:" + difficulty);
             logInfo("monsterBoost:" + monsterBoost);
-            logFile = new HardCoreLog(getPlugin(), "eventlog.txt");
+            logFile = new HardCoreLog(getPlugin(), "eventlog");
         } catch (IOException e) {
             e.printStackTrace();
             disable();
@@ -132,7 +132,6 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         if (event.getPlugin() == getPlugin()) {
             mvPlugin.decrementPluginCount();
             config.saveConfig();
-            logFile.close();
         }
     }
 
@@ -532,7 +531,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         if (duration <= 0) {
             return "just a few seconds";
         } else {
-            return String.format("%02d hours %02d minutes and %02d seconds", duration / 3600, (duration % 3600) / 60, (duration % 60));
+            return String.format("%02d:%02d:%02d", duration / 3600, (duration % 3600) / 60, (duration % 60));
         }
     }
 
@@ -542,21 +541,24 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     private class HardCoreLog extends CowNetConfig {
         private PrintWriter log;
+        private String nameRoot;
 
         public HardCoreLog(JavaPlugin plugin, String name) throws IOException {
-            super(plugin, name);
-            log = new PrintWriter(new BufferedWriter(new FileWriter(getConfigFile(), true)));
+            super(plugin);
+            nameRoot = name;
         }
 
-        public void close() {
-            log.close();
+        protected String getFileName() {
+            return nameRoot + "-" + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ".txt";
         }
 
         public void log(String message) {
             try {
+                log = new PrintWriter(new BufferedWriter(new FileWriter(getConfigFile(), true)));
                 String timeStamp = dateFormat.format(new Date());
                 log.println("[" + timeStamp + "] " + message);
                 log.flush();
+                log.close();
             } catch (Exception e) {
                 //if we can't write log file, whatever
                 e.printStackTrace();
@@ -574,9 +576,15 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         private boolean regenIsAlreadyScheduled = false;
         private Map<String, PlayerState> allPlayers = new HashMap<String, PlayerState>();
         private String creationDate = "unknown";
+        private String name;
 
         public HardCoreState(JavaPlugin plugin, String name) {
-            super(plugin, name);
+            super(plugin);
+            this.name = name;
+        }
+
+        protected String getFileName() {
+            return name;
         }
 
         public void loadConfig() throws IOException, InvalidConfigurationException {
