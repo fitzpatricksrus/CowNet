@@ -61,7 +61,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     private static final int REAPER_FREQUENCY = 20 * 30; // 30 seconds
     private HardCoreState config;
     private HardCoreLog logFile;
-    private String worldName = "HardCoreCow";
+    private String worldName = "HardCore";
     private int safeDistance = 10;
     private MultiverseCore mvPlugin;
     private Difficulty difficulty = Difficulty.HARD;
@@ -257,30 +257,20 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
         player.sendMessage("  World: " + worldName);
         player.sendMessage("  Created: " + config.getCreationDate());
-        player.sendMessage("  Dead players: ");
-        for (PlayerState p : config.getDeadPlayers()) {
-            player.sendMessage("    " + p.name
-                    + "  Deaths:" + p.deathCount
-                    + "  Time: " + StringUtils.durationString(p.getSecondsInHardcore())
-                    + "  Placed: " + p.blocksPlaced
-                    + "  Broken: " + p.blocksBroken
-                    + "  Kills: " + p.mobsKilled
-                    + "  Last on: " + dateFormat.format(new Date(p.lastActivity))
-            );
-        }
-        player.sendMessage("  Live players: ");
-        for (PlayerState p : config.getLivePlayers()) {
-            player.sendMessage("    " + p.name
-                    + "  Deaths:" + p.deathCount
-                    + "  Time: " + StringUtils.durationString(p.getSecondsInHardcore())
-                    + "  Placed: " + p.blocksPlaced
-                    + "  Broken: " + p.blocksBroken
-                    + "  Kills: " + p.mobsKilled
-                    + "  Last on: " + dateFormat.format(new Date(p.lastActivity))
-            );
-        }
 
-        config.dumpRankings(player);
+        player.sendMessage("  --- HARD CORE ---");
+        player.sendMessage("  name Deaths TimeOn Placed Broken Kills LastOn");
+        for (PlayerState p : config.getRankedPlayers()) {
+            player.sendMessage("    " + p.name
+                    + ((p.isLive) ? "" : "(dead)")
+                    + "  D:" + p.deathCount
+                    + "  T: " + StringUtils.durationString(p.getSecondsInHardcore())
+                    + "  P: " + p.blocksPlaced
+                    + "  B: " + p.blocksBroken
+                    + "  K: " + p.mobsKilled
+                    + "  L: " + StringUtils.durationString(System.currentTimeMillis() - p.lastActivity));
+        }
+        player.sendMessage("  --- Wimpy ---");
 
         return true;
     }
@@ -314,13 +304,13 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     // ---- Event handlers
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
         debugInfo("onPlayerChangedWorld");
         handleWorldChange(event.getPlayer(), event.getFrom());
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         if (event.isCancelled()) return;
         handleWorldChange(event.getPlayer(), event.getFrom().getWorld());
@@ -353,7 +343,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         // --- Stop Ghosts from doing things
         if (event.isCancelled()) return;
@@ -364,21 +354,21 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         String playerName = event.getPlayer().getName();
         if (config.isDead(playerName)) {
             debugInfo("Ghost event");
-            event.getPlayer().sendMessage("Your're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
+            event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
             event.setCancelled(true);
         } else {
             config.playerActivity(playerName);
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
         if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
         String playerName = event.getPlayer().getName();
         if (config.isDead(playerName)) {
             debugInfo("Ghost event");
-            event.getPlayer().sendMessage("Your're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
+            event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
             event.setCancelled(true);
         } else {
             config.accrueBlockPlaced(playerName);
@@ -386,14 +376,14 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
         String playerName = event.getPlayer().getName();
         if (config.isDead(playerName)) {
             debugInfo("Ghost event");
-            event.getPlayer().sendMessage("Your're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
+            event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
             event.setCancelled(true);
         } else {
             config.accrueBlockBroken(playerName);
@@ -401,21 +391,21 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPickupItem(PlayerPickupItemEvent event) {
         if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
         String playerName = event.getPlayer().getName();
         if (config.isDead(playerName)) {
             debugInfo("Ghost event");
-            event.getPlayer().sendMessage("Your're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
+            event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
             event.setCancelled(true);
         } else {
             config.playerActivity(playerName);
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
         if (event.isCancelled()) return;
         if (isHardCoreWorld(event.getPlayer().getWorld())) {
@@ -424,6 +414,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
     }
 
+    @EventHandler(ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
         if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getEntity().getWorld())) return;
@@ -447,7 +438,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerDeath(EntityDeathEvent event) {
         if (!isHardCoreWorld(event.getEntity().getWorld())) return;
         Entity entity = event.getEntity();
@@ -477,7 +468,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onEntityTarget(EntityTargetEvent event) {
         if (event.isCancelled() || event.getTarget() == null) return;
         if (!isHardCoreWorld(event.getTarget().getWorld())) return;
@@ -489,7 +480,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onVehicleEntityCollision(VehicleEntityCollisionEvent event) {
         if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getEntity().getWorld())) return;
@@ -501,7 +492,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerLogin(PlayerLoginEvent event) {
         Player player = event.getPlayer();
         debugInfo("onPlayerLogin: " + player.getName());
@@ -511,10 +502,10 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         } else {
             debugInfo("  softy (" + player.getWorld().getName() + ")");
         }
-        config.dumpRankings(player);
+        // hey jf - dump rankings
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
         debugInfo("onPlayerQuit");
         Player player = event.getPlayer();
@@ -524,7 +515,8 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     private boolean isHardCoreWorld(World w) {
-        return worldName.equalsIgnoreCase(w.getName());
+        return worldName.equalsIgnoreCase(w.getName())
+                || worldName.contains(w.getName().toLowerCase());
     }
 
     //
@@ -700,6 +692,12 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             return result;
         }
 
+        public List<PlayerState> getRankedPlayers() {
+            List<PlayerState> result = new LinkedList<PlayerState>(allPlayers.values());
+            Collections.sort(result);
+            return result;
+        }
+
         public long getSecondsTillTimeout(String name) {
             PlayerState ps = getPlayerState(name);
             if (ps == null) return 0;
@@ -834,19 +832,6 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 debugInfo("    " + ps.toString());
             }
         }
-
-        public void dumpRankings(CommandSender player) {
-            Collection<PlayerState> players = allPlayers.values();
-            List<PlayerState> list = new LinkedList<PlayerState>();
-            list.addAll(players);
-            Collections.sort(list);
-            player.sendMessage("Most HARD CORE ---");
-            for (PlayerState ps : list) {
-                player.sendMessage("  " + ps.name);
-                ps.dumpScoreComponents();
-            }
-            player.sendMessage("--- least hard core");
-        }
     }
 
 
@@ -869,4 +854,5 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         test.getSecondsTillTimeout();
     }
 }
+
 
