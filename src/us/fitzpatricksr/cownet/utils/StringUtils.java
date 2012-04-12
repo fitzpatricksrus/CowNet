@@ -24,4 +24,13 @@ public class StringUtils {
         if (s == null || s.length() == 0) return new String[0];
         return s.split(seperator);
     }
+
+    public static String durationString(long duration) {
+        if (duration <= 0) {
+            return "just a few seconds";
+        } else {
+            return String.format("%02d:%02d:%02d", duration / 3600, (duration % 3600) / 60, (duration % 60));
+        }
+    }
+
 }
