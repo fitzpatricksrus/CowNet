@@ -258,19 +258,18 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         player.sendMessage("  World: " + worldName);
         player.sendMessage("  Created: " + config.getCreationDate());
 
-        player.sendMessage("  --- HARD CORE ---");
-        player.sendMessage("  name Deaths TimeOn Placed Broken Kills LastOn");
+        player.sendMessage("  --- HARD CORE Rankings ---");
+        player.sendMessage("  Name  - Deaths TimeOn Placed Broken Kills LastActive");
         for (PlayerState p : config.getRankedPlayers()) {
             player.sendMessage("    " + p.name
                     + ((p.isLive) ? "" : "(dead)")
-                    + "  D:" + p.deathCount
-                    + "  T: " + StringUtils.durationString(p.getSecondsInHardcore())
-                    + "  P: " + p.blocksPlaced
-                    + "  B: " + p.blocksBroken
-                    + "  K: " + p.mobsKilled
-                    + "  L: " + StringUtils.durationString(System.currentTimeMillis() - p.lastActivity));
+                    + " -  D:" + p.deathCount
+                    + "  T:" + StringUtils.durationString(p.getSecondsInHardcore())
+                    + "  P:" + p.blocksPlaced
+                    + "  B:" + p.blocksBroken
+                    + "  K:" + p.mobsKilled
+                    + "  L:" + StringUtils.durationString((System.currentTimeMillis() - p.lastActivity) / 1000));
         }
-        player.sendMessage("  --- Wimpy ---");
 
         return true;
     }
@@ -430,7 +429,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             final EntityDamageByEntityEvent target = (EntityDamageByEntityEvent) event;
             final Entity damager = target.getDamager();
             if (damager instanceof Player) {
-                String playerName = ((Player) entity).getName();
+                String playerName = ((Player) damager).getName();
                 if (config.isDead(playerName)) {
                     event.setCancelled(true);
                 }
@@ -502,7 +501,13 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         } else {
             debugInfo("  softy (" + player.getWorld().getName() + ")");
         }
-        // hey jf - dump rankings
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        // just dump the info through the command handler even though it's a hack
+        goInfo(player);
     }
 
     @EventHandler(ignoreCancelled = true)
