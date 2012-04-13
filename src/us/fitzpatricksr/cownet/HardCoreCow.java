@@ -29,16 +29,14 @@ import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import us.fitzpatricksr.cownet.hardcore.HardCoreLog;
 import us.fitzpatricksr.cownet.hardcore.PlayerState;
 import us.fitzpatricksr.cownet.utils.CowNetConfig;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
 import us.fitzpatricksr.cownet.utils.CowZombeControl;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -61,7 +59,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     private static final int REAPER_FREQUENCY = 20 * 30; // 30 seconds
     private HardCoreState config;
     private HardCoreLog logFile;
-    private String worldName = "HardCore";
+    private String hardCoreWorldNames = "HardCore";
     private int safeDistance = 10;
     private MultiverseCore mvPlugin;
     private Difficulty difficulty = Difficulty.HARD;
@@ -89,7 +87,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     protected void reload() {
         if (mvPlugin != null) mvPlugin.decrementPluginCount();
         try {
-            worldName = getConfigString("worldname", worldName);
+            hardCoreWorldNames = getConfigString("worldname", hardCoreWorldNames);
             safeDistance = getConfigInt("safedistance", safeDistance);
             PlayerState.liveTimeout = getConfigLong("livetimeout", PlayerState.liveTimeout);
             PlayerState.deathDuration = getConfigLong("deathduration", PlayerState.deathDuration);
@@ -106,7 +104,10 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 //TODO: hey jf - there needs to be a way to do a teardown on disable.
                 mvPlugin.incrementPluginCount();
             }
-            logInfo("worldname:" + worldName);
+            logInfo("" + getHardCoreWorldNames().length + " hardcore worlds found");
+            for (String wn : getHardCoreWorldNames()) {
+                logInfo("  worldname:" + wn);
+            }
             logInfo("safeDistance:" + safeDistance);
             logInfo("liveTimeout:" + PlayerState.liveTimeout);
             logInfo("deathDuration:" + PlayerState.deathDuration);
@@ -135,7 +136,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     protected String getHelpString(CommandSender player) {
         PlayerState ps = config.getPlayerState(player.getName());
         long timeOut = (ps != null) ? ps.getSecondsTillTimeout() : PlayerState.deathDuration;
-        return "usage: hardcore (go | info | stats | revive <player> | regen)  " +
+        return "usage: hardcore (<worldname> | info | stats | revive <player> | regen)  " +
                 "HardCore is played with no mods.  You're on your own.  " +
                 "Type /HardCore (or /hc) to enter and exit HardCore world.  " +
                 "The leave, you must be close to the spawn point.  " +
@@ -175,15 +176,15 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     protected boolean handleCommand(Player player, Command cmd, String[] args) {
         // handle commands that operate on the player who issued the command
         if (args.length == 0) {
-            return goHardCore(player);
-        } else if ((args.length == 1) && ("go".equalsIgnoreCase((args[0])))) {
-            return goHardCore(player);
+            return goHardCore(player, null);
+        } else if ((args.length == 1) && (isHardCoreWorld(args[0]))) {
+            return goHardCore(player, args[0]);
         }
         return false;
     }
 
-    private boolean goHardCore(Player player) {
-        if (isHardCoreWorld(player.getWorld())) {
+    private boolean goHardCore(Player player, String worldName) {
+        if (isHardCoreWorld(player.getWorld()) && (worldName == null)) {
             //Player is on HARD CORE world already and wants to leave.
             //if they are close to spawn we will rescue them
             World world = player.getWorld();
@@ -199,8 +200,9 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             }
         } else {
             // player is in some other world and wants to go HARD CORE
+            if (worldName == null) worldName = getHardCoreWorldNames()[0];
             MVWorldManager mgr = mvPlugin.getMVWorldManager();
-            if (!mgr.isMVWorld(worldName) && !config.generateNewWorld()) {
+            if (!mgr.isMVWorld(worldName) && !config.generateNewWorld(worldName)) {
                 //this is an error.  Error message sent to console already.
                 player.sendMessage("Something is wrong with HARD CORE.  You can't be transported at the moment.");
                 return true;
@@ -255,9 +257,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         } else {
             player.sendMessage("You are not in the HARD CORE game.  Type /hc and do something to enter.");
         }
-        player.sendMessage("  World: " + worldName);
-        player.sendMessage("  Created: " + config.getCreationDate());
-
+        player.sendMessage("HARE CORE worlds: " + hardCoreWorldNames);
         player.sendMessage("  --- HARD CORE Rankings ---");
         player.sendMessage("  Name  - Deaths TimeOn Placed Broken Kills LastActive");
         for (PlayerState p : config.getRankedPlayers()) {
@@ -279,12 +279,9 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             player.sendMessage("Sorry, you're not HARD CORE enough.  Come back when you're more HARD CORE.");
             return true;
         }
-        if (config.generateNewWorld()) {
-            player.sendMessage(worldName + " has been regenerated HARDer and more CORE than ever.");
-            logFile.log(worldName + " regenerated");
-        } else {
-            player.sendMessage(worldName + " is too HARD CORE to be regenerated.");
-        }
+        config.generateNewWorlds();
+        player.sendMessage("The HARD CORE worlds have been regenerated HARDer and more CORE than ever.");
+        logFile.log(hardCoreWorldNames + " regenerated");
         return true;
     }
 
@@ -327,7 +324,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 CowZombeControl.setAllowMods(player, false);
             }
             config.playerEnteredHardCore(player.getName());
-            logFile.log(player.getName() + " entered " + worldName + "  op = ");
+            logFile.log(player.getName() + " entered " + player.getWorld().getName() + "  op = " + player.isOp());
         } else if (isHardCoreWorld(fromWorld)) {
             // teleported from hardcore
             player.setAllowFlight(true);
@@ -338,7 +335,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 player.setOp(config.wasOp(player.getName()));
             }
             config.playerLeftHardCore(player.getName());
-            logFile.log(player.getName() + " left " + worldName);
+            logFile.log(player.getName() + " left " + fromWorld);
         }
     }
 
@@ -407,9 +404,10 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
         if (event.isCancelled()) return;
-        if (isHardCoreWorld(event.getPlayer().getWorld())) {
+        World world = event.getPlayer().getWorld();
+        if (isHardCoreWorld(world)) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage("Can't change game modes.  " + worldName + " is HARD CORE.");
+            event.getPlayer().sendMessage("Can't change game modes.  " + world.getName() + " is HARD CORE.");
         }
     }
 
@@ -493,19 +491,18 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerLogin(PlayerLoginEvent event) {
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        debugInfo("onPlayerLogin: " + player.getName());
+        debugInfo("onPlayerJoin: " + player.getName());
         if (isHardCoreWorld(player.getWorld())) {
             config.playerEnteredHardCore(player.getName());
             debugInfo("  hardcore");
         } else {
             debugInfo("  softy (" + player.getWorld().getName() + ")");
         }
-    }
-
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
         // just dump the info through the command handler even though it's a hack
         goInfo(player);
     }
@@ -520,40 +517,20 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     private boolean isHardCoreWorld(World w) {
-        return worldName.equalsIgnoreCase(w.getName())
-                || worldName.contains(w.getName().toLowerCase());
+        return isHardCoreWorld(w.getName());
+    }
+
+    private boolean isHardCoreWorld(String worldName) {
+        return hardCoreWorldNames.toLowerCase().contains(worldName.toLowerCase());
+    }
+
+    private String[] getHardCoreWorldNames() {
+        return hardCoreWorldNames.split(",");
     }
 
     //
     // Persistent state methods (ex. live vs. dead)
     //
-
-    private class HardCoreLog extends CowNetConfig {
-        private PrintWriter log;
-        private String nameRoot;
-
-        public HardCoreLog(JavaPlugin plugin, String name) throws IOException {
-            super(plugin);
-            nameRoot = name;
-        }
-
-        protected String getFileName() {
-            return nameRoot + "-" + new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + ".txt";
-        }
-
-        public void log(String message) {
-            try {
-                log = new PrintWriter(new BufferedWriter(new FileWriter(getConfigFile(), true)));
-                String timeStamp = dateFormat.format(new Date());
-                log.println("[" + timeStamp + "] " + message);
-                log.flush();
-                log.close();
-            } catch (Exception e) {
-                //if we can't write log file, whatever
-                e.printStackTrace();
-            }
-        }
-    }
 
     /*
        Configuration looks like this:
@@ -783,17 +760,27 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 // if the last live player was removed, regen the world
                 getPlugin().getServer().getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
                     public void run() {
-                        generateNewWorld();
+                        generateNewWorlds();
                         resetWorldState();
-                        getPlugin().getServer().broadcastMessage("Seems like " + worldName + " was too HARD CORE.  " +
-                                "It's been regenerated to be a bit more fluffy for you softies.");
+                        getPlugin().getServer().broadcastMessage("Seems like things were too HARD CORE.  " +
+                                "The HARD CORE worlds have been regenerated to be a bit more fluffy for you softies.");
                     }// end of run
                 }, 40);
             }
         }
 
-        private boolean generateNewWorld() {
-            if (regenIsAlreadyScheduled) return true;
+        private void generateNewWorlds() {
+            for (String worldName : getHardCoreWorldNames()) {
+                generateNewWorld(worldName);
+            }
+        }
+
+        private boolean generateNewWorld(String worldName) {
+            logInfo("generateNewWorld " + worldName);
+            if (regenIsAlreadyScheduled) {
+                logInfo("generateNewWorld " + worldName + " aborted.  Regen already in progress.");
+                return true;
+            }
             try {
                 regenIsAlreadyScheduled = true;
                 MVWorldManager mgr = mvPlugin.getMVWorldManager();
@@ -829,7 +816,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
 
         private void debug(String msg) {
             debugInfo(msg);
-            debugInfo("  World: " + worldName);
+            debugInfo("  World: " + hardCoreWorldNames);
             debugInfo("  Created: " + creationDate);
             debugInfo("  Players: ");
             for (String name : allPlayers.keySet()) {
