@@ -54,9 +54,11 @@ hardcore:
   enable: true
   debug: false
   worldname: HardCoreCow
-  safedistance: 5
+  safedistance: 50
   livetimeout: 518400
   deathDuration: 60
   timeoutgrowth: 2.0
   difficulty: HARD
   monsterBoost: 1.0
+  allowFly: false
+  allowXRay: false

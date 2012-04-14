@@ -64,6 +64,8 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     private MultiverseCore mvPlugin;
     private Difficulty difficulty = Difficulty.HARD;
     private double monsterBoost = 1.0d;
+    private boolean allowFly = false;
+    private boolean allowXRay = false;
 
     public HardCoreCow(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
@@ -94,6 +96,8 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             PlayerState.timeOutGrowth = getConfigDouble("timeoutgrowth", PlayerState.timeOutGrowth);
             difficulty = Difficulty.valueOf(getConfigString("dificulty", difficulty.toString()));
             monsterBoost = Double.valueOf(getConfigString("monsterBoost", Double.toString(monsterBoost)));
+            allowFly = getConfigBoolean("allowFly", allowFly);
+            allowXRay = getConfigBoolean("allowXRay", allowXRay);
             config = new HardCoreState(getPlugin(), getTrigger() + ".yml");
             config.loadConfig();
             mvPlugin = (MultiverseCore) getPlugin().getServer().getPluginManager().getPlugin("Multiverse-Core");
@@ -101,7 +105,6 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 logInfo("Could not find Multiverse-Core plugin.  Disabling self");
                 disable();
             } else {
-                //TODO: hey jf - there needs to be a way to do a teardown on disable.
                 mvPlugin.incrementPluginCount();
             }
             logInfo("" + getHardCoreWorldNames().length + " hardcore worlds found");
@@ -195,6 +198,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 World exitPlace = mvPlugin.getMVWorldManager().getSpawnWorld().getCBWorld();
                 SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
                 teleporter.safelyTeleport(null, player, exitPlace.getSpawnLocation(), true);
+                player.sendMessage("You must logoff and log into the server to reenable FlyMod.");
             } else {
                 player.sendMessage("You need to make a HARD CORE effort to get closer to the spawn point.");
             }
@@ -321,7 +325,11 @@ public class HardCoreCow extends CowNetThingy implements Listener {
                 player.setOp(false);
                 player.setAllowFlight(false);
                 player.setGameMode(GameMode.SURVIVAL);
-                CowZombeControl.setAllowMods(player, false);
+                CowZombeControl.setAllowFly(player, allowFly);
+                CowZombeControl.setAllowMap(player, allowXRay);
+                CowZombeControl.setAllowXray(player, allowXRay);
+                CowZombeControl.setAllowNoClip(player, allowXRay);
+                CowZombeControl.setAllowCheat(player, allowXRay);
             }
             config.playerEnteredHardCore(player.getName());
             logFile.log(player.getName() + " entered " + player.getWorld().getName() + "  op = " + player.isOp());

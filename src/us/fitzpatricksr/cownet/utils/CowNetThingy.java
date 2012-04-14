@@ -42,9 +42,13 @@ public class CowNetThingy implements CommandExecutor {
                 sender.sendMessage(getHelpString(sender));
                 return true;
             } else if ("reload".equalsIgnoreCase(args[0])) {
+                getPlugin().reloadConfig();
                 reload();
                 sender.sendMessage("Reloaded...");
                 return true;
+            } else if ("debug".equalsIgnoreCase(args[0])) {
+                isDebug = !isDebug;
+                sender.sendMessage("Debug = " + isDebug);
             }
         }
         if (sender instanceof Player) {
