@@ -139,7 +139,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     protected String getHelpString(CommandSender player) {
         PlayerState ps = config.getPlayerState(player.getName());
         long timeOut = (ps != null) ? ps.getSecondsTillTimeout() : PlayerState.deathDuration;
-        return "usage: hardcore (<worldname> | info | stats | revive <player> | regen)  " +
+        return "usage: hardcore (<worldname> | info | stats | revive <player> | regen | twiddle <params>)  " +
                 "HardCore is played with no mods.  You're on your own.  " +
                 "Type /HardCore (or /hc) to enter and exit HardCore world.  " +
                 "The leave, you must be close to the spawn point.  " +
@@ -170,6 +170,10 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         } else if (args.length == 2) {
             if ("revive".equalsIgnoreCase(args[0])) {
                 return goRevive(sender, args[1]);
+            }
+        } else if (args.length == 3) {
+            if ("twiddle".equalsIgnoreCase(args[0])) {
+                return goTwiddle(sender, args[1], args[2]);
             }
         }
         return super.handleCommand(sender, cmd, args);
@@ -247,7 +251,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     private boolean goInfo(CommandSender player) {
-        if (!hasPermissions(player, "info")) {
+        if (!hasPermissionsOrOp(player, "info")) {
             player.sendMessage("Sorry, you don't have permission.");
             return true;
         }
@@ -279,7 +283,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     private boolean goRegen(CommandSender player) {
-        if (!hasPermissions(player, "regen")) {
+        if (!hasPermissionsOrOp(player, "regen")) {
             player.sendMessage("Sorry, you're not HARD CORE enough.  Come back when you're more HARD CORE.");
             return true;
         }
@@ -290,7 +294,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     private boolean goRevive(CommandSender player, String arg) {
-        if (!hasPermissions(player, "revive")) {
+        if (!hasPermissionsOrOp(player, "revive")) {
             player.sendMessage("Sorry, you're not HARD CORE enough to revive other players.");
         } else if (!config.isDead(arg)) {
             player.sendMessage(arg + " is still going at it HARD CORE and isn't dead.");
@@ -298,6 +302,36 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             config.markPlayerUndead(arg);
             player.sendMessage(arg + " has been revived, be is still not as HARD CORE as you.");
             logFile.log(arg + " revived by " + player.getName());
+        }
+        return true;
+    }
+
+    private boolean goTwiddle(CommandSender player, String playerName, String param) {
+        if (!hasPermissionsOrOp(player, "twiddle")) {
+            PlayerState ps = config.getPlayerState(playerName);
+            if (ps == null) {
+                player.sendMessage(playerName + " is not in the game.");
+            } else {
+                String option = param.substring(0, 2).toLowerCase();
+                long arg = Long.parseLong(param.substring(2).toLowerCase());
+                if ("d:".equals(option)) {
+                    ps.deathCount = (int) arg;
+                } else if ("t:".equals(option)) {
+                    ps.timeInGame = arg;
+                } else if ("p:".equals(option)) {
+                    ps.blocksPlaced = arg;
+                } else if ("b:".equals(option)) {
+                    ps.blocksBroken = arg;
+                } else if ("k:".equals(option)) {
+                    ps.mobsKilled = arg;
+                } else if ("l:".equals(option)) {
+                    ps.lastActivity = arg;
+                } else {
+                    player.sendMessage("Could not set property " + option + " on player " + playerName);
+                }
+            }
+        } else {
+            player.sendMessage("You don't have permissions to set player properties");
         }
         return true;
     }

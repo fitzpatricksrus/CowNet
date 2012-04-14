@@ -14,7 +14,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
-import org.bukkit.event.painting.PaintingBreakEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
@@ -81,7 +80,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
         final Entity smacked = event.getEntity();
         if (smacked instanceof Player) {
@@ -104,7 +103,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onEntityTarget(EntityTargetEvent event) {
         if ((event.getTarget() instanceof Player) && isHidden((Player) event.getTarget())) {
             event.setCancelled(true);
@@ -120,24 +119,18 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOW)
-    public void onPlayerJoinEarly(PlayerJoinEvent event) {
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onPlayer(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (hasPermissions(player, "joinHidden", false)) {
+        if (hasPermissions(player, "joinHidden")) {
             hidePlayer(player, false);
             player.sendMessage("Joining hidden...");
-        }
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onPlayerJoinLate(PlayerJoinEvent event) {
-        if (isHidden(event.getPlayer())) {
             event.setJoinMessage(null);
         }
         hideInvisiblePlayersFrom(event.getPlayer());
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
     public void onPlayerChat(PlayerChatEvent event) {
         if (isHidden(event.getPlayer())) {
             event.setCancelled(true);
@@ -145,7 +138,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onBucketFill(PlayerBucketFillEvent event) {
         if (isHidden(event.getPlayer())) {
             event.setCancelled(true);
@@ -153,7 +146,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (isHidden(event.getPlayer())) {
             event.setCancelled(true);
@@ -161,7 +154,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onPlayerPickupItem(PlayerPickupItemEvent event) {
         if (isHidden(event.getPlayer())) {
             event.setCancelled(true);
@@ -169,7 +162,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
         if (isHidden(event.getPlayer())) {
             unhidePlayer(event.getPlayer(), false);
@@ -177,7 +170,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(ignoreCancelled = true)
     public void onShear(PlayerShearEntityEvent event) {
         if (isHidden(event.getPlayer())) {
             event.setCancelled(true);
@@ -185,12 +178,9 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onWorldChange(PlayerChangedWorldEvent event) {
-    }
-
-    @EventHandler
-    public void badReview(PaintingBreakEvent criticism) {
+        hideInvisiblePlayersFrom(event.getPlayer());
     }
 
     public void hidePlayer(Player p, boolean poof) {
@@ -200,7 +190,7 @@ public class Hide extends CowNetThingy implements Listener {
         if (poof) smokeScreenEffect(p.getLocation());
         for (Player other : w.getPlayers()) {
             if (!other.equals(p)) {
-                if (!hasPermissions(other, "seesInvisible", false)) {
+                if (!hasPermissions(other, "seesInvisible")) {
                     debugInfo("Hiding " + p.getName() + " from " + other.getName());
                     if (other.canSee(p)) {
                         other.hidePlayer(p);
@@ -212,7 +202,7 @@ public class Hide extends CowNetThingy implements Listener {
     }
 
     public void hideInvisiblePlayersFrom(Player p) {
-        if (hasPermissions(p, "seesInvisible", false)) return;
+        if (hasPermissions(p, "seesInvisible")) return;
         for (Player other : invisiblePlayers.values()) {
             if (!other.equals(p)) {
                 debugInfo("Hiding " + other.getName() + " from " + p.getName());
