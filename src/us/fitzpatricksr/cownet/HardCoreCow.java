@@ -307,7 +307,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     private boolean goTwiddle(CommandSender player, String playerName, String param) {
-        if (!hasPermissionsOrOp(player, "twiddle")) {
+        if (hasPermissionsOrOp(player, "twiddle")) {
             PlayerState ps = config.getPlayerState(playerName);
             if (ps == null) {
                 player.sendMessage(playerName + " is not in the game.");
