@@ -233,7 +233,7 @@ public class Plots extends CowNetThingy {
 
         ApplicableRegionSet regions = regionManager.getApplicableRegions(player.getLocation());
         if (regions.size() == 0) {
-            player.sendMessage("This region is free to be claimed for " + getPurchaseFeeString(regionManager, player));
+            player.sendMessage("This region can be claimed for " + getPurchaseFeeString(regionManager, player));
             String moneyInPocket = getAvailableMoneyString(regionManager, player);
             if (moneyInPocket != null) {
                 player.sendMessage("   You have " + moneyInPocket);
