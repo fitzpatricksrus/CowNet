@@ -444,6 +444,20 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true)
+    public void onPlayerDropItem(PlayerDropItemEvent event) {
+        if (event.isCancelled()) return;
+        if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
+        String playerName = event.getPlayer().getName();
+        if (config.isDead(playerName)) {
+            debugInfo("Ghost event");
+            event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
+            event.setCancelled(true);
+        } else {
+            config.playerActivity(playerName);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
         if (event.isCancelled()) return;
         World world = event.getPlayer().getWorld();
