@@ -57,7 +57,7 @@ public class CowNetThingy implements CommandExecutor {
                 player.sendMessage("Sorry, you don't have permission");
                 return false;
             }
-            return handleCommand(sender, cmd, args);
+            return handleCommand(sender, cmd, args) || handleCommand(player, cmd, args);
         } else if (sender.getClass().getName().contains("Console")) {
             // commands from the console
             return handleCommand(sender, cmd, args);
@@ -165,10 +165,6 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     protected boolean handleCommand(CommandSender sender, Command cmd, String[] args) {
-        if (sender instanceof Player) {
-            return handleCommand((Player) sender, cmd, args);
-        } else {
-            return false;
-        }
+        return false;
     }
 }

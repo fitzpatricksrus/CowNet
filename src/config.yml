@@ -62,3 +62,6 @@ hardcore:
   monsterBoost: 1.0
   allowFly: false
   allowXRay: false
+
+hungergames:
+  enable: true

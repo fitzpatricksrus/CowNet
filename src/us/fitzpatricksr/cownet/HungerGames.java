@@ -2,6 +2,8 @@ package us.fitzpatricksr.cownet;
 
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
+import org.bukkit.Difficulty;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.WorldType;
 import org.bukkit.command.Command;
@@ -13,40 +15,54 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.server.PluginDisableEvent;
-import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 /*
-    enter "lobby" to invite people
-    when enough people have entered the lobby announce 10 seconds
-    teleported and games begin
-    random items around teleport
-    no reg health
-    goes until all dead
-    people not in games can watch and donate 1 item per minute
-    cannon when people die
-    last person to leave wins
-    persistant stats
-    if you join the game late, you get health = the weakest player
+    the game world is off limits until a game starts
+    the first person to enter starts the gathering
+    gathering continues for a specified period of time
+    all players who entered after that time are teleported in and their inventory cleared.
+    after the last player dies the world is regenerated.
 
     games have 3 states
-       unstarted - nothing in progress
+       ended - nothing in progress
        gathering - someone is waiting for the games to start
-       started - the games are underway
+       inprogress - the games are underway
+
+    for each person
+       enum { player, deadPlayer, sponsor } gameState
+       boolean lastTribute
  */
 public class HungerGames extends CowNetThingy implements Listener {
+    private static final int GAME_WATCHER_FREQUENCY = 20 * 1; // 30 seconds
+
+    private static enum GamePhase {
+        ENDED,
+        GATHERING,
+        IN_PROGRESS
+    }
+
+    private static enum PlayerState {
+        TRIBUTE,
+        DEAD,
+        SPONSOR
+    }
+
     private String gameWorldName = "HungerGames";
-    private int safeDistance = 10;
-    private int maxDistance = 1000;
+    private int arenaSize = 1000;
     private MultiverseCore mvPlugin;
     private boolean allowFly = false;
     private boolean allowXRay = false;
@@ -54,12 +70,24 @@ public class HungerGames extends CowNetThingy implements Listener {
     private long timeBetweenGifts = 1 * 60 * 1000;
     private int minTributes = 3;
 
+    private long firstPlayerJoinTime = 0;
+    private HashMap<Player, PlayerInfo> gameInfo = new HashMap<Player, PlayerInfo>();
+
     public HungerGames(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
         if (isEnabled()) {
             reload();
             PluginManager pm = plugin.getServer().getPluginManager();
             pm.registerEvents(this, plugin);
+            getPlugin().getServer().getScheduler().scheduleAsyncRepeatingTask(
+                    getPlugin(),
+                    new Runnable() {
+                        public void run() {
+                            goGameWatcher();
+                        }
+                    },
+                    GAME_WATCHER_FREQUENCY,
+                    GAME_WATCHER_FREQUENCY);
         }
     }
 
@@ -67,8 +95,7 @@ public class HungerGames extends CowNetThingy implements Listener {
     protected void reload() {
         if (mvPlugin != null) mvPlugin.decrementPluginCount();
         gameWorldName = getConfigString("worldname", gameWorldName);
-        safeDistance = getConfigInt("safedistance", safeDistance);
-        maxDistance = getConfigInt("maxDistance", maxDistance);
+        arenaSize = getConfigInt("arenaSize", arenaSize);
         allowFly = getConfigBoolean("allowFly", allowFly);
         allowXRay = getConfigBoolean("allowXRay", allowXRay);
         timeToGather = getConfigLong("timeToGather", timeToGather);
@@ -82,8 +109,7 @@ public class HungerGames extends CowNetThingy implements Listener {
             mvPlugin.incrementPluginCount();
         }
         logInfo("gameWorldName:" + gameWorldName);
-        logInfo("safeDistance:" + safeDistance);
-        logInfo("maxDistance:" + maxDistance);
+        logInfo("arenaSize:" + arenaSize);
         logInfo("allowFly:" + allowFly);
         logInfo("timeToGather:" + timeToGather);
         logInfo("timeBetweenGifts:" + timeBetweenGifts);
@@ -99,7 +125,7 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @Override
     protected String getHelpString(CommandSender player) {
-        return "usage: /hungergames or /hg";
+        return "usage: /hungergames or /hg   info | quit | donate";
     }
 
     @Override
@@ -109,20 +135,51 @@ public class HungerGames extends CowNetThingy implements Listener {
         //  info
         //  donate <player> <item>
         //  --- empty takes you to the hardcore world
+        if (args.length == 1 && (
+                "info".equalsIgnoreCase(args[0])
+                        || "list".equalsIgnoreCase(args[0])
+                        || "stats".equalsIgnoreCase(args[0]))) {
+            return goInfo(sender);
+        }
+        return false;
+    }
+
+    protected boolean handleCommand(Player sender, Command cmd, String[] args) {
         if (args.length == 1) {
-            if ("info".equalsIgnoreCase(args[0])
-                    || "list".equalsIgnoreCase(args[0])
-                    || "stats".equalsIgnoreCase(args[0])) {
-                return goInfo(sender);
-            } else if ("quit".equalsIgnoreCase(args[0])) {
+            if ("quit".equalsIgnoreCase(args[0])) {
                 return goQuit(sender);
             }
         } else if (args.length == 2) {
             if ("donate".equalsIgnoreCase(args[0])) {
-                return goDonate(sender, args[1]);
+                return goDonate(sender, args[0], args[1]);
             }
         }
-        return super.handleCommand(sender, cmd, args);
+        return false;
+    }
+
+    private boolean goInfo(CommandSender sender) {
+        if (!hasPermissions(sender, "info")) {
+            sender.sendMessage("You don't have permission.");
+        } else {
+            sender.sendMessage("Game stats:");
+            for (Player player : getPlugin().getServer().getOnlinePlayers()) {
+                PlayerInfo info = getPlayerInfo(player);
+                sender.sendMessage("  " + info);
+            }
+        }
+        return true;
+    }
+
+    private boolean goQuit(Player player) {
+        if (playerIsInGame(player)) {
+            removePlayerFromGame(player);
+        }
+        return true;
+    }
+
+    private boolean goDonate(Player sender, String tributeName, String itemName) {
+        //todo hey jf - code this routine.
+        return true;
     }
 
 
@@ -130,102 +187,90 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
-        handleWorldChange(event.getPlayer(), event.getFrom(), event.getPlayer().getWorld());
+        // do we need this or is it also a teleport event
+//        handleWorldChange(event.getPlayer(), event.getFrom(), event.getPlayer().getWorld());
     }
 
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
-        handleWorldChange(event.getPlayer(), event.getTo().getWorld(), event.getFrom().getWorld());
+        // nobody can go to the game world unless a game is underway
+        if (isGameWorld(event.getTo().getWorld()) && (getGameState() != GamePhase.IN_PROGRESS)) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage("You can't teleport to the arena.  You must become a tribute using /hg");
+        } else if (playerIsInGame(event.getPlayer())) {
+            // tributes can't be teleported.  Sorry.
+            event.setCancelled(true);
+        }
     }
 
-    private void handleWorldChange(Player p, World fromWorld, World toWorld) {
-        if (isGameWorld(toWorld)) {
-            //unstarted - start the reaping timer and make announcements
-            //gathering - player is added/removed from the games
-            //started - you're a sponsor only
-        } else if (isGameWorld(toWorld)) {
-            // if it's a player who left this world, they quit, so there may be a winner
-            //   restore inventory if needed
-        } else {
-            // to and from non-game worlds, we don't care
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPlayerMoved(PlayerMoveEvent event) {
+        if (playerIsInGame(event.getPlayer()) && !isInArena(event.getTo())) {
+            event.setCancelled(true);
         }
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onPlayerMoved(PlayerMoveEvent event) {
-        // if sponsor, you can't do anything
-        Player player = event.getPlayer();
-        if (!playerIsInGame(player)) return;
-        // if in the game, keep within game bounds.
-    }
-
-    @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
+        if (getGameState() != GamePhase.IN_PROGRESS) return;
         // if sponsor, you can't do anything
         Player player = event.getPlayer();
-        if (!playerIsInGame(player)) {
+        if (!playerIsInGame(player) && isInArena(player.getLocation())) {
             event.setCancelled(true);
             player.sendMessage("You can't interfere with the game directly.");
-        } else {
-
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
+        if (getGameState() != GamePhase.IN_PROGRESS) return;
         // if sponsor, you can't do anything
         Player player = event.getPlayer();
-        if (!playerIsInGame(player)) {
+        if (!playerIsInGame(player) && isInArena(player.getLocation())) {
             event.setCancelled(true);
-            player.sendMessage("YYou can't interfere with the game directly.");
-        } else {
-
+            player.sendMessage("You can't interfere with the game directly.");
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
+        if (getGameState() != GamePhase.IN_PROGRESS) return;
         // if sponsor, you can't do anything
         Player player = event.getPlayer();
-        if (!playerIsInGame(player)) {
+        if (!playerIsInGame(player) && isInArena(player.getLocation())) {
             event.setCancelled(true);
             player.sendMessage("You can't interfere with the game directly.");
-        } else {
-
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPickupItem(PlayerPickupItemEvent event) {
+        if (getGameState() != GamePhase.IN_PROGRESS) return;
         Player player = event.getPlayer();
-        if (!playerIsInGame(player)) {
+        if (!playerIsInGame(player) && isInArena(player.getLocation())) {
             event.setCancelled(true);
             player.sendMessage("You can't interfere with the game directly.");
-        } else {
-            //
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerDropItem(PlayerDropItemEvent event) {
+        if (getGameState() != GamePhase.IN_PROGRESS) return;
         Player player = event.getPlayer();
-        if (!playerIsInGame(player)) {
-            if (playerIsSponsor(player)) {
-                if (System.currentTimeMillis() - timeOfLastSponsorship(player) <= timeBetweenGifts) {
-                    event.setCancelled(true);
-                    player.sendMessage("You can only give gifts once every " + timeBetweenGifts / 1000 / 60 + " minutes.");
-                }
-            } else {
+        if (playerIsOutOfGame(player)) {
+            event.setCancelled(true);
+            player.sendMessage("You are out of the game and can't sponsor other players.");
+        } else if (playerIsSponsor(player)) {
+            if (!dropGiftToTribute(player)) {
                 event.setCancelled(true);
-                player.sendMessage("As a dead player, you can't interfere with the game directly.");
+                player.sendMessage("You can only give gifts once every " + timeBetweenGifts / 1000 / 60 + " minutes.");
             }
-        } else {
-            // players who are in the game can drop whatever they want
         }
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
+        if (getGameState() != GamePhase.IN_PROGRESS) return;
         Player player = event.getPlayer();
         if (playerIsInGame(player)) {
             event.setCancelled(true);
@@ -235,58 +280,82 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
+        if (getGameState() != GamePhase.IN_PROGRESS) return;
         // if sponsor, you can't do anything
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onPlayerDeath(EntityDeathEvent event) {
-        // mark player a non-sponsor and fire the cannon
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onEntityTarget(EntityTargetEvent event) {
-        // if sponsor, they can't be targeted
-        Entity entity = event.getTarget();
-        if (!isGameWorld(entity.getWorld())) return;
-        if (event.getEntity() instanceof Player) {
-            Player player = (Player) event.getEntity();
+        Entity entity = event.getEntity();
+        if (entity instanceof Player) {
+            // make sure sponsors can't be damaged
+            Player player = (Player) entity;
             if (!playerIsInGame(player)) {
                 event.setCancelled(true);
+            }
+        } else if (event instanceof EntityDamageByEntityEvent) {
+            // make user non-players can't damage things in the arena
+            final EntityDamageByEntityEvent target = (EntityDamageByEntityEvent) event;
+            final Entity damager = target.getDamager();
+            if (damager instanceof Player) {
+                Player player = ((Player) damager);
+                if (!playerIsInGame(player) && isInArena(player.getLocation())) {
+                    event.setCancelled(true);
+                }
             }
         }
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onVehicleEntityCollision(VehicleEntityCollisionEvent event) {
-        // if sponsor, you can't do anything
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        if (getGameState() != GamePhase.IN_PROGRESS) return;
+        if (playerIsInGame(event.getEntity())) {
+            removePlayerFromGame(event.getEntity());
+        }
     }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onEntityTarget(EntityTargetEvent event) {
+        if (getGameState() != GamePhase.IN_PROGRESS) return;
+        // if sponsor, they can't be targeted
+        if (event.getTarget() instanceof Player) {
+            Player player = (Player) event.getTarget();
+            if (isInArena(player) && !playerIsInGame(player)) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+/*    @EventHandler(ignoreCancelled = true)
+    public void onVehicleEntityCollision(VehicleEntityCollisionEvent event) {
+        if (getGameState() != GamePhase.IN_PROGRESS) return;
+    } */
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
-        // tell them about the games
+        if (getGameState() != GamePhase.IN_PROGRESS) return;
+        goInfo(event.getPlayer());
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
-        // if in the games, there may be a winner
-        // restore inventory
+        if (getGameState() != GamePhase.IN_PROGRESS) return;
+        if (playerIsInGame(event.getPlayer())) {
+            removePlayerFromGame(event.getPlayer());
+        }
     }
 
     // -- utility methods
-    private long timeOfLastSponsorship(Player player) {
-        return 0;
+    private boolean dropGiftToTribute(Player player) {
+        return getPlayerInfo(player).dropGiftToTribute();
     }
 
     private boolean playerIsInGame(Player p) {
-        return false;
+        return getPlayerInfo(p).isInGame();
     }
 
     private boolean playerIsSponsor(Player p) {
-        return false;
+        return getPlayerInfo(p).isSponsor();
     }
 
     private boolean playerIsOutOfGame(Player p) {
-        return false;
+        return getPlayerInfo(p).isOutOfGame();
     }
 
     private boolean isGameWorld(World w) {
@@ -295,6 +364,82 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     private boolean isGameWorld(String worldName) {
         return gameWorldName.equalsIgnoreCase(worldName);
+    }
+
+    private boolean isInArena(Player player) {
+        return isInArena(player.getLocation());
+    }
+
+    private boolean isInArena(Location loc) {
+        World w = loc.getWorld();
+        if (isGameWorld(w)) {
+            Location spawnLoc = w.getSpawnLocation();
+            double distance = spawnLoc.distance(loc);
+            return distance < arenaSize;
+        } else {
+            return false;
+        }
+    }
+
+    // -- player list support
+    private List<PlayerInfo> getPlayersInGame() {
+        LinkedList<PlayerInfo> result = new LinkedList<PlayerInfo>();
+        for (PlayerInfo p : gameInfo.values()) {
+            if (p.isInGame()) {
+                result.add(p);
+            }
+        }
+        return result;
+    }
+
+    private void removePlayerFromGame(Player player) {
+        if (playerIsInGame(player)) {
+            player.getWorld().strikeLightningEffect(player.getLocation());
+            player.getWorld().strikeLightningEffect(player.getLocation());
+            player.setHealth(0);
+            getPlayerInfo(player).setIsOutOfGame();
+            List<PlayerInfo> livePlayers = getPlayersInGame();
+            if (livePlayers.size() < 2) {
+                PlayerInfo winner = livePlayers.get(0);
+                for (Player p : getPlugin().getServer().getOnlinePlayers()) {
+                    p.sendMessage("" + winner.getPlayer().getDisplayName() + " is the winner of the games.");
+                }
+                gameInfo.clear();
+            }
+        }
+    }
+
+    private PlayerInfo getPlayerInfo(Player p) {
+        PlayerInfo info = gameInfo.get(p);
+        if (info == null) {
+            info = new PlayerInfo(p, PlayerState.SPONSOR);
+            gameInfo.put(p, info);
+        }
+        return info;
+    }
+
+    private GamePhase getGameState() {
+        List<PlayerInfo> livePlayers = getPlayersInGame();
+        if (livePlayers.size() == 0) {
+            firstPlayerJoinTime = 0;
+            return GamePhase.ENDED;
+        } else if (System.currentTimeMillis() - firstPlayerJoinTime > timeToGather && livePlayers.size() > 2) {
+            return GamePhase.IN_PROGRESS;
+        } else {
+            return GamePhase.GATHERING;
+        }
+    }
+
+    private void goGameWatcher() {
+        //todo hey jf - code this routine
+        GamePhase phase = getGameState();
+        if (phase == GamePhase.IN_PROGRESS) {
+            //if there are people that are not in the arena, teleport them there
+        } else if (phase == GamePhase.GATHERING) {
+            //if we don't have enough people, say so and extend gathering time if needed
+            //if less than 10 seconds, do countdown.
+        }
+        // run every second
     }
 
     private boolean regenIsAlreadyScheduled = false;
@@ -323,10 +468,9 @@ public class HungerGames extends CowNetThingy implements Listener {
                     true,
                     null,
                     true)) {
-                config.resetWorldState();
                 World w = mgr.getMVWorld(worldName).getCBWorld();
-                w.setDifficulty(difficulty);
-                w.setTicksPerMonsterSpawns((int) (w.getTicksPerMonsterSpawns() * monsterBoost) + 1);
+                w.setDifficulty(Difficulty.HARD);
+//                w.setTicksPerMonsterSpawns((int) (w.getTicksPerMonsterSpawns() * monsterBoost) + 1);
                 logInfo(worldName + " has been regenerated.");
                 return true;
             } else {
@@ -338,6 +482,58 @@ public class HungerGames extends CowNetThingy implements Listener {
         }
     }
 
+    private class PlayerInfo {
+        private Player player;
+        private PlayerState state;
+        private long lastGiftTime = 0;
+
+        public PlayerInfo(Player player, PlayerState state) {
+            this.player = player;
+            this.state = state;
+        }
+
+        public Player getPlayer() {
+            return player;
+        }
+
+        public boolean dropGiftToTribute() {
+            if (System.currentTimeMillis() - lastGiftTime <= timeBetweenGifts) {
+                return false;
+            } else {
+                lastGiftTime = System.currentTimeMillis();
+                return true;
+            }
+        }
+
+        public boolean isInGame() {
+            return state == PlayerState.TRIBUTE;
+        }
+
+        public void setIsInGame() {
+            state = PlayerState.TRIBUTE;
+        }
+
+        public boolean isSponsor() {
+            return state == PlayerState.SPONSOR;
+        }
+
+        public void setIsSponsor() {
+            state = PlayerState.SPONSOR;
+        }
+
+        public boolean isOutOfGame() {
+            return state == PlayerState.DEAD;
+        }
+
+        public void setIsOutOfGame() {
+            state = PlayerState.DEAD;
+        }
+
+        public String toString() {
+            //todo hey jf - do something here.  this is used for "info" command
+            return null;
+        }
+    }
 }
 
 

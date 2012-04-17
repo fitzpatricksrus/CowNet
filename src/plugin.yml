@@ -34,6 +34,10 @@ commands:
       aliases: [ hc ]
       description: Go to the Hard Core world.
       usage: Use "/hardcore help"
+  hungergames:
+      aliases: [ hg ]
+      description: Enter the games
+      usage: Use "/hungergames help"
 permissions:
     cownet.starve:
         description: Starve creatures around you

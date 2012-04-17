@@ -34,6 +34,7 @@ public class CowNetMod extends JavaPlugin {
             new Rank(this, COWNET, "rank");
             new Timber(this, COWNET, "timber");
             new HardCoreCow(this, COWNET, "hardcore");
+            new HungerGames(this, COWNET, "hungergames");
 //            new FlingPortal(this, COWNET, "flingportal");
 //            new Hide(this, COWNET, "Hide");
         } else {
