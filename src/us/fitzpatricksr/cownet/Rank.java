@@ -99,3 +99,14 @@ public class Rank extends CowNetThingy {
     }
 }
 
+/*
+            String params = new String();
+            for (String grp : group) {
+                params += grp + ",";
+            }
+    ConsoleCommandSender console = this.getServer().getConsoleSender();
+    this.getServer().dispatchCommand(console, "permissions player setgroup " + player + " " + params);
+
+
+
+ */
