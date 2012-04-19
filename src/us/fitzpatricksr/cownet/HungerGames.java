@@ -27,6 +27,7 @@ import org.bukkit.event.player.*;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.easymock.EasyMock;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
@@ -89,6 +90,10 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     private long firstPlayerJoinTime = 0;
     private HashMap<Player, PlayerInfo> gameInfo = new HashMap<Player, PlayerInfo>();
+
+    private HungerGames() {
+        // for testing only
+    }
 
     public HungerGames(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
@@ -192,6 +197,7 @@ public class HungerGames extends CowNetThingy implements Listener {
     private boolean goQuit(Player player) {
         if (playerIsInGame(player)) {
             removePlayerFromGame(player);
+            playPlayerDeathSound(player);
         }
         return true;
     }
@@ -212,7 +218,8 @@ public class HungerGames extends CowNetThingy implements Listener {
             broadcast("The games have been aborted because there weren't enough players.");
             resetPlayers();
         } else if (phase == GamePhase.GATHERING) {
-            broadcast("The games start in " + StringUtils.durationString(getTimeToGather()) + " seconds");
+            long timeToWait = getTimeToGather() / 1000;
+            broadcast("The games start in " + StringUtils.durationString(timeToWait) + " seconds");
         } else if (phase == GamePhase.IN_PROGRESS) {
             //if there are people that are not in the arena, teleport them there
             for (PlayerInfo playerInfo : getPlayersInGame()) {
@@ -352,6 +359,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         if (getGameState() != GamePhase.IN_PROGRESS) return;
         if (playerIsInGame(event.getEntity())) {
             removePlayerFromGame(event.getEntity());
+            playPlayerDeathSound(event.getEntity());
         }
     }
 
@@ -378,7 +386,13 @@ public class HungerGames extends CowNetThingy implements Listener {
         if (getGameState() != GamePhase.IN_PROGRESS) return;
         if (playerIsInGame(event.getPlayer())) {
             removePlayerFromGame(event.getPlayer());
+            playPlayerDeathSound(event.getPlayer());
         }
+    }
+
+    private void playPlayerDeathSound(Player player) {
+        player.getWorld().strikeLightningEffect(player.getLocation());
+        player.getWorld().strikeLightningEffect(player.getLocation());
     }
 
     // --------------------------------------------------------------
@@ -395,15 +409,15 @@ public class HungerGames extends CowNetThingy implements Listener {
     }
 
     private void addPlayerToGame(Player player) {
+        if (firstPlayerJoinTime == 0) {
+            firstPlayerJoinTime = System.currentTimeMillis();
+        }
         PlayerInfo info = getPlayerInfo(player);
         info.setIsInGame();
     }
 
     private void removePlayerFromGame(Player player) {
         if (playerIsInGame(player)) {
-            player.getWorld().strikeLightningEffect(player.getLocation());
-            player.getWorld().strikeLightningEffect(player.getLocation());
-            player.setHealth(0);
             getPlayerInfo(player).setIsOutOfGame();
         }
     }
@@ -422,7 +436,7 @@ public class HungerGames extends CowNetThingy implements Listener {
     }
 
     private long getTimeToGather() {
-        return Math.max(System.currentTimeMillis() - firstPlayerJoinTime, 0);
+        return Math.max(timeToGather - (System.currentTimeMillis() - firstPlayerJoinTime), 0);
     }
 
     private GamePhase getGameState() {
@@ -447,7 +461,7 @@ public class HungerGames extends CowNetThingy implements Listener {
             } else {
                 return GamePhase.IN_PROGRESS;
             }
-        } else if (System.currentTimeMillis() - firstPlayerJoinTime < timeToGather) {
+        } else if (getTimeToGather() > 0) {
             if (livePlayerCount == 0) {
                 firstPlayerJoinTime = 0; //puts us in the UNSTARTED list above
                 return GamePhase.UNSTARTED;
@@ -467,6 +481,40 @@ public class HungerGames extends CowNetThingy implements Listener {
                 return GamePhase.IN_PROGRESS;
             }
         }
+    }
+
+    private void testPlayerListSupport() {
+        List<PlayerInfo> infos = getPlayersInGame();
+        GamePhase phase = getGameState();
+        Player mockPlayer1 = EasyMock.createMock(Player.class);
+
+        //test gathering state
+        addPlayerToGame(mockPlayer1);
+        infos = getPlayersInGame();
+        phase = getGameState();
+
+        //test failure to gather enough people
+        firstPlayerJoinTime = 1;
+        phase = getGameState();
+        firstPlayerJoinTime = System.currentTimeMillis();
+
+        //test adding two people while gathering
+        Player mockPlayer2 = EasyMock.createMock(Player.class);
+        addPlayerToGame(mockPlayer2);
+        addPlayerToGame(mockPlayer1);
+        infos = getPlayersInGame();
+        phase = getGameState();
+
+        //test finished gathering
+        firstPlayerJoinTime = 1;
+        phase = getGameState();
+
+        //test one player leaves game.  should be ended
+        removePlayerFromGame(mockPlayer1);
+        infos = getPlayersInGame();
+        phase = getGameState();
+
+
     }
 
     // ------------------------------------------------
@@ -651,6 +699,11 @@ public class HungerGames extends CowNetThingy implements Listener {
         for (Player player : getPlugin().getServer().getOnlinePlayers()) {
             player.sendMessage(msg);
         }
+    }
+
+    public static void main(String[] args) {
+        HungerGames games = new HungerGames();
+        games.testPlayerListSupport();
     }
 }
 

@@ -12,10 +12,14 @@ import java.util.logging.Logger;
 public class CowNetThingy implements CommandExecutor {
     private Logger logger = Logger.getLogger("Minecraft");
     private JavaPlugin plugin;
-    private String trigger;
-    private String permissionNode;
-    private boolean isEnabled;
-    private boolean isDebug;
+    private String trigger = "";
+    private String permissionNode = "";
+    private boolean isEnabled = false;
+    private boolean isDebug = false;
+
+    protected CowNetThingy() {
+        //for testing only
+    }
 
     public CowNetThingy(JavaPlugin plugin, String permissionRoot, String trigger) {
         this.plugin = plugin;

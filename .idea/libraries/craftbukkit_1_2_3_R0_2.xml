@@ -7,6 +7,7 @@
       <root url="jar://$PROJECT_DIR$/../worldedit/classes/artifacts/WorldEdit/WorldEdit-CowNet.jar!/" />
       <root url="jar://$PROJECT_DIR$/../worldguard/classes/artifacts/WorldGuard/WorldGuard-CowNet.jar!/" />
       <root url="jar://$PROJECT_DIR$/../LIBRARIES/Multiverse-Core.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../LIBRARIES/easymock-3.1/easymock-3.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
@@ -17,6 +18,7 @@
       <root url="file://$PROJECT_DIR$/../Bukkit/src/main/java" />
       <root url="file://$PROJECT_DIR$/../CraftBukkit/src/main/java" />
       <root url="file://$PROJECT_DIR$/../Multiverse-Core/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/../LIBRARIES/easymock-3.1/easymock-3.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
