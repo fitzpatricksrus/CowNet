@@ -99,6 +99,9 @@ permissions:
     cownet.hardcore.canAlwaysEscape:
         description: can you hc out from anywhere
         default: op
+    cownet.hungergames:
+        description: participate in Hunger Games
+        default: true
     cownet.hungergames.join:
         description: get information about the games
         default: true

@@ -18,6 +18,7 @@ import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -46,6 +47,7 @@ import java.util.Random;
  */
 public class HungerGames extends CowNetThingy implements Listener {
     private static final int GAME_WATCHER_FREQUENCY = 20 * 1; // 1 second
+    private static final int WORLD_REGEN_DELAY = 20 * 15; // 15 seconds
     private static final Material[] gifts = {
             Material.TNT,
             Material.TORCH,
@@ -232,9 +234,11 @@ public class HungerGames extends CowNetThingy implements Listener {
             if (!gameInstance.isGameOn()) {
                 gameInstance.addPlayerToGame(player);
                 player.sendMessage("You've joined the game as a tribute.");
+                broadcast("" + gameInstance.getPlayerInfo(player));
                 goInfo(player);
             } else {
                 player.sendMessage("You can't join a game in progress.  You can only sponsor tributes.");
+                goInfo(player);
             }
         }
         return true;
@@ -278,13 +282,11 @@ public class HungerGames extends CowNetThingy implements Listener {
                 broadcast("The winner of the games is: " + info.getPlayer().getDisplayName());
             }
             removeAllPlayersFromArena(gameWorldName);
-            gameInstance = new GameInstance();
-            //TODO hey jf - you should generateNewWorld() here
+            generateNewWorld();
         } else if (gameInstance.isFailed()) {
             broadcast("The games have been canceled due to lack of tributes.");
             removeAllPlayersFromArena(gameWorldName);
-            gameInstance = new GameInstance();
-            //TODO hey jf - you should generateNewWorld() here
+            generateNewWorld();
         } else if (gameInstance.isGathering()) {
             long timeToWait = gameInstance.getTimeToGather() / 1000;
             if (timeToWait % 10 == 0 || timeToWait < 10) {
@@ -326,7 +328,15 @@ public class HungerGames extends CowNetThingy implements Listener {
                 // tributes can only be teleported from outside the arena to inside the arena.
                 Location to = event.getTo();
                 Location from = event.getFrom();
-                if (isInArena(from) || !isInArena(to)) {
+                if (!isInArena(from) && isInArena(to)) {
+                    // from somewhere to the arena.  clear player inventory
+                    Inventory inventory = player.getInventory();
+                    player.setItemInHand(null);
+                    for (int i = 0; i < 40; i++) {
+                        inventory.setItem(i, null);
+                    }
+                } else {
+                    // teleport to/from anywhere else is not allowed for players.
                     event.setCancelled(true);
                 }
             }
@@ -345,9 +355,8 @@ public class HungerGames extends CowNetThingy implements Listener {
             if (to.getX() != from.getX() ||
                     to.getY() != from.getY() ||
                     to.getZ() != from.getZ()) {
-                // if they do anything but spin or move their head, cancel.
-                event.setCancelled(true);
-                event.getPlayer().teleport(from);
+                // if they do anything but spin or move their head, strike with lightning.
+                event.getPlayer().getWorld().strikeLightning(to);
             }
         } else if (!isInArena(event.getTo())) {
             // don't let them leave the arena ever.
@@ -525,6 +534,18 @@ public class HungerGames extends CowNetThingy implements Listener {
         } else {
             return false;
         }
+    }
+
+    private void generateNewWorld() {
+        getPlugin().getServer().getScheduler().scheduleAsyncDelayedTask(
+                getPlugin(),
+                new Runnable() {
+                    public void run() {
+                        generateNewWorld(gameWorldName);
+                        gameInstance = new GameInstance();
+                    }
+                },
+                WORLD_REGEN_DELAY);
     }
 
     private boolean generateNewWorld(String worldName) {
