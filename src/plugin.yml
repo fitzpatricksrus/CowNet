@@ -35,7 +35,7 @@ commands:
       description: Go to the Hard Core world.
       usage: Use "/hardcore help"
   hungergames:
-      aliases: [ hg ]
+      aliases: [ games ]
       description: Enter the games
       usage: Use "/hungergames help"
 permissions:
@@ -99,4 +99,14 @@ permissions:
     cownet.hardcore.canAlwaysEscape:
         description: can you hc out from anywhere
         default: op
+    cownet.hungergames.join:
+        description: get information about the games
+        default: true
+    cownet.hungergames.info:
+        description: get information about the games
+        default: true
+    cownet.hungergames.quit:
+        description: get information about the games
+        default: true
+
 

@@ -2,7 +2,6 @@ package us.fitzpatricksr.cownet.hungergames;
 
 import org.bukkit.entity.Player;
 import org.easymock.EasyMock;
-import us.fitzpatricksr.cownet.utils.StringUtils;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -20,6 +19,7 @@ public class GameInstance {
 
     public static long timeToGather = 1 * 60 * 1000; // 1 minutesprivate long firstPlayerJoinTime = 0;private java.util.HashMap<org.bukkit.entity.Player,us.fitzpatricksr.cownet.HungerGames.PlayerInfo> gameInfo = new java.util.HashMap<org.bukkit.entity.Player,us.fitzpatricksr.cownet.HungerGames.PlayerInfo>();	public GameInstance(us.fitzpatricksr.cownet.HungerGames hungerGames)	{		this.hungerGames = hungerGames;	}private java.util.List<us.fitzpatricksr.cownet.HungerGames.PlayerInfo> getPlayersInGame() {
     public static long timeToAcclimate = 10 * 1000; // 1 minutesprivate long firstPlayerJoinTime = 0;private java.util.HashMap<org.bukkit.entity.Player,us.fitzpatricksr.cownet.HungerGames.PlayerInfo> gameInfo = new java.util.HashMap<org.bukkit.entity.Player,us.fitzpatricksr.cownet.HungerGames.PlayerInfo>();	public GameInstance(us.fitzpatricksr.cownet.HungerGames hungerGames)	{		this.hungerGames = hungerGames;	}private java.util.List<us.fitzpatricksr.cownet.HungerGames.PlayerInfo> getPlayersInGame() {
+    public static int minTributes = 2;
 
     private long firstPlayerJoinTime = 0;
     private HashMap<Player, PlayerInfo> gameInfo = new HashMap<Player, PlayerInfo>();
@@ -31,11 +31,11 @@ public class GameInstance {
             return "Game Status: Canceled due to lack of tributes.";
         } else if (isGathering()) {
             long timeToWait = getTimeToGather() / 1000;
-            return "Game Status: Gathering tributes.  Will start in " + StringUtils.durationString(timeToWait) + " seconds";
-        } else if (isInProgress()) {
+            return "Game Status: Gathering.  The games will start in " + timeToWait + " seconds";
+        } else if (isGameOn()) {
             return "Game Status: IN PROGRESS";
         } else if (isUnstarted()) {
-            return "Game Status: Waiting for first tribute to start gathering";
+            return "Game Status: Waiting for first tribute";
         } else {
             return "Game Status: UNKNOWN.  What's up with that?";
         }
@@ -129,72 +129,16 @@ public class GameInstance {
                 return GamePhase.GATHERING;
             }
         } else if (time < timeToGather + timeToAcclimate) {
-            if (livePlayerCount < 2) {
+            if (livePlayerCount < minTributes) {
                 return GamePhase.FAILED;
             } else {
                 return GamePhase.ACCLIMATING;
             }
         } else {
-            if (livePlayerCount < 2) {
+            if (livePlayerCount < minTributes) {
                 // we have a winner...maybe...unless they both died at once.
                 return GamePhase.ENDED;
             } else {
-                return GamePhase.IN_PROGRESS;
-            }
-        }
-    }
-
-    private GamePhase getGameState2() {
-        // #Players  firstJoin  state
-        //    0         0       UNSTARTED
-        //    1         0       ENDED
-        //    2         0       IN_PROGRESS
-        //    0       < gather  UNSTARTED, clear FJ
-        //    1       < gather  GATHERING
-        //    2       < gather  GATHERING
-        //    0      >= gather  UNSTARTED, clear FJ
-        //    1      >= gather  FAILED
-        //    2      >= gather  IN_PROGRESS, clear FJ
-
-        List<PlayerInfo> livePlayers = getPlayersInGame();
-        int livePlayerCount = livePlayers.size();
-        if (timeSinceFirstPlayer() == -1) {
-            // we haven't started gathering yet.
-            if (livePlayerCount == 0) {
-                return GamePhase.UNSTARTED;
-            } else if (livePlayerCount == 1) {
-                return GamePhase.ENDED;
-            } else {
-                return GamePhase.IN_PROGRESS;
-            }
-        } else if (getTimeToGather() > 0) {
-            if (livePlayerCount == 0) {
-                // we started gathering and the only player left?
-                return GamePhase.FAILED;
-            } else if (livePlayerCount == 1) {
-                return GamePhase.GATHERING;
-            } else {
-                return GamePhase.GATHERING;
-            }
-        } else if (getTimeToGather() + timeToAcclimate > 0) {
-            if (livePlayerCount == 0) {
-                // we started aclimating and the only player left?
-                return GamePhase.FAILED;
-            } else if (livePlayerCount == 1) {
-                // we started aclimating and the only player left?
-                return GamePhase.ENDED;
-            } else {
-                return GamePhase.ACCLIMATING;
-            }
-        } else {
-            if (livePlayerCount == 0) {
-                // we started playing and there was nobody there, or everyone died in the first second
-                return GamePhase.FAILED;
-            } else if (livePlayerCount == 1) {
-                // we started and there was only 1 person there
-                return GamePhase.ENDED;
-            } else {
-                firstPlayerJoinTime = 0;
                 return GamePhase.IN_PROGRESS;
             }
         }

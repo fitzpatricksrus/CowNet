@@ -53,7 +53,7 @@ rank:
 hardcore:
   enable: true
   debug: false
-  worldname: HardCoreCow
+  worldname: HardCore
   safedistance: 50
   livetimeout: 518400
   deathDuration: 60
@@ -65,3 +65,13 @@ hardcore:
 
 hungergames:
   enable: true
+  debug: false
+  worldName: HungerGames
+  arenaSize: 250
+  monsterBoost: 1.0
+  allowFly: false
+  allowXRay: false
+  teleportJiggle: 5
+  minTributes: 2
+  timeToGather: 60000
+  timeToAcclimate: 10000
