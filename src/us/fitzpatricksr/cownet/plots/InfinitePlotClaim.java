@@ -36,10 +36,10 @@ public class InfinitePlotClaim implements Plots.AbstractClaim {
     }
 
     public void decorateClaim(Player p, ProtectedRegion region) {
-        BlockUtils.manageFences(p, region, true);
+        FenceUtils.manageFences(p, region, true);
     }
 
     public void dedecorateClaim(Player p, ProtectedRegion region) {
-        BlockUtils.manageFences(p, region, false);
+        FenceUtils.manageFences(p, region, false);
     }
 }
