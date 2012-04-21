@@ -166,7 +166,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         allowFly = getConfigBoolean("allowFly", allowFly);
         allowXRay = getConfigBoolean("allowXRay", allowXRay);
         GameInstance.timeToGather = getConfigLong("timeToGather", GameInstance.timeToGather);
-        GameInstance.timeToAcclimate = getConfigLong("timeToGather", GameInstance.timeToAcclimate);
+        GameInstance.timeToAcclimate = getConfigLong("timeToAcclimate", GameInstance.timeToAcclimate);
         PlayerInfo.timeBetweenGifts = getConfigLong("timeBetweenGifts", PlayerInfo.timeBetweenGifts);
         GameInstance.minTributes = getConfigInt("minTributes", GameInstance.minTributes);
         teleportJiggle = getConfigInt("teleportJiggle", teleportJiggle);
