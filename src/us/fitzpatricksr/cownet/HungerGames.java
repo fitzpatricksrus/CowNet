@@ -47,7 +47,7 @@ import java.util.Random;
  */
 public class HungerGames extends CowNetThingy implements Listener {
     private static final int GAME_WATCHER_FREQUENCY = 20 * 1; // 1 second
-    private static final int WORLD_REGEN_DELAY = 20 * 15; // 15 seconds
+    private static final int WORLD_REGEN_DELAY = 20 * 5; // 15 seconds
     private static final Material[] gifts = {
             Material.TNT,
             Material.TORCH,
@@ -200,7 +200,7 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @Override
     protected String getHelpString(CommandSender player) {
-        return "usage: /hungergames or /hg   join | info | quit";
+        return "usage: /hungergames or /hg   join | info | quit | tp";
     }
 
     @Override
@@ -222,6 +222,10 @@ public class HungerGames extends CowNetThingy implements Listener {
                 return goQuit(sender);
             } else if ("join".equalsIgnoreCase(args[0])) {
                 return doJoin(sender);
+            }
+        } else if (args.length == 2) {
+            if ("tp".equalsIgnoreCase(args[0])) {
+                return doTeleport(sender, args[1]);
             }
         }
         return false;
@@ -270,6 +274,25 @@ public class HungerGames extends CowNetThingy implements Listener {
         return true;
     }
 
+    private boolean doTeleport(Player sender, String destName) {
+        PlayerInfo source = gameInstance.getPlayerInfo(sender);
+        if (source.isInGame()) {
+            sender.sendMessage("Tributes are not allowed to teleport.");
+        } else if (source.isSponsor()) {
+            Player dest = getPlugin().getServer().getPlayerExact(destName);
+            PlayerInfo destInfo = gameInstance.getPlayerInfo(dest);
+            if (destInfo.isInGame()) {
+                dest.teleport(dest.getLocation());
+                return true;
+            } else {
+                sender.sendMessage("Sponsors can only teleport to tributes");
+            }
+        } else {
+            sender.sendMessage("Only Sponsors can teleport and only to active tributes.");
+        }
+        return false;
+    }
+
     // --------------------------------------------------------------
     // ---- Game watcher moves the game forward through different stages
 
@@ -278,15 +301,18 @@ public class HungerGames extends CowNetThingy implements Listener {
         if (gameInstance.isUnstarted()) {
             //don't do anything until the games start
         } else if (gameInstance.isEnded()) {
-            for (PlayerInfo info : gameInstance.getPlayersInGame()) {
-                broadcast("The winner of the games is: " + info.getPlayer().getDisplayName());
+            if (!regenIsAlreadyScheduled) {
+                for (PlayerInfo info : gameInstance.getPlayersInGame()) {
+                    broadcast("The winner of the games is: " + info.getPlayer().getDisplayName());
+                }
+                removeAllPlayersFromArena(gameWorldName);
+                regenIsAlreadyScheduled = true;
+                generateNewWorld();
             }
-            removeAllPlayersFromArena(gameWorldName);
-            generateNewWorld();
         } else if (gameInstance.isFailed()) {
             broadcast("The games have been canceled due to lack of tributes.");
             removeAllPlayersFromArena(gameWorldName);
-            generateNewWorld();
+            gameInstance = new GameInstance();
         } else if (gameInstance.isGathering()) {
             long timeToWait = gameInstance.getTimeToGather() / 1000;
             if (timeToWait % 10 == 0 || timeToWait < 10) {
@@ -330,11 +356,10 @@ public class HungerGames extends CowNetThingy implements Listener {
                 Location from = event.getFrom();
                 if (!isInArena(from) && isInArena(to)) {
                     // from somewhere to the arena.  clear player inventory
-                    Inventory inventory = player.getInventory();
+                    debugInfo("Clearing inventory for " + player.getName());
                     player.setItemInHand(null);
-                    for (int i = 0; i < 40; i++) {
-                        inventory.setItem(i, null);
-                    }
+                    Inventory inventory = player.getInventory();
+                    inventory.setContents(new ItemStack[inventory.getSize()]);
                 } else {
                     // teleport to/from anywhere else is not allowed for players.
                     event.setCancelled(true);
@@ -352,11 +377,14 @@ public class HungerGames extends CowNetThingy implements Listener {
             // don't let them move while acclimating
             Location to = event.getTo().getBlock().getLocation();
             Location from = event.getFrom().getBlock().getLocation();
+            Player player = event.getPlayer();
             if (to.getX() != from.getX() ||
                     to.getY() != from.getY() ||
                     to.getZ() != from.getZ()) {
                 // if they do anything but spin or move their head, strike with lightning.
-                event.getPlayer().getWorld().strikeLightning(to);
+                player.getWorld().strikeLightning(to);
+                player.damage(2);
+                debugInfo("Player " + event.getPlayer().getName() + " is moving during acclimation");
             }
         } else if (!isInArena(event.getTo())) {
             // don't let them leave the arena ever.
@@ -529,7 +557,6 @@ public class HungerGames extends CowNetThingy implements Listener {
         if (isGameWorld(w)) {
             Location spawnLoc = w.getSpawnLocation();
             double distance = spawnLoc.distance(loc);
-            debugInfo("Distance: " + distance);
             return distance < arenaSizeThisGame;
         } else {
             return false;
@@ -541,49 +568,38 @@ public class HungerGames extends CowNetThingy implements Listener {
                 getPlugin(),
                 new Runnable() {
                     public void run() {
-                        generateNewWorld(gameWorldName);
-                        gameInstance = new GameInstance();
+                        logInfo("Starting regen tread for " + gameWorldName);
+                        try {
+                            logInfo("Regenerating " + gameWorldName);
+                            MVWorldManager mgr = mvPlugin.getMVWorldManager();
+                            if (mgr.isMVWorld(gameWorldName)) {
+                                mgr.removePlayersFromWorld(gameWorldName);
+                                if (!mgr.deleteWorld(gameWorldName)) {
+                                    logInfo("Agh!  Can't regen " + gameWorldName);
+                                }
+                            }
+                            //TODO hey jf - can we create this world in another thread?
+                            if (mgr.addWorld(gameWorldName,
+                                    World.Environment.NORMAL,
+                                    "" + (new Random().nextLong()),
+                                    WorldType.NORMAL,
+                                    true,
+                                    null,
+                                    true)) {
+                                World w = mgr.getMVWorld(gameWorldName).getCBWorld();
+                                w.setDifficulty(Difficulty.NORMAL);
+                                w.setTicksPerMonsterSpawns((int) (w.getTicksPerMonsterSpawns() * monsterBoost));
+                                logInfo(gameWorldName + " has been regenerated.");
+                            } else {
+                                logInfo("Oh No's! " + gameWorldName + " don wurk.");
+                            }
+                        } finally {
+                            gameInstance = new GameInstance();
+                            regenIsAlreadyScheduled = false;
+                        }
                     }
                 },
                 WORLD_REGEN_DELAY);
-    }
-
-    private boolean generateNewWorld(String worldName) {
-        logInfo("generateNewWorld " + worldName);
-        if (regenIsAlreadyScheduled) {
-            logInfo("generateNewWorld " + worldName + " aborted.  Regen already in progress.");
-            return true;
-        }
-        try {
-            regenIsAlreadyScheduled = true;
-            MVWorldManager mgr = mvPlugin.getMVWorldManager();
-            if (mgr.isMVWorld(worldName)) {
-                mgr.removePlayersFromWorld(worldName);
-                if (!mgr.deleteWorld(worldName)) {
-                    logInfo("Agh!  Can't regen " + worldName);
-                    return false;
-                }
-            }
-            //TODO hey jf - can we create this world in another thread?
-            if (mgr.addWorld(worldName,
-                    World.Environment.NORMAL,
-                    "" + (new Random().nextLong()),
-                    WorldType.NORMAL,
-                    true,
-                    null,
-                    true)) {
-                World w = mgr.getMVWorld(worldName).getCBWorld();
-                w.setDifficulty(Difficulty.HARD);
-                w.setTicksPerMonsterSpawns((int) (w.getTicksPerMonsterSpawns() * monsterBoost) + 1);
-                logInfo(worldName + " has been regenerated.");
-                return true;
-            } else {
-                logInfo("Oh No's! " + worldName + " don wurk.");
-                return false;
-            }
-        } finally {
-            regenIsAlreadyScheduled = false;
-        }
     }
 
     private void teleportPlayerToArena(Player player, String worldName) {
