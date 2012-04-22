@@ -47,7 +47,7 @@ import java.util.Random;
  */
 public class HungerGames extends CowNetThingy implements Listener {
     private static final int GAME_WATCHER_FREQUENCY = 20 * 1; // 1 second
-    private static final int WORLD_REGEN_DELAY = 20 * 5; // 15 seconds
+    private static final int WORLD_REGEN_DELAY = 20 * 15; // 15 seconds
     private static final Material[] gifts = {
             Material.TNT,
             Material.TORCH,
@@ -135,8 +135,6 @@ public class HungerGames extends CowNetThingy implements Listener {
     private MultiverseCore mvPlugin;
     private GameInstance gameInstance = new GameInstance();
     private int arenaSizeThisGame = 0;
-    private boolean regenIsAlreadyScheduled = false;
-
 
     private HungerGames() {
         // for testing only
@@ -301,14 +299,12 @@ public class HungerGames extends CowNetThingy implements Listener {
         if (gameInstance.isUnstarted()) {
             //don't do anything until the games start
         } else if (gameInstance.isEnded()) {
-            if (!regenIsAlreadyScheduled) {
-                for (PlayerInfo info : gameInstance.getPlayersInGame()) {
-                    broadcast("The winner of the games is: " + info.getPlayer().getDisplayName());
-                }
-                removeAllPlayersFromArena(gameWorldName);
-                regenIsAlreadyScheduled = true;
-                generateNewWorld();
+            for (PlayerInfo info : gameInstance.getPlayersInGame()) {
+                broadcast("The winner of the games is: " + info.getPlayer().getDisplayName());
             }
+            removeAllPlayersFromArena(gameWorldName);
+            setNewSpawnLocation();
+            gameInstance = new GameInstance();
         } else if (gameInstance.isFailed()) {
             broadcast("The games have been canceled due to lack of tributes.");
             removeAllPlayersFromArena(gameWorldName);
@@ -337,6 +333,13 @@ public class HungerGames extends CowNetThingy implements Listener {
         }
     }
 
+    private void clearPlayerInventory(Player player) {
+        debugInfo("Clearing inventory for " + player.getName());
+        player.setItemInHand(null);
+        Inventory inventory = player.getInventory();
+        inventory.setContents(new ItemStack[inventory.getSize()]);
+    }
+
     // --------------------------------------------------------------
     // ---- Event handlers
 
@@ -356,10 +359,7 @@ public class HungerGames extends CowNetThingy implements Listener {
                 Location from = event.getFrom();
                 if (!isInArena(from) && isInArena(to)) {
                     // from somewhere to the arena.  clear player inventory
-                    debugInfo("Clearing inventory for " + player.getName());
-                    player.setItemInHand(null);
-                    Inventory inventory = player.getInventory();
-                    inventory.setContents(new ItemStack[inventory.getSize()]);
+                    clearPlayerInventory(player);
                 } else {
                     // teleport to/from anywhere else is not allowed for players.
                     event.setCancelled(true);
@@ -563,51 +563,47 @@ public class HungerGames extends CowNetThingy implements Listener {
         }
     }
 
-    private void generateNewWorld() {
-        getPlugin().getServer().getScheduler().scheduleAsyncDelayedTask(
-                getPlugin(),
-                new Runnable() {
-                    public void run() {
-                        logInfo("Starting regen tread for " + gameWorldName);
-                        try {
-                            logInfo("Regenerating " + gameWorldName);
-                            MVWorldManager mgr = mvPlugin.getMVWorldManager();
-                            if (mgr.isMVWorld(gameWorldName)) {
-                                mgr.removePlayersFromWorld(gameWorldName);
-                                if (!mgr.deleteWorld(gameWorldName)) {
-                                    logInfo("Agh!  Can't regen " + gameWorldName);
-                                }
-                            }
-                            //TODO hey jf - can we create this world in another thread?
-                            if (mgr.addWorld(gameWorldName,
-                                    World.Environment.NORMAL,
-                                    "" + (new Random().nextLong()),
-                                    WorldType.NORMAL,
-                                    true,
-                                    null,
-                                    true)) {
-                                World w = mgr.getMVWorld(gameWorldName).getCBWorld();
-                                w.setDifficulty(Difficulty.NORMAL);
-                                w.setTicksPerMonsterSpawns((int) (w.getTicksPerMonsterSpawns() * monsterBoost));
-                                logInfo(gameWorldName + " has been regenerated.");
-                            } else {
-                                logInfo("Oh No's! " + gameWorldName + " don wurk.");
-                            }
-                        } finally {
-                            gameInstance = new GameInstance();
-                            regenIsAlreadyScheduled = false;
-                        }
-                    }
-                },
-                WORLD_REGEN_DELAY);
+    private void setNewSpawnLocation() {
+        logInfo("Setting new spawn in " + gameWorldName);
+
+        // regenerating the world is VERY slow, so let's just move spawn around.
+        World w = getPlugin().getServer().getWorld(gameWorldName);
+        Location spawn = w.getSpawnLocation();
+        spawn = jiggleLocation(spawn, gameInstance.getNumberOfGamePlayers() * 10);
+        spawn = BlockUtils.getHighestLandLocation(spawn);
+        w.setSpawnLocation(spawn.getBlockX(), spawn.getBlockY(), spawn.getBlockZ());
+    }
+
+    private void regenerateWorld() {
+        MVWorldManager mgr = mvPlugin.getMVWorldManager();
+        if (mgr.isMVWorld(gameWorldName)) {
+            mgr.removePlayersFromWorld(gameWorldName);
+            if (!mgr.deleteWorld(gameWorldName)) {
+                logInfo("Agh!  Can't regen " + gameWorldName);
+            }
+        }
+        //TODO hey jf - can we create this world in another thread?
+        if (mgr.addWorld(gameWorldName,
+                World.Environment.NORMAL,
+                "" + (new Random().nextLong()),
+                WorldType.NORMAL,
+                true,
+                null,
+                true)) {
+            World w = mgr.getMVWorld(gameWorldName).getCBWorld();
+            w.setDifficulty(Difficulty.NORMAL);
+            w.setTicksPerMonsterSpawns((int) (w.getTicksPerMonsterSpawns() * monsterBoost));
+            logInfo(gameWorldName + " has been regenerated.");
+        } else {
+            logInfo("Oh No's! " + gameWorldName + " don wurk.");
+        }
     }
 
     private void teleportPlayerToArena(Player player, String worldName) {
-        if (regenIsAlreadyScheduled) return;
         World gameWorld = getPlugin().getServer().getWorld(worldName);
         Location spawn = gameWorld.getSpawnLocation().clone();
         Location location = spawn.clone();
-        location = jiggleLocation(location);
+        location = jiggleLocation(location, gameInstance.getNumberOfGamePlayers() - 1);
         location = BlockUtils.getHighestLandLocation(location);
         location.add(0, 1, 0);
         player.setGameMode(GameMode.SURVIVAL);
@@ -616,7 +612,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         //place 3 random gifts per player
         for (int i = 0; i < 3; i++) {
             Location giftLoc = spawn.clone();
-            giftLoc = jiggleLocation(giftLoc);
+            giftLoc = jiggleLocation(giftLoc, gameInstance.getNumberOfGamePlayers() - 1);
             giftLoc = BlockUtils.getHighestLandLocation(giftLoc);
             giftLoc.add(0, 1, 0);
             Material gift = gifts[rand.nextInt(gifts.length)];
@@ -633,9 +629,9 @@ public class HungerGames extends CowNetThingy implements Listener {
         }
     }
 
-    private Location jiggleLocation(Location loc) {
+    private Location jiggleLocation(Location loc, int jiggleFactor) {
         //the more players, the bigger the jiggle
-        int jiggle = teleportJiggle * (gameInstance.getPlayersInGame().size() - 1);
+        int jiggle = teleportJiggle * jiggleFactor;
         Location result = loc.clone();
         result.add(rand.nextInt(jiggle * 2) - jiggle, 0, rand.nextInt(jiggle * 2) - jiggle);
         return result;

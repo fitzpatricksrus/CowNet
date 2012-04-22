@@ -22,6 +22,7 @@ public class GameInstance {
     public static int minTributes = 2;
 
     private long firstPlayerJoinTime = 0;
+    private int gameSize = 0; //the most people who have ever been in the games
     private HashMap<Player, PlayerInfo> gameInfo = new HashMap<Player, PlayerInfo>();
 
     public String getGameStatusMessage() {
@@ -117,6 +118,11 @@ public class GameInstance {
         return (firstPlayerJoinTime != 0) ? System.currentTimeMillis() - firstPlayerJoinTime : -1;
     }
 
+    // the number of people who were in the games when it started.
+    public int getNumberOfGamePlayers() {
+        return gameSize;
+    }
+
     private GamePhase getGameState() {
         int livePlayerCount = getPlayersInGame().size();
         long time = timeSinceFirstPlayer();
@@ -129,6 +135,7 @@ public class GameInstance {
                 return GamePhase.GATHERING;
             }
         } else if (time < timeToGather + timeToAcclimate) {
+            gameSize = Math.max(0, livePlayerCount);
             if (livePlayerCount < minTributes) {
                 return GamePhase.FAILED;
             } else {
