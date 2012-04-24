@@ -612,7 +612,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         debugInfo("    PostJiggleSpawn:" + spawn);
         spawn = BlockUtils.getHighestLandLocation(spawn);
         debugInfo("    NewSpawn:" + spawn);
-        w.setSpawnLocation(spawn.getBlockX(), spawn.getBlockY(), spawn.getBlockZ());
+        w.setSpawnLocation(spawn.getBlockX() % 2000, spawn.getBlockY(), spawn.getBlockZ() % 2000);
     }
 
     private void teleportPlayerToArena(Player player, String worldName) {
