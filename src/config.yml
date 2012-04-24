@@ -73,5 +73,6 @@ hungergames:
   allowXRay: false
   teleportJiggle: 5
   minTributes: 2
+  giftsPerPlayer: 3
   timeToGather: 60000
   timeToAcclimate: 10000

@@ -102,14 +102,5 @@ permissions:
     cownet.hungergames:
         description: participate in Hunger Games
         default: true
-    cownet.hungergames.join:
-        description: get information about the games
-        default: true
-    cownet.hungergames.info:
-        description: get information about the games
-        default: true
-    cownet.hungergames.quit:
-        description: get information about the games
-        default: true
 
 

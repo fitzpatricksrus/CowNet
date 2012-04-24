@@ -2,7 +2,10 @@ package us.fitzpatricksr.cownet;
 
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVWorldManager;
-import org.bukkit.*;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
@@ -47,7 +50,6 @@ import java.util.Random;
  */
 public class HungerGames extends CowNetThingy implements Listener {
     private static final int GAME_WATCHER_FREQUENCY = 20 * 1; // 1 second
-    private static final int WORLD_REGEN_DELAY = 20 * 15; // 15 seconds
     private static final Material[] gifts = {
             Material.TNT,
             Material.TORCH,
@@ -131,6 +133,7 @@ public class HungerGames extends CowNetThingy implements Listener {
     private boolean allowXRay = false;
     private double monsterBoost = 1.0d;
     private int teleportJiggle = 5;
+    private int giftsPerPlayer = 3;
 
     private MultiverseCore mvPlugin;
     private GameInstance gameInstance = new GameInstance();
@@ -146,7 +149,7 @@ public class HungerGames extends CowNetThingy implements Listener {
             reload();
             PluginManager pm = plugin.getServer().getPluginManager();
             pm.registerEvents(this, plugin);
-            getPlugin().getServer().getScheduler().scheduleAsyncRepeatingTask(
+            getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(
                     getPlugin(),
                     new Runnable() {
                         public void run() {
@@ -171,6 +174,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         GameInstance.minTributes = getConfigInt("minTributes", GameInstance.minTributes);
         teleportJiggle = getConfigInt("teleportJiggle", teleportJiggle);
         monsterBoost = getConfigDouble("monsterBoost", monsterBoost);
+        giftsPerPlayer = getConfigInt("giftsPerPlayer", giftsPerPlayer);
         mvPlugin = (MultiverseCore) getPlugin().getServer().getPluginManager().getPlugin("Multiverse-Core");
         if (mvPlugin == null) {
             logInfo("Could not find Multiverse-Core plugin.  Disabling self");
@@ -184,6 +188,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         logInfo("timeToGather:" + GameInstance.timeToGather);
         logInfo("timeToAcclimate:" + GameInstance.timeToAcclimate);
         logInfo("timeBetweenGifts:" + PlayerInfo.timeBetweenGifts);
+        logInfo("giftsPerPlayer:" + giftsPerPlayer);
         logInfo("minTributes:" + GameInstance.minTributes);
         logInfo("teleportJiggle:" + teleportJiggle);
         logInfo("monsterBoost:" + monsterBoost);
@@ -218,6 +223,8 @@ public class HungerGames extends CowNetThingy implements Listener {
         } else if (args.length == 1) {
             if ("quit".equalsIgnoreCase(args[0])) {
                 return goQuit(sender);
+            } else if ("start".equalsIgnoreCase(args[0])) {
+                return doStart(sender);
             } else if ("join".equalsIgnoreCase(args[0])) {
                 return doJoin(sender);
             }
@@ -230,44 +237,39 @@ public class HungerGames extends CowNetThingy implements Listener {
     }
 
     private boolean doJoin(Player player) {
-        if (!hasPermissions(player, "join")) {
-            player.sendMessage("You don't have permission.");
+        if (!gameInstance.isGameOn()) {
+            gameInstance.addPlayerToGame(player);
+            player.sendMessage("You've joined the game as a tribute.");
+            broadcast("" + gameInstance.getPlayerInfo(player));
+            goInfo(player);
         } else {
-            if (!gameInstance.isGameOn()) {
-                gameInstance.addPlayerToGame(player);
-                player.sendMessage("You've joined the game as a tribute.");
-                broadcast("" + gameInstance.getPlayerInfo(player));
-                goInfo(player);
-            } else {
-                player.sendMessage("You can't join a game in progress.  You can only sponsor tributes.");
-                goInfo(player);
-            }
+            player.sendMessage("You can't join a game in progress.  You can only sponsor tributes.");
+            goInfo(player);
+        }
+        return true;
+    }
+
+    private boolean doStart(Player player) {
+        if (!gameInstance.isGameOn()) {
+            gameInstance.startNow();
         }
         return true;
     }
 
     private boolean goInfo(CommandSender sender) {
-        if (!hasPermissions(sender, "info")) {
-            sender.sendMessage("You don't have permission.");
-        } else {
-            sender.sendMessage(gameInstance.getGameStatusMessage());
-            for (Player player : getPlugin().getServer().getOnlinePlayers()) {
-                PlayerInfo info = gameInstance.getPlayerInfo(player);
-                sender.sendMessage("  " + info);
-            }
+        sender.sendMessage(gameInstance.getGameStatusMessage());
+        for (Player player : getPlugin().getServer().getOnlinePlayers()) {
+            PlayerInfo info = gameInstance.getPlayerInfo(player);
+            sender.sendMessage("  " + info);
         }
         return true;
     }
 
     private boolean goQuit(Player player) {
-        if (!hasPermissions(player, "quit")) {
-            player.sendMessage("You don't have permission.");
-        } else {
-            if (playerIsInGame(player)) {
-                gameInstance.removePlayerFromGame(player);
-                playPlayerDeathSound(player);
-                player.sendMessage("You've left the game.");
-            }
+        if (playerIsInGame(player)) {
+            gameInstance.removePlayerFromGame(player);
+            playPlayerDeathSound(player);
+            player.sendMessage("You've left the game.");
         }
         return true;
     }
@@ -322,6 +324,11 @@ public class HungerGames extends CowNetThingy implements Listener {
             if (gameInstance.isAcclimating()) {
                 long timeToWait = gameInstance.getTimeToAcclimate() / 1000;
                 broadcast("The games start in " + timeToWait + " seconds");
+                for (PlayerInfo playerInfo : gameInstance.getPlayersInGame()) {
+                    Player player = playerInfo.getPlayer();
+                    clearPlayerInventory(player);
+                    player.setGameMode(GameMode.SURVIVAL);
+                }
             }
             // if acclimating or in progress...
             for (PlayerInfo playerInfo : gameInstance.getPlayersInGame()) {
@@ -345,12 +352,13 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
+        debugInfo("PlayerTeleportEvent");
         // nobody can go to the game world unless a game is underway
         if (isGameWorld(event.getTo().getWorld()) && !gameInstance.isGameOn()) {
             event.setCancelled(true);
             event.getPlayer().sendMessage("You can't teleport to the arena until the game starts.");
             removeAllPlayersFromArena(gameWorldName);
-            debugInfo("canceled PlayerTeleportEvent");
+            debugInfo("canceled PlayerTeleportEvent1");
         } else if (gameInstance.isGameOn()) {
             Player player = event.getPlayer();
             if (playerIsInGame(player)) {
@@ -359,10 +367,14 @@ public class HungerGames extends CowNetThingy implements Listener {
                 Location from = event.getFrom();
                 if (!isInArena(from) && isInArena(to)) {
                     // from somewhere to the arena.  clear player inventory
-                    clearPlayerInventory(player);
                 } else {
                     // teleport to/from anywhere else is not allowed for players.
                     event.setCancelled(true);
+                    debugInfo("canceled PlayerTeleportEvent2");
+                    debugInfo("         isInArena(from)=" + isInArena(from));
+                    debugInfo("              " + getNotInArenaReason(from));
+                    debugInfo("         isInArena(to)=" + isInArena(to));
+                    debugInfo("              " + getNotInArenaReason(to));
                 }
             }
         }
@@ -395,6 +407,7 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
+        debugInfo("PlayerInteractEvent");
         if (!gameInstance.isGameOn()) return;
         // if sponsor, you can't do anything
         Player player = event.getPlayer();
@@ -407,6 +420,7 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
+        debugInfo("BlockPlaceEvent");
         if (!gameInstance.isGameOn()) return;
         // if sponsor, you can't do anything
         Player player = event.getPlayer();
@@ -419,6 +433,7 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
+        debugInfo("BlockBreakEvent");
         if (!gameInstance.isGameOn()) return;
         // if sponsor, you can't do anything
         Player player = event.getPlayer();
@@ -431,6 +446,7 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPickupItem(PlayerPickupItemEvent event) {
+        debugInfo("PlayerPickupItemEvent");
         if (!gameInstance.isGameOn()) return;
         Player player = event.getPlayer();
         if (!playerIsInGame(player) && isInArena(player.getLocation())) {
@@ -442,6 +458,7 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerDropItem(PlayerDropItemEvent event) {
+        debugInfo("PlayerDropItemEvent");
         if (!gameInstance.isGameOn()) return;
         Player player = event.getPlayer();
         if (playerIsOutOfGame(player) && isInArena(player)) {
@@ -458,6 +475,7 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
+        debugInfo("PlayerGameModeChangeEvent");
         if (!gameInstance.isGameOn()) return;
         Player player = event.getPlayer();
         if (playerIsInGame(player)) {
@@ -496,6 +514,7 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerDeath(PlayerDeathEvent event) {
+        debugInfo("PlayerDeathEvent");
         if (!gameInstance.isGameOn()) return;
         if (playerIsInGame(event.getEntity())) {
             gameInstance.removePlayerFromGame(event.getEntity());
@@ -518,12 +537,14 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
+        debugInfo("PlayerJoinEvent");
         if (!gameInstance.isGameOn()) return;
         goInfo(event.getPlayer());
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
+        debugInfo("PlayerQuitEvent");
         if (!gameInstance.isGameOn()) return;
         if (playerIsInGame(event.getPlayer())) {
             gameInstance.removePlayerFromGame(event.getPlayer());
@@ -563,54 +584,49 @@ public class HungerGames extends CowNetThingy implements Listener {
         }
     }
 
+    private String getNotInArenaReason(Location loc) {
+        World w = loc.getWorld();
+        if (isGameWorld(w)) {
+            Location spawnLoc = w.getSpawnLocation();
+            double distance = spawnLoc.distance(loc);
+            if (distance < arenaSizeThisGame) {
+                return "in arena";
+            } else {
+                return "Distance: " + distance + " >= " + arenaSizeThisGame;
+            }
+        } else {
+            return "Wrong world: " + w.getName() + "  expected: " + gameWorldName;
+        }
+    }
+
     private void setNewSpawnLocation() {
         logInfo("Setting new spawn in " + gameWorldName);
 
         // regenerating the world is VERY slow, so let's just move spawn around.
         World w = getPlugin().getServer().getWorld(gameWorldName);
-        Location spawn = w.getSpawnLocation();
-        spawn = jiggleLocation(spawn, gameInstance.getNumberOfGamePlayers() * 10);
+        Location spawn = w.getSpawnLocation().getBlock().getLocation();
+        debugInfo("    CurrentSpawn:" + spawn);
+        spawn = new Location(spawn.getWorld(), spawn.getX() + 0.5, 250, spawn.getZ() + 0.5);
+        debugInfo("    PreJiggleSpawn:" + spawn);
+        spawn = jiggleLocation(spawn, arenaSizeThisGame);
+        debugInfo("    PostJiggleSpawn:" + spawn);
         spawn = BlockUtils.getHighestLandLocation(spawn);
+        debugInfo("    NewSpawn:" + spawn);
         w.setSpawnLocation(spawn.getBlockX(), spawn.getBlockY(), spawn.getBlockZ());
     }
 
-    private void regenerateWorld() {
-        MVWorldManager mgr = mvPlugin.getMVWorldManager();
-        if (mgr.isMVWorld(gameWorldName)) {
-            mgr.removePlayersFromWorld(gameWorldName);
-            if (!mgr.deleteWorld(gameWorldName)) {
-                logInfo("Agh!  Can't regen " + gameWorldName);
-            }
-        }
-        //TODO hey jf - can we create this world in another thread?
-        if (mgr.addWorld(gameWorldName,
-                World.Environment.NORMAL,
-                "" + (new Random().nextLong()),
-                WorldType.NORMAL,
-                true,
-                null,
-                true)) {
-            World w = mgr.getMVWorld(gameWorldName).getCBWorld();
-            w.setDifficulty(Difficulty.NORMAL);
-            w.setTicksPerMonsterSpawns((int) (w.getTicksPerMonsterSpawns() * monsterBoost));
-            logInfo(gameWorldName + " has been regenerated.");
-        } else {
-            logInfo("Oh No's! " + gameWorldName + " don wurk.");
-        }
-    }
-
     private void teleportPlayerToArena(Player player, String worldName) {
+        debugInfo("Teleported player " + player.getDisplayName() + " to " + worldName);
         World gameWorld = getPlugin().getServer().getWorld(worldName);
         Location spawn = gameWorld.getSpawnLocation().clone();
-        Location location = spawn.clone();
+        Location location = spawn.getBlock().getLocation().clone();
         location = jiggleLocation(location, gameInstance.getNumberOfGamePlayers() - 1);
         location = BlockUtils.getHighestLandLocation(location);
-        location.add(0, 1, 0);
-        player.setGameMode(GameMode.SURVIVAL);
+        location.add(0.5, 1, 0.5);
         player.teleport(location);
         player.sendMessage("Good luck.");
         //place 3 random gifts per player
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < giftsPerPlayer; i++) {
             Location giftLoc = spawn.clone();
             giftLoc = jiggleLocation(giftLoc, gameInstance.getNumberOfGamePlayers() - 1);
             giftLoc = BlockUtils.getHighestLandLocation(giftLoc);
@@ -618,7 +634,7 @@ public class HungerGames extends CowNetThingy implements Listener {
             Material gift = gifts[rand.nextInt(gifts.length)];
             gameWorld.dropItemNaturally(giftLoc, new ItemStack(gift, 1));
         }
-        debugInfo("Teleported player " + player.getDisplayName() + " to " + worldName);
+        debugInfo("  Teleported player " + player.getDisplayName() + " to " + worldName + " complete");
     }
 
     private void removeAllPlayersFromArena(String worldName) {

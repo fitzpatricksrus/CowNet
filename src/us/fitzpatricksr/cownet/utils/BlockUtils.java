@@ -18,6 +18,7 @@ public class BlockUtils {
 //                            Material.WATER,
 //                            Material.STATIONARY_WATER,
                             Material.LEAVES,
+                            Material.SAPLING,
                             Material.WEB,
                             Material.FEATHER,
                             Material.FENCE,

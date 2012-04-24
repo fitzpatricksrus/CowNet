@@ -73,7 +73,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             reload();
             PluginManager pm = plugin.getServer().getPluginManager();
             pm.registerEvents(this, plugin);
-            getPlugin().getServer().getScheduler().scheduleAsyncRepeatingTask(
+            getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(
                     getPlugin(),
                     new Runnable() {
                         public void run() {

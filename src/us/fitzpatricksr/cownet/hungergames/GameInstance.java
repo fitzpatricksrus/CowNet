@@ -123,6 +123,10 @@ public class GameInstance {
         return gameSize;
     }
 
+    public void startNow() {
+        firstPlayerJoinTime = System.currentTimeMillis() - timeToGather;
+    }
+
     private GamePhase getGameState() {
         int livePlayerCount = getPlayersInGame().size();
         long time = timeSinceFirstPlayer();
