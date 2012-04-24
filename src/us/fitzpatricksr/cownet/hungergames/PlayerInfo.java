@@ -6,8 +6,7 @@ public class PlayerInfo {
     private static enum PlayerState {
         TRIBUTE("a tribute in the games"),
         DEAD("an ex-tribute"),
-        SPONSOR("a sponsor"),
-        VICTOR("the victor");
+        SPONSOR("a sponsor");
 
         private String printString;
 
@@ -25,7 +24,6 @@ public class PlayerInfo {
     private Player player;
     private PlayerState state;
     private long lastGiftTime = 0;
-    private int rank = 0;
 
     public PlayerInfo(Player player) {
         this.player = player;
@@ -71,35 +69,8 @@ public class PlayerInfo {
         state = PlayerState.DEAD;
     }
 
-    public boolean isVictor() {
-        return state == PlayerState.VICTOR;
-    }
-
-    public void setIsVictor() {
-        lastGiftTime = System.currentTimeMillis() - lastGiftTime;
-        state = PlayerState.VICTOR;
-    }
-
     public PlayerState getState() {
         return state;
-    }
-
-    public int getRank() {
-        return rank;
-    }
-
-    public void setRank(int newRank) {
-        rank = newRank;
-    }
-
-    public long getTimeInGame() {
-        if (state == PlayerState.SPONSOR) {
-            return 0;
-        } else if (state == PlayerState.TRIBUTE) {
-            return System.currentTimeMillis() - lastGiftTime;
-        } else {
-            return lastGiftTime;
-        }
     }
 
     public String toString() {
