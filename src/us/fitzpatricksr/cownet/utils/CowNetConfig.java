@@ -75,7 +75,7 @@ public abstract class CowNetConfig extends YamlConfiguration {
         Class<?> c = source.getClass();
         for (Field f : c.getFields()) {
             int modifiers = f.getModifiers();
-            if (!Modifier.isVolatile(modifiers) && !Modifier.isStatic(modifiers) && Modifier.isPublic(modifiers)) {
+            if (!Modifier.isVolatile(modifiers) && !Modifier.isTransient(modifiers) && !Modifier.isStatic(modifiers) && Modifier.isPublic(modifiers)) {
                 String key = f.getName();
                 Object value = null;
                 try {

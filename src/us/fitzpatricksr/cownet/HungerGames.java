@@ -8,6 +8,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -25,11 +26,14 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import us.fitzpatricksr.cownet.hungergames.GameHistory;
 import us.fitzpatricksr.cownet.hungergames.GameInstance;
 import us.fitzpatricksr.cownet.hungergames.PlayerInfo;
 import us.fitzpatricksr.cownet.utils.BlockUtils;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.StringUtils;
 
+import java.io.IOException;
 import java.util.Random;
 
 /*
@@ -137,6 +141,7 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     private MultiverseCore mvPlugin;
     private GameInstance gameInstance = new GameInstance();
+    private GameHistory gameHistory;
     private int arenaSizeThisGame = 0;
 
     private HungerGames() {
@@ -182,6 +187,14 @@ public class HungerGames extends CowNetThingy implements Listener {
         } else {
             mvPlugin.incrementPluginCount();
         }
+        gameHistory = new GameHistory(getPlugin(), getTrigger() + ".yml");
+        try {
+            gameHistory.loadConfig();
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (InvalidConfigurationException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
         logInfo("worldName:" + gameWorldName);
         logInfo("arenaSize:" + arenaSize);
         logInfo("allowFly:" + allowFly);
@@ -208,11 +221,12 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @Override
     protected boolean handleCommand(CommandSender sender, Command cmd, String[] args) {
-        if (args.length == 1 && (
-                "info".equalsIgnoreCase(args[0])
-                        || "list".equalsIgnoreCase(args[0])
-                        || "stats".equalsIgnoreCase(args[0]))) {
-            return goInfo(sender);
+        if (args.length == 1) {
+            if ("info".equalsIgnoreCase(args[0]) || "list".equalsIgnoreCase(args[0])) {
+                return goInfo(sender);
+            } else if ("stats".equalsIgnoreCase(args[0])) {
+                return goStats(sender);
+            }
         }
         return false;
     }
@@ -234,6 +248,17 @@ public class HungerGames extends CowNetThingy implements Listener {
             }
         }
         return false;
+    }
+
+    private boolean goStats(CommandSender sender) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            player.sendMessage("Your wins: " + gameHistory.getPlayerWins(player) + "   "
+                    + StringUtils.fitToColumnSize(Double.toString(gameHistory.getPlayerAverage(player) * 100), 5) + "%");
+        }
+        gameHistory.dumpRecentHistory(sender);
+        gameHistory.dumpLeaderBoard(sender);
+        return true;
     }
 
     private boolean doJoin(Player player) {
@@ -268,6 +293,7 @@ public class HungerGames extends CowNetThingy implements Listener {
     private boolean goQuit(Player player) {
         if (playerIsInGame(player)) {
             gameInstance.removePlayerFromGame(player);
+            gameHistory.registerLossFor(player);
             playPlayerDeathSound(player);
             player.sendMessage("You've left the game.");
         }
@@ -303,6 +329,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         } else if (gameInstance.isEnded()) {
             for (PlayerInfo info : gameInstance.getPlayersInGame()) {
                 broadcast("The winner of the games is: " + info.getPlayer().getDisplayName());
+                gameHistory.registerWinFor(info.getPlayer());
             }
             removeAllPlayersFromArena(gameWorldName);
             setNewSpawnLocation();
@@ -518,6 +545,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         if (!gameInstance.isGameOn()) return;
         if (playerIsInGame(event.getEntity())) {
             gameInstance.removePlayerFromGame(event.getEntity());
+            gameHistory.registerLossFor(event.getEntity());
             playPlayerDeathSound(event.getEntity());
         }
     }
@@ -548,6 +576,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         if (!gameInstance.isGameOn()) return;
         if (playerIsInGame(event.getPlayer())) {
             gameInstance.removePlayerFromGame(event.getPlayer());
+            gameHistory.registerLossFor(event.getPlayer());
             playPlayerDeathSound(event.getPlayer());
         }
     }

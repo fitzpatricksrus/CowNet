@@ -33,4 +33,20 @@ public class StringUtils {
         }
     }
 
+    public static String fitToColumnSize(String value, int columns) {
+        // truncate to max size.
+        value = value.substring(0, Math.min(columns, value.length()));
+        // if too short, pad on the left
+        StringBuilder builder = new StringBuilder(value);
+        while (builder.length() < columns) {
+            builder.insert(0, ' ');
+        }
+        return builder.toString();
+    }
+
+    public static void main(String args[]) {
+        String result = fitToColumnSize("123", 5);
+        result = fitToColumnSize("123456789", 5);
+    }
+
 }
