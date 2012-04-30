@@ -50,6 +50,10 @@ rank:
   enable: true
   groupNames: Convict,BadBoy,Default,Builder,Trusted,Engineer,BossBuilder,Architect,EarthMover,Terraformer,BlockGod
 
+timber:
+  enable: true;
+  worlds: ALL
+
 hardcore:
   enable: true
   debug: false

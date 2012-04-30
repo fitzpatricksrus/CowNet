@@ -331,6 +331,9 @@ public class HungerGames extends CowNetThingy implements Listener {
                 broadcast("The winner of the games is: " + info.getPlayer().getDisplayName());
                 gameHistory.registerWinFor(info.getPlayer());
             }
+            for (Player player : getPlugin().getServer().getOnlinePlayers()) {
+                goStats(player);
+            }
             removeAllPlayersFromArena(gameWorldName);
             setNewSpawnLocation();
             gameInstance = new GameInstance();

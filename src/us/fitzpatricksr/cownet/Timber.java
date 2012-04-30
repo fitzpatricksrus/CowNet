@@ -17,6 +17,8 @@ import us.fitzpatricksr.cownet.utils.CowNetThingy;
 import java.util.LinkedList;
 
 public class Timber extends CowNetThingy {
+    private String worlds = "";
+
     public Timber(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
         if (isEnabled()) {
@@ -29,6 +31,7 @@ public class Timber extends CowNetThingy {
 
     @Override
     public void reload() {
+        worlds = getConfigString("worlds", worlds);
     }
 
     @Override
@@ -52,18 +55,21 @@ public class Timber extends CowNetThingy {
         @EventHandler(priority = EventPriority.HIGHEST)
         public void onBlockBreak(BlockBreakEvent event) {
             if (event.isCancelled()) return;
-            Block dropBlock = event.getBlock();
-            Location dropLoc = dropBlock.getLocation();
-            Location loc = dropLoc.clone();
-            LinkedList<ItemStack> drops = new LinkedList<ItemStack>();
-            while (loc.getBlock().getType() == Material.LOG) {
-                drops.addAll(loc.getBlock().getDrops());
-                loc.getBlock().setType(Material.AIR);
-                loc.setY(loc.getY() + 1);
-            }
-            if (drops.size() > 0) {
-                for (ItemStack drop : drops) {
-                    dropBlock.getWorld().dropItemNaturally(dropLoc, drop);
+            String worldName = event.getPlayer().getWorld().getName().toLowerCase();
+            if (worlds.equalsIgnoreCase("ALL") || worlds.contains(worldName)) {
+                Block dropBlock = event.getBlock();
+                Location dropLoc = dropBlock.getLocation();
+                Location loc = dropLoc.clone();
+                LinkedList<ItemStack> drops = new LinkedList<ItemStack>();
+                while (loc.getBlock().getType() == Material.LOG) {
+                    drops.addAll(loc.getBlock().getDrops());
+                    loc.getBlock().setType(Material.AIR);
+                    loc.setY(loc.getY() + 1);
+                }
+                if (drops.size() > 0) {
+                    for (ItemStack drop : drops) {
+                        dropBlock.getWorld().dropItemNaturally(dropLoc, drop);
+                    }
                 }
             }
         }
