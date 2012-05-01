@@ -106,5 +106,8 @@ permissions:
     cownet.hungergames:
         description: participate in Hunger Games
         default: true
+    cownet.hungergames.gamemaker:
+        description: can you visit the arena even if games aren't underway
+        default: false
 
 

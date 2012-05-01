@@ -393,10 +393,12 @@ public class HungerGames extends CowNetThingy implements Listener {
         debugInfo("PlayerTeleportEvent");
         // nobody can go to the game world unless a game is underway
         if (isGameWorld(event.getTo().getWorld()) && !gameInstance.isGameOn()) {
-            event.setCancelled(true);
-            event.getPlayer().sendMessage("You can't teleport to the arena until the game starts.");
-            removeAllPlayersFromArena(gameWorldName);
-            debugInfo("canceled PlayerTeleportEvent1");
+            if (!hasPermissions(event.getPlayer(), "gamemaker")) {
+                event.setCancelled(true);
+                event.getPlayer().sendMessage("You can't teleport to the arena until the game starts.");
+                removeAllPlayersFromArena(gameWorldName);
+                debugInfo("canceled PlayerTeleportEvent1");
+            }
         } else if (gameInstance.isGameOn()) {
             Player player = event.getPlayer();
             if (playerIsInGame(player)) {
