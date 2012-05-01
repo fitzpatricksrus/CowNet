@@ -38,6 +38,10 @@ commands:
       aliases: [ games ]
       description: Enter the games
       usage: Use "/hungergames help"
+  nickname:
+      description: nicknames duh?
+      usage: Use "/nickname help"
+
 permissions:
     cownet.starve:
         description: Starve creatures around you
