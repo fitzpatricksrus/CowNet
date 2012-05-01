@@ -43,7 +43,9 @@ public class CowNetThingy implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (args.length == 1) {
             if ("help".equalsIgnoreCase(args[0])) {
-                sender.sendMessage(getHelpString(sender));
+                for (String help : getHelpText(sender)) {
+                    sender.sendMessage(help);
+                }
                 return true;
             } else if ("reload".equalsIgnoreCase(args[0])) {
                 getPlugin().reloadConfig();
@@ -158,6 +160,10 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     protected void reload() {
+    }
+
+    protected String[] getHelpText(CommandSender sender) {
+        return new String[]{getHelpString(sender)};
     }
 
     protected String getHelpString(CommandSender sender) {

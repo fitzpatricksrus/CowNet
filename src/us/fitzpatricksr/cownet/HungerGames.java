@@ -215,8 +215,16 @@ public class HungerGames extends CowNetThingy implements Listener {
     }
 
     @Override
-    protected String getHelpString(CommandSender player) {
-        return "usage: /hungergames or /hg   join | info | quit | tp";
+    protected String[] getHelpText(CommandSender player) {
+        return new String[]{
+                "usage: /hungergames or /hg   join | info | quit | tp <player> | start",
+                "   join - join the games as a tribute",
+                "   info - get latest stats on winners/loosers of previous games",
+                "   quit - chicken out and just watch",
+                "   tp <player> - transport to a player, if you're a sponsor",
+                "   start - just get things started already!",
+                "Note: sponsors can drop items once a minute"
+        };
     }
 
     @Override
