@@ -1,7 +1,5 @@
 package us.fitzpatricksr.cownet;
 
-import com.onarandombox.MultiverseCore.MultiverseCore;
-import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,7 +19,6 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.*;
-import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
@@ -139,7 +136,6 @@ public class HungerGames extends CowNetThingy implements Listener {
     private int teleportJiggle = 5;
     private int giftsPerPlayer = 3;
 
-    private MultiverseCore mvPlugin;
     private GameInstance gameInstance = new GameInstance();
     private GameHistory gameHistory;
     private int arenaSizeThisGame = 0;
@@ -168,7 +164,6 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @Override
     protected void reload() {
-        if (mvPlugin != null) mvPlugin.decrementPluginCount();
         gameWorldName = getConfigString("worldName", gameWorldName);
         arenaSize = getConfigInt("arenaSize", arenaSize);
         allowFly = getConfigBoolean("allowFly", allowFly);
@@ -180,13 +175,6 @@ public class HungerGames extends CowNetThingy implements Listener {
         teleportJiggle = getConfigInt("teleportJiggle", teleportJiggle);
         monsterBoost = getConfigDouble("monsterBoost", monsterBoost);
         giftsPerPlayer = getConfigInt("giftsPerPlayer", giftsPerPlayer);
-        mvPlugin = (MultiverseCore) getPlugin().getServer().getPluginManager().getPlugin("Multiverse-Core");
-        if (mvPlugin == null) {
-            logInfo("Could not find Multiverse-Core plugin.  Disabling self");
-            disable();
-        } else {
-            mvPlugin.incrementPluginCount();
-        }
         gameHistory = new GameHistory(getPlugin(), getTrigger() + ".yml");
         try {
             gameHistory.loadConfig();
@@ -205,13 +193,6 @@ public class HungerGames extends CowNetThingy implements Listener {
         logInfo("minTributes:" + GameInstance.minTributes);
         logInfo("teleportJiggle:" + teleportJiggle);
         logInfo("monsterBoost:" + monsterBoost);
-    }
-
-    @EventHandler
-    protected void handlePluginDisabled(PluginDisableEvent event) {
-        if (event.getPlugin() == getPlugin()) {
-            mvPlugin.decrementPluginCount();
-        }
     }
 
     @Override
@@ -680,10 +661,11 @@ public class HungerGames extends CowNetThingy implements Listener {
     }
 
     private void removeAllPlayersFromArena(String worldName) {
-        MVWorldManager mgr = mvPlugin.getMVWorldManager();
-        if (mgr.isMVWorld(worldName)) {
-            mgr.removePlayersFromWorld(worldName);
-            debugInfo("Removed all players from arena");
+        debugInfo("Removed all players from arena");
+        World w = getPlugin().getServer().getWorld(worldName);
+        World safeWorld = getPlugin().getServer().getWorlds().get(0);
+        for (Player p : w.getPlayers()) {
+            p.teleport(safeWorld.getSpawnLocation(), null);
         }
     }
 
