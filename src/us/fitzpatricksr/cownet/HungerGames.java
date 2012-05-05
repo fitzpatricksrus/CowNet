@@ -31,6 +31,7 @@ import us.fitzpatricksr.cownet.utils.CowNetThingy;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Random;
 
 /*
@@ -200,10 +201,11 @@ public class HungerGames extends CowNetThingy implements Listener {
         return new String[]{
                 "usage: /hungergames or /hg   join | info | quit | tp <player> | start",
                 "   join - join the games as a tribute",
-                "   info - get latest stats on winners/loosers of previous games",
+                "   info - what's the state of the current game?",
                 "   quit - chicken out and just watch",
                 "   tp <player> - transport to a player, if you're a sponsor",
                 "   start - just get things started already!",
+                "   stats - see how you stack up against others.",
                 "Note: sponsors can drop items once a minute"
         };
     }
@@ -350,10 +352,12 @@ public class HungerGames extends CowNetThingy implements Listener {
                 }
             }
             // if acclimating or in progress...
-            for (PlayerInfo playerInfo : gameInstance.getPlayersInGame()) {
+            int ndx = 0;
+            List<PlayerInfo> playersInGame = gameInstance.getPlayersInGame();
+            for (PlayerInfo playerInfo : playersInGame) {
 //                if (!isInArena(playerInfo.getPlayer())) {
                 if (!isGameWorld(playerInfo.getPlayer().getLocation().getWorld())) {
-                    teleportPlayerToArena(playerInfo.getPlayer(), gameWorldName);
+                    teleportPlayerToArena(playerInfo.getPlayer(), gameWorldName, ndx++, playersInGame.size());
                 }
             }
         }
@@ -392,10 +396,6 @@ public class HungerGames extends CowNetThingy implements Listener {
                     // teleport to/from anywhere else is not allowed for players.
                     event.setCancelled(true);
                     debugInfo("canceled PlayerTeleportEvent2");
-                    debugInfo("         isInArena(from)=" + isInArena(from));
-                    debugInfo("              " + getNotInArenaReason(from));
-                    debugInfo("         isInArena(to)=" + isInArena(to));
-                    debugInfo("              " + getNotInArenaReason(to));
                 }
             }
         }
@@ -415,8 +415,9 @@ public class HungerGames extends CowNetThingy implements Listener {
                     to.getY() != from.getY() ||
                     to.getZ() != from.getZ()) {
                 // if they do anything but spin or move their head, strike with lightning.
-                player.getWorld().strikeLightning(to);
-                player.damage(2);
+//                player.getWorld().strikeLightning(to);
+//                player.damage(2);
+                event.setCancelled(true);
                 debugInfo("Player " + event.getPlayer().getName() + " is moving during acclimation");
             }
         } else if (!isInArena(event.getTo())) {
@@ -562,6 +563,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         debugInfo("PlayerJoinEvent");
         if (!gameInstance.isGameOn()) return;
         goInfo(event.getPlayer());
+        goStats(event.getPlayer());
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -607,21 +609,6 @@ public class HungerGames extends CowNetThingy implements Listener {
         }
     }
 
-    private String getNotInArenaReason(Location loc) {
-        World w = loc.getWorld();
-        if (isGameWorld(w)) {
-            Location spawnLoc = w.getSpawnLocation();
-            double distance = spawnLoc.distance(loc);
-            if (distance < arenaSizeThisGame) {
-                return "in arena";
-            } else {
-                return "Distance: " + distance + " >= " + arenaSizeThisGame;
-            }
-        } else {
-            return "Wrong world: " + w.getName() + "  expected: " + gameWorldName;
-        }
-    }
-
     private void setNewSpawnLocation() {
         logInfo("Setting new spawn in " + gameWorldName);
 
@@ -636,9 +623,60 @@ public class HungerGames extends CowNetThingy implements Listener {
         spawn = BlockUtils.getHighestLandLocation(spawn);
         debugInfo("    NewSpawn:" + spawn);
         w.setSpawnLocation(spawn.getBlockX() % 2000, spawn.getBlockY(), spawn.getBlockZ() % 2000);
+
+        // clear the spawn area
+        spawn = w.getSpawnLocation();
+        int originX = spawn.getBlockX();
+        int originY = spawn.getBlockY();
+        int originZ = spawn.getBlockZ();
+        int radius = teleportJiggle + 3;
+        int radiusSquared = radius * radius;
+
+        for (int z = -radius; z <= radius; z++) {
+            for (int x = -radius; x <= radius; x++) {
+                if (x * x + z * z <= radiusSquared) {
+                    int actualX = originX + x;
+                    int actualZ = originZ + z;
+                    for (int y = originY + 15; y >= originY; y--) {
+                        w.getBlockAt(actualX, y, actualZ).setType(Material.AIR);
+                    }
+                    w.getBlockAt(actualX, originY - 1, actualZ).setType(Material.GRASS);
+                }
+            }
+        }
     }
 
-    private void teleportPlayerToArena(Player player, String worldName) {
+    private void teleportPlayerToArena(Player player, String worldName, int index, int totalPlayers) {
+        debugInfo("Teleported player " + player.getDisplayName() + " to " + worldName);
+        World gameWorld = getPlugin().getServer().getWorld(worldName);
+        Location spawn = gameWorld.getSpawnLocation().clone();
+        Location location = spawn.getBlock().getLocation().clone();
+
+        double angle = 2 * Math.PI / totalPlayers * index;
+
+        location.setX(location.getX() + teleportJiggle * Math.cos(angle));
+        location.setY(location.getY() + teleportJiggle * Math.sin(angle));
+
+        location = BlockUtils.getHighestLandLocation(location);
+        //TODO hey jf - set the block at this location to be something recognizable
+        location.add(0.5, 0, 0.5);
+        location.getBlock().setType(Material.DIAMOND_BLOCK);
+        location.add(0, 1, 0);
+        player.teleport(location);
+        player.sendMessage("Good luck.");
+        //place 3 random gifts per player
+        for (int i = 0; i < giftsPerPlayer; i++) {
+            Location giftLoc = spawn.clone();
+            giftLoc = jiggleLocation(giftLoc, gameInstance.getNumberOfGamePlayers() - 1);
+            giftLoc = BlockUtils.getHighestLandLocation(giftLoc);
+            giftLoc.add(0, 1, 0);
+            Material gift = gifts[rand.nextInt(gifts.length)];
+            gameWorld.dropItemNaturally(giftLoc, new ItemStack(gift, 1));
+        }
+        debugInfo("  Teleported player " + player.getDisplayName() + " to " + worldName + " complete");
+    }
+
+    private void oldTeleportPlayerToArena(Player player, String worldName, int index, int totalPlayers) {
         debugInfo("Teleported player " + player.getDisplayName() + " to " + worldName);
         World gameWorld = getPlugin().getServer().getWorld(worldName);
         Location spawn = gameWorld.getSpawnLocation().clone();

@@ -101,15 +101,37 @@ public class GameHistory extends CowNetConfig {
         Collections.sort(result, new Comparator<String>() {
             @Override
             public int compare(String s, String s1) {
-                return (getPlayerAverage(s) - getPlayerAverage(s1) < 0) ? 1 : 0;
+                if (getPlayerAverage(s) < getPlayerAverage(s1)) {
+                    // better average
+                    return 1;
+                } else if (getPlayerAverage(s) > getPlayerAverage(s1)) {
+                    // worse average
+                    return -1;
+                } else {
+                    // same average, so favor person with most plays
+                    int sTotal = getPlayerWins(s) + getPlayerLosses(s);
+                    int s1Total = getPlayerWins(s1) + getPlayerLosses(s1);
+                    if (sTotal < s1Total) {
+                        return 1;
+                    }
+                    if (sTotal > s1Total) {
+                        return -1;
+                    } else {
+                        // OK, just do it in alphabetical order
+                        return s.compareTo(s1);
+                    }
+                }
             }
         });
         playerToDumpTo.sendMessage("Leader board:");
         for (String playerName : result) {
             String avgString = Double.toString(getPlayerAverage(playerName) * 100);
+            int totalPlays = getPlayerWins(playerName) + getPlayerLosses(playerName);
             playerToDumpTo.sendMessage("    "
                     + StringUtils.fitToColumnSize(avgString, 5)
-                    + "%: "
+                    + "% of "
+                    + StringUtils.fitToColumnSize(Integer.toString(totalPlays), 3)
+                    + ": "
                     + playerName);
         }
     }
