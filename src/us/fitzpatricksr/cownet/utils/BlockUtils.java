@@ -56,7 +56,7 @@ public class BlockUtils {
         for (int i = 254; i > 0; i--) {
             loc.setY(i);
             if (!BlockUtils.PASS_THROUGH_BLOCKS.contains(loc.getBlock().getType())) {
-                loc.setY(i + 1);
+                loc.setY(i);
                 return loc;
             }
         }

@@ -629,7 +629,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         debugInfo("    PostJiggleSpawn:" + spawn);
         spawn = BlockUtils.getHighestLandLocation(spawn);
         debugInfo("    NewSpawn:" + spawn);
-        w.setSpawnLocation(spawn.getBlockX() % 2000, spawn.getBlockY(), spawn.getBlockZ() % 2000);
+        w.setSpawnLocation(spawn.getBlockX() % 2000, spawn.getBlockY() + 1, spawn.getBlockZ() % 2000);
 
         // clear the spawn area
         spawn = w.getSpawnLocation();
@@ -666,9 +666,8 @@ public class HungerGames extends CowNetThingy implements Listener {
 
         location = BlockUtils.getHighestLandLocation(location);
         //TODO hey jf - set the block at this location to be something recognizable
-        location.add(0.5, 0, 0.5);
         location.getBlock().setType(Material.DIAMOND_BLOCK);
-        location.add(0, 1, 0);
+        location.add(0.5, 1, 0.5);
         player.teleport(location);
         player.sendMessage("Good luck.");
         //place 3 random gifts per player
@@ -696,7 +695,7 @@ public class HungerGames extends CowNetThingy implements Listener {
     private Location placeRandomlyWithRadius(Location loc, int radius) {
         Random rand = new Random();
         int radians = rand.nextInt();
-        int distance = (int)(rand.nextDouble()*radius);
+        int distance = (int) (rand.nextDouble() * radius);
         Location result = loc.clone();
         result.setX(result.getX() + distance * Math.cos(radians));
         result.setY(result.getY() + distance * Math.sin(radians));
