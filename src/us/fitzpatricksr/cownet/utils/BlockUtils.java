@@ -21,8 +21,8 @@ public class BlockUtils {
                             Material.SAPLING,
                             Material.WEB,
                             Material.FEATHER,
-                            Material.FENCE,
-                            Material.FENCE_GATE,
+//                            Material.FENCE,
+//                            Material.FENCE_GATE,
                             Material.LONG_GRASS,
                             Material.DEAD_BUSH,
                             Material.WOOL,
@@ -36,7 +36,7 @@ public class BlockUtils {
                             Material.SNOW,
 //                            Material.ICE,
                             Material.SNOW_BLOCK,
-                            Material.CACTUS,
+//                            Material.CACTUS,
                             Material.SUGAR_CANE_BLOCK,
                             Material.PUMPKIN,
                             Material.JACK_O_LANTERN,
@@ -56,6 +56,7 @@ public class BlockUtils {
         for (int i = 254; i > 0; i--) {
             loc.setY(i);
             if (!BlockUtils.PASS_THROUGH_BLOCKS.contains(loc.getBlock().getType())) {
+                loc.setY(i + 1);
                 return loc;
             }
         }
