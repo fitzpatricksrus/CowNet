@@ -31,7 +31,7 @@ public class CreepThemOut implements NoSwearing.Consequence, Runnable {
         FileConfiguration config = plugin.getConfig();
         mobsToSpawn = config.getInt(trigger + ".mobsToSpawn", 5); // 5 mobs will be spawned
         //we schedule a task that runs every second to spawn ALL mobs for all players that cycle
-        plugin.getServer().getScheduler().scheduleAsyncRepeatingTask(plugin, this, 0L, 20L);
+        plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, this, 0L, 20L);
     }
 
     public void handleBadWord(Player player, String word) {
