@@ -130,11 +130,11 @@ public class HungerGames extends CowNetThingy implements Listener {
     private final Random rand = new Random();
 
     private String gameWorldName = "HungerGames";
-    private int arenaSize = 500;
     private boolean allowFly = false;
     private boolean allowXRay = false;
     private double monsterBoost = 1.0d;
-    private int teleportJiggle = 5;
+    private int arenaSize = 500;
+    private int landingPadSize = 5;
     private int giftsPerPlayer = 3;
 
     private GameInstance gameInstance = new GameInstance();
@@ -173,7 +173,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         GameInstance.timeToAcclimate = getConfigLong("timeToAcclimate", GameInstance.timeToAcclimate);
         PlayerInfo.timeBetweenGifts = getConfigLong("timeBetweenGifts", PlayerInfo.timeBetweenGifts);
         GameInstance.minTributes = getConfigInt("minTributes", GameInstance.minTributes);
-        teleportJiggle = getConfigInt("teleportJiggle", teleportJiggle);
+        landingPadSize = getConfigInt("landingPadSize", landingPadSize);
         monsterBoost = getConfigDouble("monsterBoost", monsterBoost);
         giftsPerPlayer = getConfigInt("giftsPerPlayer", giftsPerPlayer);
         gameHistory = new GameHistory(getPlugin(), getTrigger() + ".yml");
@@ -192,7 +192,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         logInfo("timeBetweenGifts:" + PlayerInfo.timeBetweenGifts);
         logInfo("giftsPerPlayer:" + giftsPerPlayer);
         logInfo("minTributes:" + GameInstance.minTributes);
-        logInfo("teleportJiggle:" + teleportJiggle);
+        logInfo("landingPadSize:" + landingPadSize);
         logInfo("monsterBoost:" + monsterBoost);
     }
 
@@ -615,10 +615,17 @@ public class HungerGames extends CowNetThingy implements Listener {
         // regenerating the world is VERY slow, so let's just move spawn around.
         World w = getPlugin().getServer().getWorld(gameWorldName);
         Location spawn = w.getSpawnLocation().getBlock().getLocation();
+
+        if (spawn.getBlock().getType().equals(Material.GOLD_BLOCK)) {
+            logInfo("Not moving hungergames spawn because spawn is a gold block");
+            return;
+        }
+
         debugInfo("    CurrentSpawn:" + spawn);
         spawn = new Location(spawn.getWorld(), spawn.getX() + 0.5, 250, spawn.getZ() + 0.5);
         debugInfo("    PreJiggleSpawn:" + spawn);
-        spawn = jiggleLocation(spawn, arenaSizeThisGame);
+//        spawn = jiggleLocation(spawn, arenaSizeThisGame);
+        spawn = placeRandomlyWithRadius(spawn, arenaSizeThisGame * landingPadSize);
         debugInfo("    PostJiggleSpawn:" + spawn);
         spawn = BlockUtils.getHighestLandLocation(spawn);
         debugInfo("    NewSpawn:" + spawn);
@@ -629,7 +636,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         int originX = spawn.getBlockX();
         int originY = spawn.getBlockY();
         int originZ = spawn.getBlockZ();
-        int radius = teleportJiggle + 3;
+        int radius = landingPadSize + 3;
         int radiusSquared = radius * radius;
 
         for (int z = -radius; z <= radius; z++) {
@@ -654,8 +661,8 @@ public class HungerGames extends CowNetThingy implements Listener {
 
         double angle = 2 * Math.PI / totalPlayers * index;
 
-        location.setX(location.getX() + teleportJiggle * Math.cos(angle));
-        location.setY(location.getY() + teleportJiggle * Math.sin(angle));
+        location.setX(location.getX() + landingPadSize * Math.cos(angle));
+        location.setZ(location.getZ() + landingPadSize * Math.sin(angle));
 
         location = BlockUtils.getHighestLandLocation(location);
         //TODO hey jf - set the block at this location to be something recognizable
@@ -667,29 +674,8 @@ public class HungerGames extends CowNetThingy implements Listener {
         //place 3 random gifts per player
         for (int i = 0; i < giftsPerPlayer; i++) {
             Location giftLoc = spawn.clone();
-            giftLoc = jiggleLocation(giftLoc, gameInstance.getNumberOfGamePlayers() - 1);
-            giftLoc = BlockUtils.getHighestLandLocation(giftLoc);
-            giftLoc.add(0, 1, 0);
-            Material gift = gifts[rand.nextInt(gifts.length)];
-            gameWorld.dropItemNaturally(giftLoc, new ItemStack(gift, 1));
-        }
-        debugInfo("  Teleported player " + player.getDisplayName() + " to " + worldName + " complete");
-    }
-
-    private void oldTeleportPlayerToArena(Player player, String worldName, int index, int totalPlayers) {
-        debugInfo("Teleported player " + player.getDisplayName() + " to " + worldName);
-        World gameWorld = getPlugin().getServer().getWorld(worldName);
-        Location spawn = gameWorld.getSpawnLocation().clone();
-        Location location = spawn.getBlock().getLocation().clone();
-        location = jiggleLocation(location, gameInstance.getNumberOfGamePlayers() - 1);
-        location = BlockUtils.getHighestLandLocation(location);
-        location.add(0.5, 1, 0.5);
-        player.teleport(location);
-        player.sendMessage("Good luck.");
-        //place 3 random gifts per player
-        for (int i = 0; i < giftsPerPlayer; i++) {
-            Location giftLoc = spawn.clone();
-            giftLoc = jiggleLocation(giftLoc, gameInstance.getNumberOfGamePlayers() - 1);
+//            giftLoc = jiggleLocation(giftLoc, gameInstance.getNumberOfGamePlayers() - 1);
+            giftLoc = placeRandomlyWithRadius(giftLoc, arenaSizeThisGame / 2);
             giftLoc = BlockUtils.getHighestLandLocation(giftLoc);
             giftLoc.add(0, 1, 0);
             Material gift = gifts[rand.nextInt(gifts.length)];
@@ -707,13 +693,23 @@ public class HungerGames extends CowNetThingy implements Listener {
         }
     }
 
-    private Location jiggleLocation(Location loc, int jiggleFactor) {
+    private Location placeRandomlyWithRadius(Location loc, int radius) {
+        Random rand = new Random();
+        int radians = rand.nextInt();
+        int distance = (int)(rand.nextDouble()*radius);
+        Location result = loc.clone();
+        result.setX(result.getX() + distance * Math.cos(radians));
+        result.setY(result.getY() + distance * Math.sin(radians));
+        return result;
+    }
+
+/*    private Location jiggleLocation(Location loc, int jiggleFactor) {
         //the more players, the bigger the jiggle
-        int jiggle = teleportJiggle * jiggleFactor;
+        int jiggle = landingPadSize * jiggleFactor;
         Location result = loc.clone();
         result.add(rand.nextInt(jiggle * 2) - jiggle, 0, rand.nextInt(jiggle * 2) - jiggle);
         return result;
-    }
+    }*/
 
     private void broadcast(String msg) {
         for (Player player : getPlugin().getServer().getOnlinePlayers()) {

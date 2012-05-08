@@ -1,7 +1,6 @@
 package us.fitzpatricksr.cownet.hungergames;
 
 import org.bukkit.entity.Player;
-import org.easymock.EasyMock;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -154,42 +153,4 @@ public class GameInstance {
             }
         }
     }
-
-    void testPlayerListSupport() {
-        List<PlayerInfo> infos = getPlayersInGame();
-        GamePhase phase = getGameState();
-        Player mockPlayer1 = EasyMock.createMock(Player.class);
-
-        //test gathering state
-        addPlayerToGame(mockPlayer1);
-        infos = getPlayersInGame();
-        phase = getGameState();
-
-        //test failure to gather enough people
-        firstPlayerJoinTime = 1;
-        phase = getGameState();
-        firstPlayerJoinTime = System.currentTimeMillis();
-
-        //test adding two people while gathering
-        Player mockPlayer2 = EasyMock.createMock(Player.class);
-        addPlayerToGame(mockPlayer2);
-        addPlayerToGame(mockPlayer1);
-        infos = getPlayersInGame();
-        phase = getGameState();
-
-        //test finished gathering
-        firstPlayerJoinTime = 1;
-        phase = getGameState();
-
-        //test one player leaves game.  should be ended
-        removePlayerFromGame(mockPlayer1);
-        infos = getPlayersInGame();
-        phase = getGameState();
-    }
-
-    public static void main(String[] args) {
-        GameInstance games = new GameInstance();
-        games.testPlayerListSupport();
-    }
-
 }
