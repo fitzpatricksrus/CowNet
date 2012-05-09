@@ -9,6 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.World;
 
 import java.io.File;
+import java.io.FilenameFilter;
 
 public class SchematicUtils {
     public static boolean placeSchematic(File schematic, Location location) {
@@ -23,6 +24,19 @@ public class SchematicUtils {
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public static File[] getSchematics(File folder) {
+        if ((folder != null) && folder.exists() && folder.isDirectory()) {
+            return folder.listFiles(new FilenameFilter() {
+                @Override
+                public boolean accept(File file, String s) {
+                    return s.endsWith(".schematic");
+                }
+            });
+        } else {
+            return new File[0];
         }
     }
 }
