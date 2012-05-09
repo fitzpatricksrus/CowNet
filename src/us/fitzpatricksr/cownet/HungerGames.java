@@ -4,6 +4,8 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.Chest;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -733,6 +735,18 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     private boolean playerIsOutOfGame(Player p) {
         return gameInstance.getPlayerInfo(p).isOutOfGame();
+    }
+
+    private void dummyCode() {
+        Location where = new Location(null, 0, 0, 0);
+        Block c = where.getBlock();
+        Material material = c.getType();
+        if (material.equals(Material.CHEST)) {
+            Chest chest = (Chest) c;
+            Inventory inv = chest.getInventory();
+            inv.setContents(new ItemStack[0]);
+        }
+
     }
 }
 
