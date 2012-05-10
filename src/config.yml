@@ -71,10 +71,9 @@ hungergames:
   enable: true
   debug: false
   worldName: HungerGames
-  arenaSize: 250
+  arenaSize: 100
   allowFly: false
   allowXRay: false
-  teleportJiggle: 5
   minTributes: 2
   giftsPerPlayer: 3
   trapsPerPlayer: 3

@@ -63,15 +63,16 @@ public class HungerGames extends CowNetThingy implements Listener {
     private String gameWorldName = "HungerGames";   // name of the world
     private boolean allowFly = false;               //turn off flying hacks for players in game
     private boolean allowXRay = false;              //turn off xray hacks for players in game
-    private int arenaSize = 250;                    // the total size of the playable area per player
+    private int arenaSize = 100;                    // the total size of the playable area per player
     private int landingPadSize = 5;                 // radius of landing pad per player
     private int giftsPerPlayer = 3;                 // number of gifts that are dropped at game start per player
     private int trapsPerPlayer = 3;                 // number of traps set (from schematics) at game start per player
 
     //game state
-    private GameInstance gameInstance = new GameInstance(); //the state of the game
     private GameHistory gameHistory;                        //stats and stuff
+    private GameInstance gameInstance = new GameInstance(); //the state of the game
     private int arenaSizeThisGame = 0;                      //the actual size of the arena once game has started
+    private boolean hasPlayedStartSound = false;            //set to true if the start sound has been played this game
 
     public HungerGames(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
@@ -253,14 +254,10 @@ public class HungerGames extends CowNetThingy implements Listener {
             for (Player player : getPlugin().getServer().getOnlinePlayers()) {
                 goStats(player);
             }
-            removeAllPlayersFromArena(gameWorldName);
-            gameInstance = new GameInstance();
-            arenaSizeThisGame = 0;
+            startNewGame();
         } else if (gameInstance.isFailed()) {
             broadcast("The games have been canceled due to lack of tributes.");
-            removeAllPlayersFromArena(gameWorldName);
-            gameInstance = new GameInstance();
-            arenaSizeThisGame = 0;
+            startNewGame();
         } else if (gameInstance.isGathering()) {
             long timeToWait = gameInstance.getTimeToGather() / 1000;
             if (timeToWait % 10 == 0 || timeToWait < 10) {
@@ -294,7 +291,18 @@ public class HungerGames extends CowNetThingy implements Listener {
                     teleportPlayerToArena(playerInfo.getPlayer(), gameWorldName, ndx++, playersInGame.size());
                 }
             }
+            if (gameInstance.isInProgress() && !hasPlayedStartSound) {
+                playGameStartedSound();
+            }
         }
+    }
+
+    private void startNewGame() {
+        debugInfo("Starting new game");
+        removeAllPlayersFromArena(gameWorldName);
+        gameInstance = new GameInstance();
+        arenaSizeThisGame = 0;
+        hasPlayedStartSound = false;
     }
 
     private void clearPlayerInventory(Player player) {
@@ -302,6 +310,19 @@ public class HungerGames extends CowNetThingy implements Listener {
         player.setItemInHand(null);
         Inventory inventory = player.getInventory();
         inventory.setContents(new ItemStack[inventory.getSize()]);
+    }
+
+    private void playGameStartedSound() {
+        for (PlayerInfo playerInfo : gameInstance.getPlayersInGame()) {
+            Player player = playerInfo.getPlayer();
+            player.getWorld().strikeLightningEffect(player.getLocation());
+        }
+    }
+
+    private void playPlayerDeathSound(Player player) {
+        player.getWorld().strikeLightningEffect(player.getLocation());
+        player.getWorld().strikeLightningEffect(player.getLocation());
+        broadcast(player.getDisplayName() + " has left the games.");
     }
 
     // --------------------------------------------------------------
@@ -507,12 +528,6 @@ public class HungerGames extends CowNetThingy implements Listener {
             gameHistory.registerLossFor(event.getPlayer());
             playPlayerDeathSound(event.getPlayer());
         }
-    }
-
-    private void playPlayerDeathSound(Player player) {
-        player.getWorld().strikeLightningEffect(player.getLocation());
-        player.getWorld().strikeLightningEffect(player.getLocation());
-        broadcast(player.getDisplayName() + " has left the games.");
     }
 
     // ------------------------------------------------
