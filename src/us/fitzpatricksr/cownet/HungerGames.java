@@ -672,7 +672,6 @@ public class HungerGames extends CowNetThingy implements Listener {
         location.setZ(location.getZ() + landingPadSize * Math.sin(angle));
 
         location = BlockUtils.getHighestLandLocation(location);
-        //TODO hey jf - set the block at this location to be something recognizable
         location.getBlock().setType(Material.DIAMOND_BLOCK);
         location.add(0.5, 3, 0.5);
         player.teleport(location);
@@ -694,7 +693,7 @@ public class HungerGames extends CowNetThingy implements Listener {
     }
 
     private Location placeRandomlyWithRadius(Location loc, int minRadius, int maxRadius) {
-        int radians = rand.nextInt();
+        double radians = 2 * Math.PI * rand.nextDouble();
         int distance = minRadius + (int) (rand.nextDouble() * (maxRadius - minRadius));
         Location result = loc.clone();
         result.setX(result.getX() + distance * Math.cos(radians));
