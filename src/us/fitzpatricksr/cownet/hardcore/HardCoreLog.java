@@ -12,11 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jfitzpatrick
- * Date: 4/13/12
- * Time: 4:20 PM
- * To change this template use File | Settings | File Templates.
+ * This class is a simple text file repository for event information in HardCore.  Output only.
  */
 public class HardCoreLog extends CowNetConfig {
     private static final DateFormat TIME_STAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

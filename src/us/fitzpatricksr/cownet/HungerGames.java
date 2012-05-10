@@ -30,8 +30,10 @@ import us.fitzpatricksr.cownet.hungergames.GameInstance;
 import us.fitzpatricksr.cownet.hungergames.PlayerInfo;
 import us.fitzpatricksr.cownet.utils.BlockUtils;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.SchematicUtils;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Random;
@@ -54,98 +56,22 @@ import java.util.Random;
  */
 public class HungerGames extends CowNetThingy implements Listener {
     private static final int GAME_WATCHER_FREQUENCY = 20 * 1; // 1 second
-    private static final Material[] gifts = {
-            Material.TNT,
-            Material.TORCH,
-            Material.IRON_SPADE,
-            Material.IRON_PICKAXE,
-            Material.IRON_AXE,
-            Material.FLINT_AND_STEEL,
-            Material.APPLE,
-            Material.BOW,
-            Material.ARROW,
-            Material.COAL,
-            Material.DIAMOND,
-            Material.IRON_SWORD,
-            Material.WOOD_SWORD,
-            Material.WOOD_SPADE,
-            Material.WOOD_PICKAXE,
-            Material.WOOD_AXE,
-            Material.STONE_SWORD,
-            Material.STONE_SPADE,
-            Material.STONE_PICKAXE,
-            Material.STONE_AXE,
-//            Material.DIAMOND_SWORD,
-//            Material.DIAMOND_SPADE,
-//            Material.DIAMOND_PICKAXE,
-//            Material.DIAMOND_AXE,
-            Material.STICK,
-            Material.BOWL,
-            Material.MUSHROOM_SOUP,
-            Material.GOLD_SWORD,
-            Material.GOLD_SPADE,
-            Material.GOLD_PICKAXE,
-            Material.GOLD_AXE,
-            Material.STRING,
-            Material.FEATHER,
-            Material.WOOD_HOE,
-            Material.STONE_HOE,
-            Material.IRON_HOE,
-            Material.DIAMOND_HOE,
-            Material.GOLD_HOE,
-            Material.SEEDS,
-            Material.WHEAT,
-            Material.BREAD,
-            Material.LEATHER_HELMET,
-            Material.LEATHER_CHESTPLATE,
-            Material.LEATHER_LEGGINGS,
-            Material.LEATHER_BOOTS,
-            Material.CHAINMAIL_HELMET,
-            Material.CHAINMAIL_CHESTPLATE,
-            Material.CHAINMAIL_LEGGINGS,
-            Material.CHAINMAIL_BOOTS,
-            Material.IRON_HELMET,
-            Material.IRON_CHESTPLATE,
-            Material.IRON_LEGGINGS,
-            Material.IRON_BOOTS,
-//            Material.DIAMOND_HELMET,
-//            Material.DIAMOND_CHESTPLATE,
-//            Material.DIAMOND_LEGGINGS,
-//            Material.DIAMOND_BOOTS,
-            Material.GOLD_HELMET,
-            Material.GOLD_CHESTPLATE,
-            Material.GOLD_LEGGINGS,
-            Material.GOLD_BOOTS,
-            Material.FLINT,
-            Material.PORK,
-            Material.GRILLED_PORK,
-            Material.GOLDEN_APPLE,
-            Material.BUCKET,
-            Material.FISHING_ROD,
-            Material.CAKE,
-            Material.MAP,
-            Material.SHEARS,
-            Material.COOKED_BEEF,
-            Material.COOKED_CHICKEN
-    };
-
+    private static final int LANDING_PAD_MARGIN_SIZE = 3; //how much empty space to put aroung the landing pad
     private final Random rand = new Random();
 
-    private String gameWorldName = "HungerGames";
-    private boolean allowFly = false;
-    private boolean allowXRay = false;
-    private double monsterBoost = 1.0d;
-    private int arenaSize = 500;
-    private int landingPadSize = 5;
-    private int giftsPerPlayer = 3;
+    //configuration
+    private String gameWorldName = "HungerGames";   // name of the world
+    private boolean allowFly = false;               //turn off flying hacks for players in game
+    private boolean allowXRay = false;              //turn off xray hacks for players in game
+    private int arenaSize = 250;                    // the total size of the playable area per player
+    private int landingPadSize = 5;                 // radius of landing pad per player
+    private int giftsPerPlayer = 3;                 // number of gifts that are dropped at game start per player
+    private int trapsPerPlayer = 3;                 // number of traps set (from schematics) at game start per player
 
-    private GameInstance gameInstance = new GameInstance();
-    private GameHistory gameHistory;
-    private int arenaSizeThisGame = 0;
-
-    private HungerGames() {
-        // for testing only
-    }
+    //game state
+    private GameInstance gameInstance = new GameInstance(); //the state of the game
+    private GameHistory gameHistory;                        //stats and stuff
+    private int arenaSizeThisGame = 0;                      //the actual size of the arena once game has started
 
     public HungerGames(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
@@ -176,8 +102,8 @@ public class HungerGames extends CowNetThingy implements Listener {
         PlayerInfo.timeBetweenGifts = getConfigLong("timeBetweenGifts", PlayerInfo.timeBetweenGifts);
         GameInstance.minTributes = getConfigInt("minTributes", GameInstance.minTributes);
         landingPadSize = getConfigInt("landingPadSize", landingPadSize);
-        monsterBoost = getConfigDouble("monsterBoost", monsterBoost);
         giftsPerPlayer = getConfigInt("giftsPerPlayer", giftsPerPlayer);
+        trapsPerPlayer = getConfigInt("trapsPerPlayer", trapsPerPlayer);
         gameHistory = new GameHistory(getPlugin(), getTrigger() + ".yml");
         try {
             gameHistory.loadConfig();
@@ -193,9 +119,9 @@ public class HungerGames extends CowNetThingy implements Listener {
         logInfo("timeToAcclimate:" + GameInstance.timeToAcclimate);
         logInfo("timeBetweenGifts:" + PlayerInfo.timeBetweenGifts);
         logInfo("giftsPerPlayer:" + giftsPerPlayer);
+        logInfo("trapsPerPlayer:" + trapsPerPlayer);
         logInfo("minTributes:" + GameInstance.minTributes);
         logInfo("landingPadSize:" + landingPadSize);
-        logInfo("monsterBoost:" + monsterBoost);
     }
 
     @Override
@@ -328,12 +254,13 @@ public class HungerGames extends CowNetThingy implements Listener {
                 goStats(player);
             }
             removeAllPlayersFromArena(gameWorldName);
-            setNewSpawnLocation();
             gameInstance = new GameInstance();
+            arenaSizeThisGame = 0;
         } else if (gameInstance.isFailed()) {
             broadcast("The games have been canceled due to lack of tributes.");
             removeAllPlayersFromArena(gameWorldName);
             gameInstance = new GameInstance();
+            arenaSizeThisGame = 0;
         } else if (gameInstance.isGathering()) {
             long timeToWait = gameInstance.getTimeToGather() / 1000;
             if (timeToWait % 10 == 0 || timeToWait < 10) {
@@ -341,8 +268,13 @@ public class HungerGames extends CowNetThingy implements Listener {
             }
         } else {
             if (arenaSizeThisGame == 0) {
-                // the basic 1 on 1 arena is arenaSize.  3 people is 3/2 * arenaSize.  4 is 4/2 arenasize
+                //This happens when the games actually start.  We don't set the
+                //arena size until we know how many people are playing
+                //So we wait until after the gathering is done.
+                //The basic 1 on 1 arena is arenaSize.  3 people is 3/2 * arenaSize.  4 is 4/2 arenasize
                 arenaSizeThisGame = gameInstance.getPlayersInGame().size() / 2 * arenaSize;
+                //We build what we need at spawn and in the arena as well.
+                buildNewArena();
             }
             if (gameInstance.isAcclimating()) {
                 long timeToWait = gameInstance.getTimeToAcclimate() / 1000;
@@ -413,12 +345,10 @@ public class HungerGames extends CowNetThingy implements Listener {
             Location to = event.getTo().getBlock().getLocation();
             Location from = event.getFrom().getBlock().getLocation();
             Player player = event.getPlayer();
-            if (to.getX() != from.getX() ||
-                    to.getY() != from.getY() ||
-                    to.getZ() != from.getZ()) {
+            if (to.getBlockX() != from.getBlockX() ||
+//                    to.getY() != from.getY() ||
+                    to.getBlockZ() != from.getBlockZ()) {
                 // if they do anything but spin or move their head, strike with lightning.
-//                player.getWorld().strikeLightning(to);
-//                player.damage(2);
                 event.setCancelled(true);
                 debugInfo("Player " + event.getPlayer().getName() + " is moving during acclimation");
             }
@@ -563,9 +493,9 @@ public class HungerGames extends CowNetThingy implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
         debugInfo("PlayerJoinEvent");
-        if (!gameInstance.isGameOn()) return;
         goInfo(event.getPlayer());
         goStats(event.getPlayer());
+//        if (!gameInstance.isGameOn()) return;
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -611,47 +541,107 @@ public class HungerGames extends CowNetThingy implements Listener {
         }
     }
 
-    private void setNewSpawnLocation() {
-        logInfo("Setting new spawn in " + gameWorldName);
-
-        // regenerating the world is VERY slow, so let's just move spawn around.
+    // Set a new spawn location and build out the map given that the game is about to start and that the number
+    // of players is set.
+    private void buildNewArena() {
+        // regenerating a world is VERY slow, so let's just move spawn around.
         World w = getPlugin().getServer().getWorld(gameWorldName);
         Location spawn = w.getSpawnLocation().getBlock().getLocation();
+        boolean reusingOldSpawn = spawn.getBlock().getType().equals(Material.GOLD_BLOCK) ||
+                spawn.clone().add(0, -1, 0).getBlock().getType().equals(Material.GOLD_BLOCK);
 
-        if (spawn.getBlock().getType().equals(Material.GOLD_BLOCK)) {
+        if (reusingOldSpawn) {
             logInfo("Not moving hungergames spawn because spawn is a gold block");
-            return;
-        }
+            //we set the random seed here based on spawn so that if we reuse the same spawn location
+            //we'll end up with the same random traps and stuff.  Not sure if this is a feature or not.
+            rand.setSeed(spawn.hashCode());
+        } else {
+            logInfo("Setting new spawn in " + gameWorldName);
+            debugInfo("    CurrentSpawn:" + spawn);
+            spawn = new Location(spawn.getWorld(), spawn.getX() + 0.5, 250, spawn.getZ() + 0.5);
+            debugInfo("    PreJiggleSpawn:" + spawn);
+            spawn = placeRandomlyWithRadius(spawn, arenaSizeThisGame * landingPadSize);
+            debugInfo("    PostJiggleSpawn:" + spawn);
+            spawn = BlockUtils.getHighestLandLocation(spawn);
+            spawn = new Location(w, spawn.getBlockX() % 2000, spawn.getBlockY() + 1, spawn.getBlockZ() % 2000);
+            debugInfo("    NewSpawn:" + spawn);
+            w.setSpawnLocation(spawn.getBlockX(), spawn.getBlockY(), spawn.getBlockZ());
 
-        debugInfo("    CurrentSpawn:" + spawn);
-        spawn = new Location(spawn.getWorld(), spawn.getX() + 0.5, 250, spawn.getZ() + 0.5);
-        debugInfo("    PreJiggleSpawn:" + spawn);
-//        spawn = jiggleLocation(spawn, arenaSizeThisGame);
-        spawn = placeRandomlyWithRadius(spawn, arenaSizeThisGame * landingPadSize);
-        debugInfo("    PostJiggleSpawn:" + spawn);
-        spawn = BlockUtils.getHighestLandLocation(spawn);
-        debugInfo("    NewSpawn:" + spawn);
-        w.setSpawnLocation(spawn.getBlockX() % 2000, spawn.getBlockY() + 1, spawn.getBlockZ() % 2000);
+            // clear the spawn area, even if we reuse spawn
+            int originX = spawn.getBlockX();
+            int originY = spawn.getBlockY();
+            int originZ = spawn.getBlockZ();
+            int radius = landingPadSize + LANDING_PAD_MARGIN_SIZE;
+            int radiusSquared = radius * radius;
 
-        // clear the spawn area
-        spawn = w.getSpawnLocation();
-        int originX = spawn.getBlockX();
-        int originY = spawn.getBlockY();
-        int originZ = spawn.getBlockZ();
-        int radius = landingPadSize + 3;
-        int radiusSquared = radius * radius;
-
-        for (int z = -radius; z <= radius; z++) {
-            for (int x = -radius; x <= radius; x++) {
-                if (x * x + z * z <= radiusSquared) {
-                    int actualX = originX + x;
-                    int actualZ = originZ + z;
-                    for (int y = originY + 15; y >= originY; y--) {
-                        w.getBlockAt(actualX, y, actualZ).setType(Material.AIR);
+            for (int z = -radius; z <= radius; z++) {
+                for (int x = -radius; x <= radius; x++) {
+                    if (x * x + z * z <= radiusSquared) {
+                        int actualX = originX + x;
+                        int actualZ = originZ + z;
+                        for (int y = 254; y >= originY; y--) {
+                            w.getBlockAt(actualX, y, actualZ).setType(Material.AIR);
+                        }
+                        w.getBlockAt(actualX, originY - 1, actualZ).setType(Material.GRASS);
+                        for (int y = originY - 2; y > 1; y--) {
+                            w.getBlockAt(actualX, y, actualZ).setType(Material.DIRT);
+                        }
                     }
-                    w.getBlockAt(actualX, originY - 1, actualZ).setType(Material.GRASS);
                 }
             }
+        }
+
+        //set X random traps per player
+        int numPlayers = gameInstance.getPlayersInGame().size();
+        File[] schematics = SchematicUtils.getSchematics(getSchematicsFolder());
+        if (schematics.length > 0) {
+            //place X random traps per player
+            for (int i = 0; i < trapsPerPlayer * numPlayers; i++) {
+                Location trapLoc = spawn.clone();
+                trapLoc = placeRandomlyWithRadius(trapLoc, landingPadSize + LANDING_PAD_MARGIN_SIZE, arenaSizeThisGame);
+                trapLoc = BlockUtils.getHighestLandLocation(trapLoc);
+                File trapSchematic = schematics[rand.nextInt(schematics.length)];
+                debugInfo("Placing schematic(" + trapSchematic.getName() + ") at " + trapLoc);
+                SchematicUtils.placeSchematic(trapSchematic, trapLoc);
+            }
+        }
+
+        //place X random gifts per player
+        for (int i = 0; i < giftsPerPlayer * numPlayers; i++) {
+            Location giftLoc = spawn.clone();
+            do {  //don't stack chests
+                giftLoc = placeRandomlyWithRadius(giftLoc, landingPadSize);
+                giftLoc = BlockUtils.getHighestLandLocation(giftLoc);
+            } while (giftLoc.getBlock().getType().equals(Material.CHEST));
+            giftLoc.add(0, 1, 0);
+//            w.dropItemNaturally(giftLoc, new ItemStack(gift, 1));
+
+            Block c = giftLoc.getBlock();
+            c.setType(Material.CHEST);
+            Chest chest = (Chest) c.getState();
+            Inventory inv = chest.getInventory();
+            Material gift = gifts[rand.nextInt(gifts.length)];
+            inv.setContents(new ItemStack[]{new ItemStack(gift)});
+        }
+
+        //restore a random spawn so we don't get stuck in a rut.
+        rand.setSeed(System.currentTimeMillis());
+    }
+
+    protected File getSchematicsFolder() {
+        try {
+            File folder = getPlugin().getDataFolder();
+            if (!folder.exists()) {
+                return null;
+            }
+            File file = new File(folder, "schematics");
+            if (!file.exists() || !file.isDirectory()) {
+                return null;
+            }
+            return file;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -669,19 +659,9 @@ public class HungerGames extends CowNetThingy implements Listener {
         location = BlockUtils.getHighestLandLocation(location);
         //TODO hey jf - set the block at this location to be something recognizable
         location.getBlock().setType(Material.DIAMOND_BLOCK);
-        location.add(0.5, 1, 0.5);
+        location.add(0.5, 3, 0.5);
         player.teleport(location);
         player.sendMessage("Good luck.");
-        //place 3 random gifts per player
-        for (int i = 0; i < giftsPerPlayer; i++) {
-            Location giftLoc = spawn.clone();
-//            giftLoc = jiggleLocation(giftLoc, gameInstance.getNumberOfGamePlayers() - 1);
-            giftLoc = placeRandomlyWithRadius(giftLoc, arenaSizeThisGame / 2);
-            giftLoc = BlockUtils.getHighestLandLocation(giftLoc);
-            giftLoc.add(0, 1, 0);
-            Material gift = gifts[rand.nextInt(gifts.length)];
-            gameWorld.dropItemNaturally(giftLoc, new ItemStack(gift, 1));
-        }
         debugInfo("  Teleported player " + player.getDisplayName() + " to " + worldName + " complete");
     }
 
@@ -695,22 +675,17 @@ public class HungerGames extends CowNetThingy implements Listener {
     }
 
     private Location placeRandomlyWithRadius(Location loc, int radius) {
-        Random rand = new Random();
-        int radians = rand.nextInt();
-        int distance = (int) (rand.nextDouble() * radius);
-        Location result = loc.clone();
-        result.setX(result.getX() + distance * Math.cos(radians));
-        result.setY(result.getY() + distance * Math.sin(radians));
-        return result;
+        return placeRandomlyWithRadius(loc, 0, radius);
     }
 
-/*    private Location jiggleLocation(Location loc, int jiggleFactor) {
-        //the more players, the bigger the jiggle
-        int jiggle = landingPadSize * jiggleFactor;
+    private Location placeRandomlyWithRadius(Location loc, int minRadius, int maxRadius) {
+        int radians = rand.nextInt();
+        int distance = minRadius + (int) (rand.nextDouble() * (maxRadius - minRadius));
         Location result = loc.clone();
-        result.add(rand.nextInt(jiggle * 2) - jiggle, 0, rand.nextInt(jiggle * 2) - jiggle);
+        result.setX(result.getX() + distance * Math.cos(radians));
+        result.setZ(result.getZ() + distance * Math.sin(radians));
         return result;
-    }*/
+    }
 
     private void broadcast(String msg) {
         for (Player player : getPlugin().getServer().getOnlinePlayers()) {
@@ -737,17 +712,80 @@ public class HungerGames extends CowNetThingy implements Listener {
         return gameInstance.getPlayerInfo(p).isOutOfGame();
     }
 
-    private void dummyCode() {
-        Location where = new Location(null, 0, 0, 0);
-        Block c = where.getBlock();
-        Material material = c.getType();
-        if (material.equals(Material.CHEST)) {
-            Chest chest = (Chest) c;
-            Inventory inv = chest.getInventory();
-            inv.setContents(new ItemStack[0]);
-        }
-
-    }
+    private static final Material[] gifts = {
+            Material.TNT,
+            Material.TORCH,
+            Material.IRON_SPADE,
+            Material.IRON_PICKAXE,
+            Material.IRON_AXE,
+            Material.FLINT_AND_STEEL,
+            Material.APPLE,
+            Material.BOW,
+            Material.ARROW,
+            Material.COAL,
+            Material.DIAMOND,
+            Material.IRON_SWORD,
+            Material.WOOD_SWORD,
+            Material.WOOD_SPADE,
+            Material.WOOD_PICKAXE,
+            Material.WOOD_AXE,
+            Material.STONE_SWORD,
+            Material.STONE_SPADE,
+            Material.STONE_PICKAXE,
+            Material.STONE_AXE,
+//            Material.DIAMOND_SWORD,
+//            Material.DIAMOND_SPADE,
+//            Material.DIAMOND_PICKAXE,
+//            Material.DIAMOND_AXE,
+            Material.STICK,
+            Material.BOWL,
+            Material.MUSHROOM_SOUP,
+            Material.GOLD_SWORD,
+            Material.GOLD_SPADE,
+            Material.GOLD_PICKAXE,
+            Material.GOLD_AXE,
+            Material.STRING,
+            Material.FEATHER,
+            Material.WOOD_HOE,
+            Material.STONE_HOE,
+            Material.IRON_HOE,
+            Material.DIAMOND_HOE,
+            Material.GOLD_HOE,
+            Material.SEEDS,
+            Material.WHEAT,
+            Material.BREAD,
+            Material.LEATHER_HELMET,
+            Material.LEATHER_CHESTPLATE,
+            Material.LEATHER_LEGGINGS,
+            Material.LEATHER_BOOTS,
+            Material.CHAINMAIL_HELMET,
+            Material.CHAINMAIL_CHESTPLATE,
+            Material.CHAINMAIL_LEGGINGS,
+            Material.CHAINMAIL_BOOTS,
+            Material.IRON_HELMET,
+            Material.IRON_CHESTPLATE,
+            Material.IRON_LEGGINGS,
+            Material.IRON_BOOTS,
+//            Material.DIAMOND_HELMET,
+//            Material.DIAMOND_CHESTPLATE,
+//            Material.DIAMOND_LEGGINGS,
+//            Material.DIAMOND_BOOTS,
+            Material.GOLD_HELMET,
+            Material.GOLD_CHESTPLATE,
+            Material.GOLD_LEGGINGS,
+            Material.GOLD_BOOTS,
+            Material.FLINT,
+            Material.PORK,
+            Material.GRILLED_PORK,
+            Material.GOLDEN_APPLE,
+            Material.BUCKET,
+            Material.FISHING_ROD,
+            Material.CAKE,
+            Material.MAP,
+            Material.SHEARS,
+            Material.COOKED_BEEF,
+            Material.COOKED_CHICKEN
+    };
 }
 
 

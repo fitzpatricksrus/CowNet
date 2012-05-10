@@ -3,7 +3,6 @@ package us.fitzpatricksr.cownet.hungergames;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.serialization.SerializableAs;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetConfig;
@@ -12,7 +11,6 @@ import us.fitzpatricksr.cownet.utils.StringUtils;
 import java.io.IOException;
 import java.util.*;
 
-@SerializableAs("PlayerState")
 public class GameHistory extends CowNetConfig {
     private static final int MAX_RECENT_WINNERS = 5;
     private LinkedList<String> recentWinners = new LinkedList<String>();

@@ -6,6 +6,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * A GameInstance represents a single instance of a game being played.  I goes through multiple distinct phases:
+ * unstarted -> gathering -> failed* | acclimating -> inprogress -> ended
+ * <p/>
+ * This class is terribly hacky.  I tries to define the state transitions by just the number of people in the game
+ * and the time since the first player joined instead of explicitly keeping state.  Don't know why this made
+ * sense, but since it works I don't see any reason to change it.  I'm sure it can be simplified.
+ */
 public class GameInstance {
     private static enum GamePhase {
         UNSTARTED,      //havent started yet
@@ -16,8 +24,8 @@ public class GameInstance {
         FAILED,         //didn't gather enough players
     }
 
-    public static long timeToGather = 1 * 60 * 1000; // 1 minutesprivate long firstPlayerJoinTime = 0;private java.util.HashMap<org.bukkit.entity.Player,us.fitzpatricksr.cownet.HungerGames.PlayerInfo> gameInfo = new java.util.HashMap<org.bukkit.entity.Player,us.fitzpatricksr.cownet.HungerGames.PlayerInfo>();	public GameInstance(us.fitzpatricksr.cownet.HungerGames hungerGames)	{		this.hungerGames = hungerGames;	}private java.util.List<us.fitzpatricksr.cownet.HungerGames.PlayerInfo> getPlayersInGame() {
-    public static long timeToAcclimate = 10 * 1000; // 1 minutesprivate long firstPlayerJoinTime = 0;private java.util.HashMap<org.bukkit.entity.Player,us.fitzpatricksr.cownet.HungerGames.PlayerInfo> gameInfo = new java.util.HashMap<org.bukkit.entity.Player,us.fitzpatricksr.cownet.HungerGames.PlayerInfo>();	public GameInstance(us.fitzpatricksr.cownet.HungerGames hungerGames)	{		this.hungerGames = hungerGames;	}private java.util.List<us.fitzpatricksr.cownet.HungerGames.PlayerInfo> getPlayersInGame() {
+    public static long timeToGather = 1 * 60 * 1000; // 1 minute
+    public static long timeToAcclimate = 10 * 1000; // 10 seconds
     public static int minTributes = 2;
 
     private long firstPlayerJoinTime = 0;

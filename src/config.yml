@@ -72,12 +72,12 @@ hungergames:
   debug: false
   worldName: HungerGames
   arenaSize: 250
-  monsterBoost: 1.0
   allowFly: false
   allowXRay: false
   teleportJiggle: 5
   minTributes: 2
   giftsPerPlayer: 3
+  trapsPerPlayer: 3
   timeToGather: 60000
   timeToAcclimate: 10000
 

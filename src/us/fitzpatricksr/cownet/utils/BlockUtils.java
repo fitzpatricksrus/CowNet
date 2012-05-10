@@ -25,7 +25,7 @@ public class BlockUtils {
 //                            Material.FENCE_GATE,
                             Material.LONG_GRASS,
                             Material.DEAD_BUSH,
-                            Material.WOOL,
+//                            Material.WOOL,
                             Material.YELLOW_FLOWER,
                             Material.RED_ROSE,
                             Material.BROWN_MUSHROOM,
@@ -35,7 +35,7 @@ public class BlockUtils {
                             Material.CROPS,
                             Material.SNOW,
 //                            Material.ICE,
-                            Material.SNOW_BLOCK,
+//                            Material.SNOW_BLOCK,
 //                            Material.CACTUS,
                             Material.SUGAR_CANE_BLOCK,
                             Material.PUMPKIN,
@@ -48,7 +48,7 @@ public class BlockUtils {
                             Material.PUMPKIN_STEM,
                             Material.MELON_STEM,
                             Material.VINE,
-                            Material.WATER_LILY
+//                            Material.WATER_LILY
                     }));
 
     public static Location getHighestLandLocation(Location start) {
