@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.SettingsTwiddler;
 
 import java.util.List;
 
@@ -16,7 +17,9 @@ public class BounceCommand extends CowNetThingy {
     private static final int MAX_VELOCITY = 5;
     private static final int DEFAULT_RADIUS = 5;
     private static final int DEFAULT_VELOCITY = 1;
+    @SettingsTwiddler.Setting
     private int standardRadius;
+    @SettingsTwiddler.Setting
     private int standardVelocity;
 
     public BounceCommand(JavaPlugin plugin, String permissionRoot, String trigger) {

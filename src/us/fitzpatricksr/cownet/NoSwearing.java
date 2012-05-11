@@ -23,7 +23,7 @@ import java.util.Random;
 import java.util.logging.Logger;
 
 public class NoSwearing implements Listener {
-    Random rand = new Random();
+    private Random rand = new Random();
     private Logger logger = Logger.getLogger("Minecraft");
     private String permissionNode;
     private String[] bannedPhrases;

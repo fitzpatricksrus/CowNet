@@ -13,11 +13,13 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.SettingsTwiddler;
 
 import java.util.LinkedList;
 
 public class Timber extends CowNetThingy {
-    private String worlds = "";
+    @SettingsTwiddler.Setting
+    private String worlds = "ALL";
 
     public Timber(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);

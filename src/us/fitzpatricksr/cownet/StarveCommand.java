@@ -6,6 +6,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.SettingsTwiddler;
 
 import java.util.List;
 
@@ -14,7 +15,9 @@ public class StarveCommand extends CowNetThingy {
     private static final int MAX_DAMAGE = 100;
     private static final int DEFAULT_RADIUS = 5;
     private static final int DEFAULT_DAMAGE = 20;
+    @SettingsTwiddler.Setting
     private int standardRadius;
+    @SettingsTwiddler.Setting
     private int standardDamage;
 
     public StarveCommand(JavaPlugin plugin, String permissionRoot, String trigger) {

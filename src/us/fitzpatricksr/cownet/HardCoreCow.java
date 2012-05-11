@@ -31,10 +31,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.hardcore.HardCoreLog;
 import us.fitzpatricksr.cownet.hardcore.PlayerState;
-import us.fitzpatricksr.cownet.utils.CowNetConfig;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
-import us.fitzpatricksr.cownet.utils.CowZombeControl;
-import us.fitzpatricksr.cownet.utils.StringUtils;
+import us.fitzpatricksr.cownet.utils.*;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -59,12 +56,17 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     private static final int REAPER_FREQUENCY = 20 * 30; // 30 seconds
     private HardCoreState config;
     private HardCoreLog logFile;
-    private String hardCoreWorldNames = "HardCore";
-    private int safeDistance = 10;
     private MultiverseCore mvPlugin;
+    @SettingsTwiddler.Setting
+    private String hardCoreWorldNames = "HardCore";
+    @SettingsTwiddler.Setting
+    private int safeDistance = 10;
     private Difficulty difficulty = Difficulty.HARD;
+    @SettingsTwiddler.Setting
     private double monsterBoost = 1.0d;
+    @SettingsTwiddler.Setting
     private boolean allowFly = false;
+    @SettingsTwiddler.Setting
     private boolean allowXRay = false;
 
     public HardCoreCow(JavaPlugin plugin, String permissionRoot, String trigger) {

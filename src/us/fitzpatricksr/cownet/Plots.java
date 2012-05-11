@@ -25,6 +25,7 @@ import us.fitzpatricksr.cownet.plots.PlayerCenteredClaim;
 import us.fitzpatricksr.cownet.plots.PlotsChunkGenerator;
 import us.fitzpatricksr.cownet.utils.BlockUtils;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.SettingsTwiddler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,10 +37,14 @@ public class Plots extends CowNetThingy {
     private NoSwearing noSwearingMod;
     private PlayerCenteredClaim pcc;
     private InfinitePlotClaim ipc;
-    private int maxPlots = 3;
 
+    @SettingsTwiddler.Setting
+    private int maxPlots = 3;
+    @SettingsTwiddler.Setting
     private int plotCost = 100;
+    @SettingsTwiddler.Setting
     private int plotSize = 64;
+    @SettingsTwiddler.Setting
     private int plotHeight = 20;
     private Material plotBase = Material.STONE;
     private Material plotSurface = Material.GRASS;

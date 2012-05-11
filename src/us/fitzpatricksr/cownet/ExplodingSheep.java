@@ -12,17 +12,25 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.SettingsTwiddler;
 
 import java.util.Random;
 
 public class ExplodingSheep extends CowNetThingy {
     private Random rand = new Random();
+    @SettingsTwiddler.Setting
     private int chanceToExplode = 25;
+    @SettingsTwiddler.Setting
     private String allowedWorlds = "ALL";
+    @SettingsTwiddler.Setting
     private float explosionRadius = 3; //4 = tnt
+    @SettingsTwiddler.Setting
     private int explosionDamage = 3; //4 = tnt
+    @SettingsTwiddler.Setting
     private boolean sheepExplode = false;
+    @SettingsTwiddler.Setting
     private boolean cowsExplode = false;
+    @SettingsTwiddler.Setting
     private int wreckage = 5;
 
     public ExplodingSheep(JavaPlugin plugin, String permissionRoot, String trigger) {
