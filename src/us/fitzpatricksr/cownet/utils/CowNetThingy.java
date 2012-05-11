@@ -7,6 +7,9 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -137,7 +140,7 @@ public class CowNetThingy implements CommandExecutor {
         return hasPermissions(player, perm, true) || player.hasPermission("*");
     }
 
-    private final boolean hasPermissions(CommandSender player, String perm, boolean allowOps) {
+    private boolean hasPermissions(CommandSender player, String perm, boolean allowOps) {
         if ((allowOps && player.isOp()) || player.hasPermission(permissionNode + "." + perm)) {
             return true;
         } else {
@@ -190,6 +193,56 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     protected boolean handleCommand(CommandSender sender, Command cmd, String[] args) {
+        // hey jf - this used to just return false
+        return dispatchMethod(sender, cmd, args);
+    }
+
+    static Class[] args0 = new Class[]{CommandSender.class, Command.class};
+    static Class[] args1 = new Class[]{CommandSender.class, Command.class, String.class};
+    static Class[] args2 = new Class[]{CommandSender.class, Command.class, String.class, String.class};
+    static Class[] args3 = new Class[]{CommandSender.class, Command.class, String.class, String.class, String.class};
+    static Class[] args4 = new Class[]{CommandSender.class, Command.class, String.class, String.class, String.class, String.class};
+    static Class[][] argsX = {args0, args1, args2, args3, args4};
+
+    private Method getMethod(String[] args) {
+        String methodName = args[0];
+        methodName = "do" + methodName.toUpperCase().substring(0, 1) + methodName.toLowerCase().substring(1);
+        debugInfo(methodName);
+
+        try {
+            int paramCount = args.length - 1;
+            Method method = getClass().getMethod(methodName, argsX[paramCount]);
+            if (method.getReturnType().equals(boolean.class)) {
+                return method;
+            } else {
+                return null;
+            }
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+    }
+
+    private boolean dispatchMethod(CommandSender sender, Command cmd, String[] args) {
+        try {
+            LinkedList<Object> paramList = new LinkedList<Object>();
+            paramList.addFirst(sender);
+            paramList.addLast(cmd);
+            for (int i = 1; i < args.length; i++) {
+                paramList.addLast(args[i]);
+            }
+            Object[] params = paramList.toArray();
+            Method method = getMethod(args);
+            if (method != null) {
+                Object result = method.invoke(this, params);
+                return (Boolean) result;
+            }
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
         return false;
     }
+
+
 }

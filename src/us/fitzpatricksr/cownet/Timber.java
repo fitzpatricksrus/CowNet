@@ -52,6 +52,21 @@ public class Timber extends CowNetThingy {
         }
     }
 
+    public boolean doStuff(CommandSender sender, Command cmd) {
+        sender.sendMessage("Yup");
+        return true;
+    }
+
+    public boolean doStuff(CommandSender sender, Command cmd, String arg1) {
+        sender.sendMessage("Yup(" + arg1 + ")");
+        return true;
+    }
+
+    public boolean doStuff(CommandSender sender, Command cmd, String arg1, String arg2) {
+        sender.sendMessage("Yup(" + arg1 + "," + arg2 + ")");
+        return true;
+    }
+
     private class TreeListener implements Listener {
         @SuppressWarnings("unused")
         @EventHandler(priority = EventPriority.HIGHEST)
