@@ -28,10 +28,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.hungergames.GameHistory;
 import us.fitzpatricksr.cownet.hungergames.GameInstance;
 import us.fitzpatricksr.cownet.hungergames.PlayerInfo;
-import us.fitzpatricksr.cownet.utils.BlockUtils;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
-import us.fitzpatricksr.cownet.utils.SchematicUtils;
-import us.fitzpatricksr.cownet.utils.StringUtils;
+import us.fitzpatricksr.cownet.utils.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,12 +57,19 @@ public class HungerGames extends CowNetThingy implements Listener {
     private final Random rand = new Random();
 
     //configuration
+    @SettingsTwiddler.Setting
     private String gameWorldName = "HungerGames";   // name of the world
+    @SettingsTwiddler.Setting
     private boolean allowFly = false;               //turn off flying hacks for players in game
+    @SettingsTwiddler.Setting
     private boolean allowXRay = false;              //turn off xray hacks for players in game
+    @SettingsTwiddler.Setting
     private int arenaSize = 100;                    // the total size of the playable area per player
+    @SettingsTwiddler.Setting
     private int landingPadSize = 5;                 // radius of landing pad per player
+    @SettingsTwiddler.Setting
     private int giftsPerPlayer = 3;                 // number of gifts that are dropped at game start per player
+    @SettingsTwiddler.Setting
     private int trapsPerPlayer = 3;                 // number of traps set (from schematics) at game start per player
 
     //game state

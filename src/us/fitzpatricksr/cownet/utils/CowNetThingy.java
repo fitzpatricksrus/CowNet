@@ -7,6 +7,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class CowNetThingy implements CommandExecutor {
@@ -15,6 +16,7 @@ public class CowNetThingy implements CommandExecutor {
     private String trigger = "";
     private String permissionNode = "";
     private boolean isEnabled = false;
+    @SettingsTwiddler.Setting()
     private boolean isDebug = false;
 
     protected CowNetThingy() {
@@ -55,13 +57,26 @@ public class CowNetThingy implements CommandExecutor {
             } else if ("debug".equalsIgnoreCase(args[0])) {
                 isDebug = !isDebug;
                 sender.sendMessage("Debug = " + isDebug);
+                return true;
+            } else if ("settings".equalsIgnoreCase(args[0]) && sender.isOp()) {
+                Map<String, String> settings = SettingsTwiddler.getSettings(this);
+                for (String key : settings.keySet()) {
+                    sender.sendMessage(key + ": " + settings.get(key));
+                }
+                return true;
+            }
+        } else if (args.length == 3) {
+            if ("set".equalsIgnoreCase(args[0]) && sender.isOp()) {
+                // set <setting> <value>
+                SettingsTwiddler.setSetting(this, args[1], args[2]);
+                return true;
             }
         }
         if (sender instanceof Player) {
             Player player = (Player) sender;
             if (!hasPermissions(player)) {
                 player.sendMessage("Sorry, you don't have permission");
-                return false;
+                return true;
             }
             return handleCommand(sender, cmd, args) || handleCommand(player, cmd, args);
         } else if (sender.getClass().getName().contains("Console")) {
@@ -69,7 +84,7 @@ public class CowNetThingy implements CommandExecutor {
             return handleCommand(sender, cmd, args);
         } else {
             logInfo("Could not handle command from " + sender);
-            return false;
+            return true;
         }
     }
 
