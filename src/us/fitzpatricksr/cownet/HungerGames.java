@@ -32,6 +32,7 @@ import us.fitzpatricksr.cownet.utils.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -127,6 +128,12 @@ public class HungerGames extends CowNetThingy implements Listener {
         logInfo("trapsPerPlayer:" + trapsPerPlayer);
         logInfo("minTributes:" + GameInstance.minTributes);
         logInfo("landingPadSize:" + landingPadSize);
+        File[] schematics = SchematicUtils.getSchematics(getSchematicsFolder());
+        String[] fileNames = new String[schematics.length];
+        for (int i = 0; i < fileNames.length; i++) {
+            fileNames[i] = schematics[i].getName();
+        }
+        logInfo("schematics: " + StringUtils.flatten(Arrays.asList(fileNames)));
     }
 
     @Override
@@ -157,18 +164,18 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     protected boolean handleCommand(Player sender, Command cmd, String[] args) {
         if (args.length == 0) {
-            return doJoin(sender);
+            return goJoin(sender);
         } else if (args.length == 1) {
             if ("quit".equalsIgnoreCase(args[0])) {
                 return goQuit(sender);
             } else if ("start".equalsIgnoreCase(args[0])) {
-                return doStart(sender);
+                return goStart(sender);
             } else if ("join".equalsIgnoreCase(args[0])) {
-                return doJoin(sender);
+                return goJoin(sender);
             }
         } else if (args.length == 2) {
             if ("tp".equalsIgnoreCase(args[0])) {
-                return doTeleport(sender, args[1]);
+                return goTeleport(sender, args[1]);
             }
         }
         return false;
@@ -185,7 +192,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean doJoin(Player player) {
+    private boolean goJoin(Player player) {
         if (!gameInstance.isGameOn()) {
             gameInstance.addPlayerToGame(player);
             player.sendMessage("You've joined the game as a tribute.");
@@ -198,7 +205,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean doStart(Player player) {
+    private boolean goStart(Player player) {
         if (!gameInstance.isGameOn()) {
             gameInstance.startNow();
         }
@@ -224,7 +231,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean doTeleport(Player sender, String destName) {
+    private boolean goTeleport(Player sender, String destName) {
         PlayerInfo source = gameInstance.getPlayerInfo(sender);
         if (source.isInGame()) {
             sender.sendMessage("Tributes are not allowed to teleport.");
@@ -241,6 +248,16 @@ public class HungerGames extends CowNetThingy implements Listener {
             sender.sendMessage("Only Sponsors can teleport and only to active tributes.");
         }
         return false;
+    }
+
+    protected boolean doSchematics(CommandSender sender, Command cmd) {
+        File[] schematics = SchematicUtils.getSchematics(getSchematicsFolder());
+        String[] fileNames = new String[schematics.length];
+        for (int i = 0; i < fileNames.length; i++) {
+            fileNames[i] = schematics[i].getName();
+        }
+        sender.sendMessage("schematics: " + StringUtils.flatten(Arrays.asList(fileNames)));
+        return true;
     }
 
     // --------------------------------------------------------------
