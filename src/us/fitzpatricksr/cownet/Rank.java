@@ -3,7 +3,6 @@ package us.fitzpatricksr.cownet;
 import com.platymuus.bukkit.permissions.Group;
 import com.platymuus.bukkit.permissions.PermissionsPlugin;
 import com.platymuus.bukkit.permissions.PermissionsUtils;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
@@ -15,6 +14,7 @@ import java.util.List;
 public class Rank extends CowNetThingy {
     private static final String UP_CMD = "up";
     private static final String DOWN_CMD = "down";
+    private static final String NONE_CMD = "none";
     private PermissionsPlugin permsPlugin;
     private PermissionsUtils permsUtils;
     private LinkedList<String> permsGroups = new LinkedList<String>();
@@ -45,11 +45,19 @@ public class Rank extends CowNetThingy {
         }
     }
 
-    protected boolean handleCommand(CommandSender sender, Command cmd, String[] args) {
-        if (args.length > 2) return false;
+    @Override
+    protected String getHelpString(CommandSender sender) {
+        return "usage: rank <userName> [UP | DOWN]";
+    }
+
+    @SubCommand
+    protected boolean doRank(CommandSender sender, String playerName) {
+        return doRank(sender, playerName, NONE_CMD);
+    }
+
+    @SubCommand
+    protected boolean doRank(CommandSender sender, String playerName, String subCmd) {
         try {
-            String subCmd = (args.length > 1) ? args[1] : null;
-            String playerName = args[0];
             if (UP_CMD.equalsIgnoreCase(subCmd)) {
                 int ndx = getPlayerGroup(playerName);
                 if (ndx == -1) {
@@ -68,7 +76,7 @@ public class Rank extends CowNetThingy {
                     permsUtils.playerRemoveGroup(playerName, permsGroups.get(ndx));
                     sender.sendMessage("Change player " + playerName + " from " + permsGroups.get(ndx) + " to " + permsGroups.get(ndx - 1));
                 }
-            } else if (args.length == 1) {
+            } else if (NONE_CMD.equalsIgnoreCase(subCmd)) {
                 int ndx = getPlayerGroup(playerName);
                 if (ndx == -1) {
                     sender.sendMessage("Could not find " + playerName);
@@ -98,15 +106,3 @@ public class Rank extends CowNetThingy {
         return -1;
     }
 }
-
-/*
-            String params = new String();
-            for (String grp : group) {
-                params += grp + ",";
-            }
-    ConsoleCommandSender console = this.getServer().getConsoleSender();
-    this.getServer().dispatchCommand(console, "permissions player setgroup " + player + " " + params);
-
-
-
- */

@@ -1,7 +1,6 @@
 package us.fitzpatricksr.cownet;
 
 import org.bukkit.GameMode;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -157,25 +156,25 @@ public class LoginHistory extends CowNetThingy implements Listener {
         }
     }
 
-    @Override
-    protected boolean handleCommand(CommandSender player, Command cmd, String[] args) {
-        if (args.length > 1) return false;
-        Filter filterType = Filter.INOUT;
-        String filterString = null;
-        if (args.length > 0) {
-            filterString = args[0];
-            // it's -in, -out, or a filter
-            if (filterString.equalsIgnoreCase("-in")) {
-                filterType = Filter.IN;
-            } else if (filterString.equalsIgnoreCase("-out")) {
-                filterType = Filter.OUT;
-            } else if (filterString.equalsIgnoreCase("-inout")) {
-                filterType = Filter.INOUT;
-            } else if (filterString.equalsIgnoreCase("-all")) {
-                filterType = Filter.ALL;
-            } else {
-                filterType = Filter.CHAT;
-            }
+    @SubCommand
+    protected boolean doLogins(CommandSender player) {
+        return doLogins(player, "-inout");
+    }
+
+    @SubCommand
+    protected boolean doLogins(CommandSender player, String filterString) {
+        Filter filterType;
+        // it's -in, -out, or a filter
+        if (filterString.equalsIgnoreCase("-in")) {
+            filterType = Filter.IN;
+        } else if (filterString.equalsIgnoreCase("-out")) {
+            filterType = Filter.OUT;
+        } else if (filterString.equalsIgnoreCase("-inout")) {
+            filterType = Filter.INOUT;
+        } else if (filterString.equalsIgnoreCase("-all")) {
+            filterType = Filter.ALL;
+        } else {
+            filterType = Filter.CHAT;
         }
 
         int count = 0;

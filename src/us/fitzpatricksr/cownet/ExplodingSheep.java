@@ -2,7 +2,6 @@ package us.fitzpatricksr.cownet;
 
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -12,25 +11,24 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
-import us.fitzpatricksr.cownet.utils.SettingsTwiddler;
 
 import java.util.Random;
 
 public class ExplodingSheep extends CowNetThingy {
     private Random rand = new Random();
-    @SettingsTwiddler.Setting
+    @Setting
     private int chanceToExplode = 25;
-    @SettingsTwiddler.Setting
+    @Setting
     private String allowedWorlds = "ALL";
-    @SettingsTwiddler.Setting
+    @Setting
     private float explosionRadius = 3; //4 = tnt
-    @SettingsTwiddler.Setting
+    @Setting
     private int explosionDamage = 3; //4 = tnt
-    @SettingsTwiddler.Setting
+    @Setting
     private boolean sheepExplode = false;
-    @SettingsTwiddler.Setting
+    @Setting
     private boolean cowsExplode = false;
-    @SettingsTwiddler.Setting
+    @Setting
     private int wreckage = 5;
 
     public ExplodingSheep(JavaPlugin plugin, String permissionRoot, String trigger) {
@@ -58,17 +56,6 @@ public class ExplodingSheep extends CowNetThingy {
     @Override
     protected String getHelpString(CommandSender sender) {
         return "usage: tntsheep";
-    }
-
-    @Override
-    protected boolean handleCommand(Player player, Command cmd, String[] args) {
-        if (!hasPermissions(player)) {
-            player.sendMessage("Sorry, you don't have permissions");
-            return false;
-        } else {
-            player.sendMessage("Huh?  Srsly?  Commands for sheep?");
-            return false;
-        }
     }
 
     private boolean sheepShouldExplode(Entity sheep) {

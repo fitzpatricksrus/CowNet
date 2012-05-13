@@ -6,7 +6,6 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.entity.Entity;
@@ -28,7 +27,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.hungergames.GameHistory;
 import us.fitzpatricksr.cownet.hungergames.GameInstance;
 import us.fitzpatricksr.cownet.hungergames.PlayerInfo;
-import us.fitzpatricksr.cownet.utils.*;
+import us.fitzpatricksr.cownet.utils.BlockUtils;
+import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.SchematicUtils;
+import us.fitzpatricksr.cownet.utils.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,19 +60,19 @@ public class HungerGames extends CowNetThingy implements Listener {
     private final Random rand = new Random();
 
     //configuration
-    @SettingsTwiddler.Setting
+    @Setting
     private String gameWorldName = "HungerGames";   // name of the world
-    @SettingsTwiddler.Setting
+    @Setting
     private boolean allowFly = false;               //turn off flying hacks for players in game
-    @SettingsTwiddler.Setting
+    @Setting
     private boolean allowXRay = false;              //turn off xray hacks for players in game
-    @SettingsTwiddler.Setting
+    @Setting
     private int arenaSize = 100;                    // the total size of the playable area per player
-    @SettingsTwiddler.Setting
+    @Setting
     private int landingPadSize = 5;                 // radius of landing pad per player
-    @SettingsTwiddler.Setting
+    @Setting
     private int giftsPerPlayer = 3;                 // number of gifts that are dropped at game start per player
-    @SettingsTwiddler.Setting
+    @Setting
     private int trapsPerPlayer = 3;                 // number of traps set (from schematics) at game start per player
 
     //game state
@@ -78,6 +80,11 @@ public class HungerGames extends CowNetThingy implements Listener {
     private GameInstance gameInstance = new GameInstance(); //the state of the game
     private int arenaSizeThisGame = 0;                      //the actual size of the arena once game has started
     private boolean hasPlayedStartSound = false;            //set to true if the start sound has been played this game
+
+
+    private HungerGames() {
+        //testing only
+    }
 
     public HungerGames(JavaPlugin plugin, String permissionRoot, String trigger) {
         super(plugin, permissionRoot, trigger);
@@ -89,7 +96,7 @@ public class HungerGames extends CowNetThingy implements Listener {
                     getPlugin(),
                     new Runnable() {
                         public void run() {
-                            goGameWatcher();
+                            gameWatcher();
                         }
                     },
                     GAME_WATCHER_FREQUENCY,
@@ -150,38 +157,45 @@ public class HungerGames extends CowNetThingy implements Listener {
         };
     }
 
-    @Override
+/*    @Override
     protected boolean handleCommand(CommandSender sender, Command cmd, String[] args) {
         if (args.length == 1) {
             if ("info".equalsIgnoreCase(args[0]) || "list".equalsIgnoreCase(args[0])) {
-                return goInfo(sender);
+                return doInfo(sender);
             } else if ("stats".equalsIgnoreCase(args[0])) {
-                return goStats(sender);
+                return doStats(sender);
             }
         }
         return false;
     }
 
+    @Override
     protected boolean handleCommand(Player sender, Command cmd, String[] args) {
         if (args.length == 0) {
-            return goJoin(sender);
+            return doJoin(sender);
         } else if (args.length == 1) {
             if ("quit".equalsIgnoreCase(args[0])) {
-                return goQuit(sender);
+                return doQuit(sender);
             } else if ("start".equalsIgnoreCase(args[0])) {
-                return goStart(sender);
+                return doStart(sender);
             } else if ("join".equalsIgnoreCase(args[0])) {
-                return goJoin(sender);
+                return doJoin(sender);
             }
         } else if (args.length == 2) {
             if ("tp".equalsIgnoreCase(args[0])) {
-                return goTeleport(sender, args[1]);
+                return doTeleport(sender, args[1]);
             }
         }
         return false;
     }
+*/
 
-    private boolean goStats(CommandSender sender) {
+    //------------------------------------------------
+    //  command handlers
+    //
+
+    @SubCommand
+    private boolean doStats(CommandSender sender) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             player.sendMessage("Your wins: " + gameHistory.getPlayerWins(player) + "   "
@@ -192,27 +206,30 @@ public class HungerGames extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean goJoin(Player player) {
+    @SubCommand
+    private boolean doJoin(Player player) {
         if (!gameInstance.isGameOn()) {
             gameInstance.addPlayerToGame(player);
             player.sendMessage("You've joined the game as a tribute.");
             broadcast("" + gameInstance.getPlayerInfo(player));
-            goInfo(player);
+            doInfo(player);
         } else {
             player.sendMessage("You can't join a game in progress.  You can only sponsor tributes.");
-            goInfo(player);
+            doInfo(player);
         }
         return true;
     }
 
-    private boolean goStart(Player player) {
+    @SubCommand
+    private boolean doStart(Player player) {
         if (!gameInstance.isGameOn()) {
             gameInstance.startNow();
         }
         return true;
     }
 
-    private boolean goInfo(CommandSender sender) {
+    @SubCommand
+    private boolean doInfo(CommandSender sender) {
         sender.sendMessage(gameInstance.getGameStatusMessage());
         for (Player player : getPlugin().getServer().getOnlinePlayers()) {
             PlayerInfo info = gameInstance.getPlayerInfo(player);
@@ -221,7 +238,8 @@ public class HungerGames extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean goQuit(Player player) {
+    @SubCommand
+    private boolean doQuit(Player player) {
         if (playerIsInGame(player)) {
             gameInstance.removePlayerFromGame(player);
             gameHistory.registerLossFor(player);
@@ -231,7 +249,13 @@ public class HungerGames extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean goTeleport(Player sender, String destName) {
+    @SubCommand
+    private boolean doTp(Player sender, String destName) {
+        return doTeleport(sender, destName);
+    }
+
+    @SubCommand
+    private boolean doTeleport(Player sender, String destName) {
         PlayerInfo source = gameInstance.getPlayerInfo(sender);
         if (source.isInGame()) {
             sender.sendMessage("Tributes are not allowed to teleport.");
@@ -250,7 +274,8 @@ public class HungerGames extends CowNetThingy implements Listener {
         return false;
     }
 
-    protected boolean doSchematics(CommandSender sender, Command cmd) {
+    @SubCommand
+    private boolean doSchematics(CommandSender sender) {
         File[] schematics = SchematicUtils.getSchematics(getSchematicsFolder());
         String[] fileNames = new String[schematics.length];
         for (int i = 0; i < fileNames.length; i++) {
@@ -263,7 +288,7 @@ public class HungerGames extends CowNetThingy implements Listener {
     // --------------------------------------------------------------
     // ---- Game watcher moves the game forward through different stages
 
-    private void goGameWatcher() {
+    private void gameWatcher() {
         debugInfo(gameInstance.getGameStatusMessage());
         if (gameInstance.isUnstarted()) {
             //don't do anything until the games start
@@ -273,7 +298,7 @@ public class HungerGames extends CowNetThingy implements Listener {
                 gameHistory.registerWinFor(info.getPlayer());
             }
             for (Player player : getPlugin().getServer().getOnlinePlayers()) {
-                goStats(player);
+                doStats(player);
             }
             startNewGame();
         } else if (gameInstance.isFailed()) {
@@ -535,8 +560,8 @@ public class HungerGames extends CowNetThingy implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
         debugInfo("PlayerJoinEvent");
-        goInfo(event.getPlayer());
-        goStats(event.getPlayer());
+        doInfo(event.getPlayer());
+        doStats(event.getPlayer());
 //        if (!gameInstance.isGameOn()) return;
     }
 
@@ -821,6 +846,14 @@ public class HungerGames extends CowNetThingy implements Listener {
             Material.COOKED_BEEF,
             Material.COOKED_CHICKEN
     };
+
+
+    public static void main(String[] args) {
+        HungerGames thingy = new HungerGames();
+        thingy.findHandlerMethod(null, "doStats", 0);
+        thingy.findHandlerMethod(null, "doTp", 1);
+        thingy.findHandlerMethod(null, "doSettings", 0);
+    }
 }
 
 

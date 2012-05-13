@@ -1,12 +1,11 @@
 package us.fitzpatricksr.cownet;
 
-import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
-import us.fitzpatricksr.cownet.utils.SettingsTwiddler;
 
 import java.util.List;
 
@@ -15,9 +14,9 @@ public class StarveCommand extends CowNetThingy {
     private static final int MAX_DAMAGE = 100;
     private static final int DEFAULT_RADIUS = 5;
     private static final int DEFAULT_DAMAGE = 20;
-    @SettingsTwiddler.Setting
+    @Setting
     private int standardRadius;
-    @SettingsTwiddler.Setting
+    @Setting
     private int standardDamage;
 
     public StarveCommand(JavaPlugin plugin, String permissionRoot, String trigger) {
@@ -33,41 +32,42 @@ public class StarveCommand extends CowNetThingy {
         logInfo("radius=" + standardRadius + ", damage=" + standardDamage);
     }
 
-    protected boolean handleCommand(Player player, Command cmd, String[] args) {
-        if (!hasPermissions(player)) {
-            player.sendMessage("Sorry, you don't have permission");
-            return false;
-        }
+    @Override
+    protected String getHelpString(CommandSender player) {
+        return "Usage: /starve [radius] [damage]";
+    }
 
-        if (args.length > 2) {
-            player.sendMessage("usage: /" + cmd.getName() + " [standardRadius:" + standardRadius + "] [standardDamage:" + standardDamage + "]");
+    //    protected boolean handleCommand(Player player, Command cmd, String[] args) {
+    protected boolean doStarve(Player player) {
+        return doStarve(player, "" + standardRadius, "" + standardDamage);
+    }
+
+    protected boolean doStarve(Player player, String radius) {
+        return doStarve(player, radius, "" + standardDamage);
+    }
+
+    protected boolean doStarve(Player player, String radiusStr, String damageStr) {
+        int range = standardRadius;
+        try {
+            range = Integer.parseInt(radiusStr);
+        } catch (Exception e) {
+            player.sendMessage("usage: standardRadius must be a number between 1 and " + MAX_RADIUS);
             return false;
         }
-        int range = standardRadius;
-        if (args.length >= 1) {
-            try {
-                range = Integer.parseInt(args[0]);
-            } catch (Exception e) {
-                player.sendMessage("usage: standardRadius must be a number between 1 and " + MAX_RADIUS);
-                return false;
-            }
-            if (range < 1 || range > MAX_RADIUS) {
-                player.sendMessage("usage: standardRadius must be a number between 1 and " + MAX_RADIUS);
-                return false;
-            }
+        if (range < 1 || range > MAX_RADIUS) {
+            player.sendMessage("usage: standardRadius must be a number between 1 and " + MAX_RADIUS);
+            return false;
         }
         int damage = standardDamage;
-        if (args.length >= 2) {
-            try {
-                damage = Integer.parseInt(args[1]);
-            } catch (Exception e) {
-                player.sendMessage("usage: standardDamage must be a number between 1 and " + MAX_DAMAGE);
-                return false;
-            }
-            if (damage < 1 || damage > MAX_RADIUS) {
-                player.sendMessage("usage: standardDamage must be a number between 1 and " + MAX_DAMAGE);
-                return false;
-            }
+        try {
+            damage = Integer.parseInt(damageStr);
+        } catch (Exception e) {
+            player.sendMessage("usage: standardDamage must be a number between 1 and " + MAX_DAMAGE);
+            return false;
+        }
+        if (damage < 1 || damage > MAX_RADIUS) {
+            player.sendMessage("usage: standardDamage must be a number between 1 and " + MAX_DAMAGE);
+            return false;
         }
         player.sendMessage("Starving creatures within a standardRadius of: " + range);
         List<Entity> entities = player.getNearbyEntities(range, range, range);

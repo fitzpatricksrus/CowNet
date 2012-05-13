@@ -7,7 +7,6 @@ import com.onarandombox.MultiverseCore.api.SafeTTeleporter;
 import com.onarandombox.MultiverseCore.destination.DestinationFactory;
 import com.onarandombox.MultiverseCore.enums.TeleportResult;
 import org.bukkit.*;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.MemorySection;
@@ -31,7 +30,10 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.hardcore.HardCoreLog;
 import us.fitzpatricksr.cownet.hardcore.PlayerState;
-import us.fitzpatricksr.cownet.utils.*;
+import us.fitzpatricksr.cownet.utils.CowNetConfig;
+import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.CowZombeControl;
+import us.fitzpatricksr.cownet.utils.StringUtils;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -57,16 +59,16 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     private HardCoreState config;
     private HardCoreLog logFile;
     private MultiverseCore mvPlugin;
-    @SettingsTwiddler.Setting
+    @Setting
     private String hardCoreWorldNames = "HardCore";
-    @SettingsTwiddler.Setting
+    @Setting
     private int safeDistance = 10;
     private Difficulty difficulty = Difficulty.HARD;
-    @SettingsTwiddler.Setting
+    @Setting
     private double monsterBoost = 1.0d;
-    @SettingsTwiddler.Setting
+    @Setting
     private boolean allowFly = false;
-    @SettingsTwiddler.Setting
+    @Setting
     private boolean allowXRay = false;
 
     public HardCoreCow(JavaPlugin plugin, String permissionRoot, String trigger) {
@@ -138,61 +140,31 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     }
 
     @Override
-    protected String getHelpString(CommandSender player) {
+    protected String[] getHelpText(CommandSender player) {
         PlayerState ps = config.getPlayerState(player.getName());
         long timeOut = (ps != null) ? ps.getSecondsTillTimeout() : PlayerState.deathDuration;
-        return "usage: hardcore (<worldname> | info | stats | revive <player> | regen | twiddle <params>)  " +
-                "HardCore is played with no mods.  You're on your own.  " +
-                "Type /HardCore (or /hc) to enter and exit HardCore world.  " +
-                "The leave, you must be close to the spawn point.  " +
-                "You're officially in the game once you interact with something.  " +
-                "Until then you are an observer.  After you die,  " +
-                "you are a ghost for a " + StringUtils.durationString(timeOut) + " and can only observer.  " +
-                "The time you are a ghost increases with each death.  " +
-                "If everyone is dead at the same time, the world regens.  If you don't " +
-                "play for " + StringUtils.durationString(timeOut) + ", you're no longer considered in the game.";
+        return new String[]{
+                "usage: hardcore (<worldname> | info | stats | revive <player> | regen | twiddle <params>)  ",
+                "HardCore is played with no mods.  You're on your own.  ",
+                "Type /HardCore (or /hc) to enter and exit HardCore world.  ",
+                "The leave, you must be close to the spawn point.  ",
+                "You're officially in the game once you interact with something.  ",
+                "Until then you are an observer.  After you die,  ",
+                "you are a ghost for a " + StringUtils.durationString(timeOut) + " and can only observer.  ",
+                "The time you are a ghost increases with each death.  ",
+                "If everyone is dead at the same time, the world regens.  If you don't ",
+                "play for " + StringUtils.durationString(timeOut) + ", you're no longer considered in the game."
+        };
     }
 
-    @Override
-    protected boolean handleCommand(CommandSender sender, Command cmd, String[] args) {
-        // subcommands
-        //  regen
-        //  revive <player>
-        //  info
-        //  go
-        //  --- empty takes you to the hardcore world
-        if (args.length == 1) {
-            if ("info".equalsIgnoreCase(args[0])
-                    || "list".equalsIgnoreCase(args[0])
-                    || "stats".equalsIgnoreCase(args[0])) {
-                return goInfo(sender);
-            } else if ("regen".equalsIgnoreCase(args[0])) {
-                return goRegen(sender);
-            }
-        } else if (args.length == 2) {
-            if ("revive".equalsIgnoreCase(args[0])) {
-                return goRevive(sender, args[1]);
-            }
-        } else if (args.length == 3) {
-            if ("twiddle".equalsIgnoreCase(args[0])) {
-                return goTwiddle(sender, args[1], args[2]);
-            }
-        }
-        return super.handleCommand(sender, cmd, args);
+    @SubCommand
+    protected boolean doHardCore(Player player) {
+        return doHardCore(player, null);
     }
 
-    @Override
-    protected boolean handleCommand(Player player, Command cmd, String[] args) {
-        // handle commands that operate on the player who issued the command
-        if (args.length == 0) {
-            return goHardCore(player, null);
-        } else if ((args.length == 1) && (isHardCoreWorld(args[0]))) {
-            return goHardCore(player, args[0]);
-        }
-        return false;
-    }
-
-    private boolean goHardCore(Player player, String worldName) {
+    @SubCommand
+    protected boolean doHardCore(Player player, String worldName) {
+        if (!isHardCoreWorld(worldName)) return false;
         if (isHardCoreWorld(player.getWorld()) && (worldName == null)) {
             //Player is on HARD CORE world already and wants to leave.
             //if they are close to spawn we will rescue them
@@ -252,7 +224,18 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean goInfo(CommandSender player) {
+    @SubCommand
+    protected boolean doList(CommandSender player) {
+        return doInfo(player);
+    }
+
+    @SubCommand
+    protected boolean doStats(CommandSender player) {
+        return doInfo(player);
+    }
+
+    @SubCommand
+    protected boolean doInfo(CommandSender player) {
         if (!hasPermissionsOrOp(player, "info")) {
             player.sendMessage("Sorry, you don't have permission.");
             return true;
@@ -284,7 +267,8 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean goRegen(CommandSender player) {
+    @SubCommand
+    protected boolean doRegen(CommandSender player) {
         if (!hasPermissionsOrOp(player, "regen")) {
             player.sendMessage("Sorry, you're not HARD CORE enough.  Come back when you're more HARD CORE.");
             return true;
@@ -295,7 +279,8 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean goRevive(CommandSender player, String arg) {
+    @SubCommand
+    protected boolean doRevive(CommandSender player, String arg) {
         if (!hasPermissionsOrOp(player, "revive")) {
             player.sendMessage("Sorry, you're not HARD CORE enough to revive other players.");
         } else if (!config.isDead(arg)) {
@@ -308,7 +293,8 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         return true;
     }
 
-    private boolean goTwiddle(CommandSender player, String playerName, String param) {
+    @SubCommand
+    protected boolean doTwiddle(CommandSender player, String playerName, String param) {
         if (hasPermissionsOrOp(player, "twiddle")) {
             PlayerState ps = config.getPlayerState(playerName);
             if (ps == null) {
@@ -562,7 +548,7 @@ public class HardCoreCow extends CowNetThingy implements Listener {
             debugInfo("  softy (" + player.getWorld().getName() + ")");
         }
         // just dump the info through the command handler even though it's a hack
-        goInfo(player);
+        doInfo(player);
     }
 
     @EventHandler(ignoreCancelled = true)

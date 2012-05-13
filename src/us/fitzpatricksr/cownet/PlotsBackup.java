@@ -1,35 +1,7 @@
 package us.fitzpatricksr.cownet;
 
-import com.sk89q.worldedit.Vector;
-import com.sk89q.worldguard.LocalPlayer;
-import com.sk89q.worldguard.bukkit.BukkitPlayer;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.databases.ProtectionDatabaseException;
-import com.sk89q.worldguard.protection.flags.DefaultFlag;
-import com.sk89q.worldguard.protection.flags.StateFlag;
-import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import cosine.boseconomy.BOSEconomy;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
-import org.bukkit.generator.ChunkGenerator;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.plots.InfinitePlotClaim;
-import us.fitzpatricksr.cownet.plots.PlayerCenteredClaim;
-import us.fitzpatricksr.cownet.plots.PlotsChunkGenerator;
-import us.fitzpatricksr.cownet.utils.BlockUtils;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-public class Plots extends CowNetThingy {
+/*
+public class PlotsBackup extends CowNetThingy {
     private WorldGuardPlugin worldGuard;
     private BOSEconomy economy;
     private NoSwearing noSwearingMod;
@@ -50,7 +22,7 @@ public class Plots extends CowNetThingy {
 
     /**
      * Interface for different type of claim shapes and decorations
-     */
+     *
     public interface AbstractClaim {
         //define the region of the claim
         public ProtectedRegion defineClaim(Player p, String name);
@@ -61,7 +33,7 @@ public class Plots extends CowNetThingy {
         public void dedecorateClaim(Player p, ProtectedRegion region);
     }
 
-    public Plots(JavaPlugin plugin, String permissionRoot, String trigger, NoSwearing noSwearingMod) {
+    public PlotsBackup(JavaPlugin plugin, String permissionRoot, String trigger, NoSwearing noSwearingMod) {
         super(plugin, permissionRoot, trigger);
         if (isEnabled()) {
             //get WorldGuard and WorldEdit plugins
@@ -104,10 +76,48 @@ public class Plots extends CowNetThingy {
                 "info | list [player] | giveto <player> | tp <plotName> ]";
     }
 
-    @SubCommand
-    private boolean doShare(Player player, String playerName) {
+    @Override
+    protected boolean handleCommand(Player player, Command cmd, String[] args) {
+        if (args.length < 1) {
+            //just return the default help string
+            return false;
+        } else if (hasPermissions(player)) {
+            String subCmd = args[0].toLowerCase();
+            if ("claim".equalsIgnoreCase(subCmd)) {
+                return claim(player, args);
+            } else if ("release".equalsIgnoreCase(subCmd)) {
+                return release(player, args);
+            } else if ("share".equalsIgnoreCase(subCmd)) {
+                return share(player, args);
+            } else if ("unshare".equalsIgnoreCase(subCmd)) {
+                return unshare(player, args);
+            } else if ("info".equalsIgnoreCase(subCmd)) {
+                return info(player, args);
+            } else if ("list".equalsIgnoreCase(subCmd)) {
+                return list(player, args);
+            } else if ("tp".equalsIgnoreCase(subCmd)) {
+                return tp(player, args);
+            } else if ("giveto".equalsIgnoreCase(subCmd)) {
+                return giveTo(player, args);
+            } else {
+                return false;
+            }
+        } else {
+            player.sendMessage("You don't have permission to claim land.");
+            return true;
+        }
+    }
+
+    private boolean share(Player player, String[] args) {
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
+
+        if ((args.length != 2)) {
+            player.sendMessage("You must specify a player to share with.");
+            return true;
+        }
+
+        String playerName = args[1];
 
         ApplicableRegionSet regions = regionManager.getApplicableRegions(player.getLocation());
         if (regions.size() == 0) {
@@ -129,10 +139,16 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
-    private boolean doUnshare(Player player, String playerName) {
+    private boolean unshare(Player player, String[] args) {
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
+
+        if ((args.length != 2)) {
+            player.sendMessage("You must specify a player to unshare with.");
+            return true;
+        }
+
+        String playerName = args[1];
 
         ApplicableRegionSet regions = regionManager.getApplicableRegions(player.getLocation());
         if (regions.size() == 0) {
@@ -154,8 +170,11 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
-    private boolean doRelease(Player player) {
+    private boolean release(Player player, String[] args) {
+        if (args.length != 1) {
+            return false;
+        }
+
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
 
@@ -180,8 +199,11 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
-    private boolean doInfo(Player player) {
+    private boolean info(Player player, String[] args) {
+        if (args.length != 1) {
+            return false;
+        }
+
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
 
         ApplicableRegionSet regions = regionManager.getApplicableRegions(player.getLocation());
@@ -207,14 +229,13 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
-    private boolean doList(Player player) {
-        return doList(player, player.getName());
-    }
+    private boolean list(Player player, String[] args) {
+        if (args.length < 1 || args.length > 2) {
+            return false;
+        }
 
-    @SubCommand
-    private boolean doList(Player player, String playerName) {
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
+        String playerName = (args.length == 1) ? player.getName() : args[1];
         player.sendMessage("Plots claimed by " + playerName);
         for (Map.Entry<String, ProtectedRegion> entry : regionManager.getRegions().entrySet()) {
             for (String owner : entry.getValue().getOwners().getPlayers()) {
@@ -227,8 +248,12 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
-    private boolean doTp(Player player, String plotName) {
+    private boolean tp(Player player, String[] args) {
+        if (args.length != 2) {
+            return false;
+        }
+
+        String plotName = args[1];
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
         ProtectedRegion region = regionManager.getRegion(plotName);
         if (region == null) {
@@ -249,10 +274,16 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
-    private boolean doGiveto(Player player, String playerName) {
+    private boolean giveTo(Player player, String[] args) {
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
+
+        if ((args.length != 2)) {
+            player.sendMessage("You must specify a player to give your plot to.");
+            return true;
+        }
+
+        String playerName = args[1];
 
         ApplicableRegionSet regions = regionManager.getApplicableRegions(player.getLocation());
         if (regions.size() == 0) {
@@ -280,8 +311,7 @@ public class Plots extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
-    private boolean doClaim(Player player, String claimName) {
+    private boolean claim(Player player, String[] args) {
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
 
@@ -289,6 +319,13 @@ public class Plots extends CowNetThingy {
             player.sendMessage("You don't have permission to claim plots.");
             return true;
         }
+
+        if ((args.length != 2) || !ProtectedRegion.isValidId(args[1])) {
+            player.sendMessage("You must specify a valid name for the claim: /plot claim <name>");
+            return true;
+        }
+
+        String claimName = args[1];
 
         //make sure nobody uses bad language.
         if (noSwearingMod.scanForBadWords(player, claimName)) {
@@ -453,3 +490,4 @@ public class Plots extends CowNetThingy {
     }
 }
 
+*/

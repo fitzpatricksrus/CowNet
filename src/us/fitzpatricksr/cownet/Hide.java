@@ -48,7 +48,6 @@ public class Hide extends CowNetThingy implements Listener {
         return "usage: hide [ on | off | check | join | quit ]";
     }
 
-    @Override
     protected boolean handleCommand(Player player, Command cmd, String[] args) {
         if (hasPermissions(player)) {
             if (args.length == 0) {
