@@ -39,7 +39,9 @@ public class Logins extends CowNetThingy implements Listener {
 
     private static final String JOIN_STRING = "<JOIN>";
     private static final String QUIT_STRING = "<QUIT>";
-    private static final int MAX_QUEUE_SIZE = 500;
+    @Setting
+    private static final int MAX_QUEUE_SIZE = 5000;
+    @Setting
     private static final int MAX_DISPLAYED_TO_PLAYER = 10;
     private Plugin plugin;
     private HashMap<String, GameMode> gameModeSave = new HashMap<String, GameMode>();
