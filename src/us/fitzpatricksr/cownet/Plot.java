@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Plots extends CowNetThingy {
+public class Plot extends CowNetThingy {
     private WorldGuardPlugin worldGuard;
     private BOSEconomy economy;
     private NoSwearing noSwearingMod;
@@ -61,8 +61,8 @@ public class Plots extends CowNetThingy {
         public void dedecorateClaim(Player p, ProtectedRegion region);
     }
 
-    public Plots(JavaPlugin plugin, String permissionRoot, String trigger, NoSwearing noSwearingMod) {
-        super(plugin, permissionRoot, trigger);
+    public Plot(JavaPlugin plugin, String permissionRoot, NoSwearing noSwearingMod) {
+        super(plugin, permissionRoot);
         if (isEnabled()) {
             //get WorldGuard and WorldEdit plugins
             Plugin worldPlugin = plugin.getServer().getPluginManager().getPlugin("WorldGuard");
@@ -215,7 +215,7 @@ public class Plots extends CowNetThingy {
     @SubCommand
     private boolean doList(Player player, String playerName) {
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
-        player.sendMessage("Plots claimed by " + playerName);
+        player.sendMessage("Plot claimed by " + playerName);
         for (Map.Entry<String, ProtectedRegion> entry : regionManager.getRegions().entrySet()) {
             for (String owner : entry.getValue().getOwners().getPlayers()) {
                 if (owner.equalsIgnoreCase(playerName)) {

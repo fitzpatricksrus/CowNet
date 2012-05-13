@@ -53,7 +53,7 @@ import java.util.*;
     If they were just dead for a long time, we just remove them.  It's passive and only happens
     when the config is touched.  It's a reaper process, not something that's active.
  */
-public class HardCoreCow extends CowNetThingy implements Listener {
+public class HardCore extends CowNetThingy implements Listener {
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final int REAPER_FREQUENCY = 20 * 30; // 30 seconds
     private HardCoreState config;
@@ -71,8 +71,8 @@ public class HardCoreCow extends CowNetThingy implements Listener {
     @Setting
     private boolean allowXRay = false;
 
-    public HardCoreCow(JavaPlugin plugin, String permissionRoot, String trigger) {
-        super(plugin, permissionRoot, trigger);
+    public HardCore(JavaPlugin plugin, String permissionRoot) {
+        super(plugin, permissionRoot);
         if (isEnabled()) {
             reload();
             PluginManager pm = plugin.getServer().getPluginManager();

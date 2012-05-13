@@ -21,7 +21,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-public class LoginHistory extends CowNetThingy implements Listener {
+public class Logins extends CowNetThingy implements Listener {
     enum Filter {
         IN,
         OUT,
@@ -46,8 +46,8 @@ public class LoginHistory extends CowNetThingy implements Listener {
     private PrintWriter log;
     private LinkedList<LogEntry> recentLogEntries = new LinkedList<LogEntry>();
 
-    public LoginHistory(JavaPlugin plugin, String permissionRoot, String trigger) {
-        super(plugin, permissionRoot, trigger);
+    public Logins(JavaPlugin plugin, String permissionRoot) {
+        super(plugin, permissionRoot);
         this.plugin = plugin;
         if (isEnabled()) {
             PluginManager pm = plugin.getServer().getPluginManager();

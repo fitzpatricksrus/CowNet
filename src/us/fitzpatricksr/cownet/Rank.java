@@ -19,8 +19,8 @@ public class Rank extends CowNetThingy {
     private PermissionsUtils permsUtils;
     private LinkedList<String> permsGroups = new LinkedList<String>();
 
-    public Rank(JavaPlugin plugin, String permissionRoot, String trigger) {
-        super(plugin, permissionRoot, trigger);
+    public Rank(JavaPlugin plugin, String permissionRoot) {
+        super(plugin, permissionRoot);
         if (isEnabled()) {
             reload();
         }

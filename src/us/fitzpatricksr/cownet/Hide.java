@@ -31,8 +31,8 @@ public class Hide extends CowNetThingy implements Listener {
     private Map<String, Player> invisiblePlayers = new HashMap<String, Player>();
     private Random rand = new Random();
 
-    public Hide(JavaPlugin plugin, String permissionRoot, String trigger) {
-        super(plugin, permissionRoot, trigger);
+    public Hide(JavaPlugin plugin, String permissionRoot) {
+        super(plugin, permissionRoot);
         if (isEnabled()) {
             reload();
             plugin.getServer().getPluginManager().registerEvents(this, plugin);

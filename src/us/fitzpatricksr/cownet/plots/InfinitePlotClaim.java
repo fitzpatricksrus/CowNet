@@ -5,12 +5,12 @@ import com.sk89q.worldguard.protection.regions.ProtectedCuboidRegion;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import us.fitzpatricksr.cownet.Plots;
+import us.fitzpatricksr.cownet.Plot;
 
 /**
- * Plots for InfinitePlots generated worlds
+ * Plot for InfinitePlots generated worlds
  */
-public class InfinitePlotClaim implements Plots.AbstractClaim {
+public class InfinitePlotClaim implements Plot.AbstractClaim {
     private static int roadOffsetX = 4;
     private static int roadOffsetZ = 4;
     private static int walkwaySize = 7; // width of walkway between plots

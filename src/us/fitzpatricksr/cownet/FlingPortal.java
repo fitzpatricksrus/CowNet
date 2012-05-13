@@ -20,8 +20,8 @@ public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listen
     private static final Vector LAUNCH_VECTOR = new Vector(0, 5, 0);
     private HashMap<Player, Long> playersInFlight = new HashMap<Player, Long>();
 
-    public FlingPortal(JavaPlugin plugin, String permissionRoot, String trigger) {
-        super(plugin, permissionRoot, trigger);
+    public FlingPortal(JavaPlugin plugin, String permissionRoot) {
+        super(plugin, permissionRoot);
         if (isEnabled()) {
             logInfo("adding listeners...");
             plugin.getServer().getPluginManager().registerEvents(

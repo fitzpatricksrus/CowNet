@@ -32,7 +32,7 @@ public class CowNetThingy implements CommandExecutor {
 
     private Logger logger = Logger.getLogger("Minecraft");
     private JavaPlugin plugin;
-    private String trigger = "";
+    //    private String trigger = "";
     private String permissionNode = "";
     private boolean isEnabled = false;
     @Setting()
@@ -40,15 +40,13 @@ public class CowNetThingy implements CommandExecutor {
 
     protected CowNetThingy() {
         //for testing only
-        trigger = "test";
         isEnabled = true;
         isDebug = true;
     }
 
-    public CowNetThingy(JavaPlugin plugin, String permissionRoot, String trigger) {
+    public CowNetThingy(JavaPlugin plugin, String permissionRoot) {
         this.plugin = plugin;
-        this.trigger = trigger;
-        this.permissionNode = permissionRoot + "." + trigger;
+        this.permissionNode = permissionRoot + "." + getTrigger();
         this.isEnabled = getConfigBoolean("enable", false);
         if (!this.isEnabled()) {
             //allow this common alias
@@ -56,10 +54,10 @@ public class CowNetThingy implements CommandExecutor {
         }
         this.isDebug = getConfigBoolean("debug", false);
         if (isEnabled) {
-            plugin.getCommand(trigger).setExecutor(this);
-            logInfo(trigger + " enabled");
+            logInfo(getTrigger() + " enabled");
+            plugin.getCommand(getTrigger()).setExecutor(this);
         } else {
-            logInfo(trigger + " disabled");
+            logInfo(getTrigger() + " disabled");
         }
         logInfo("commands: " + StringUtils.flatten(getHandlerMethods()));
     }
@@ -77,31 +75,31 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     public final String getTrigger() {
-        return trigger;
+        return getClass().getSimpleName().toLowerCase();
     }
 
     public final ConfigurationSection getConfigSection() {
-        return (ConfigurationSection) plugin.getConfig().get(trigger);
+        return (ConfigurationSection) plugin.getConfig().get(getTrigger());
     }
 
     public final int getConfigInt(String key, int def) {
-        return plugin.getConfig().getInt(trigger + "." + key, def);
+        return plugin.getConfig().getInt(getTrigger() + "." + key, def);
     }
 
     public final long getConfigLong(String key, long def) {
-        return plugin.getConfig().getLong(trigger + "." + key, def);
+        return plugin.getConfig().getLong(getTrigger() + "." + key, def);
     }
 
     public final double getConfigDouble(String key, double def) {
-        return plugin.getConfig().getDouble(trigger + "." + key, def);
+        return plugin.getConfig().getDouble(getTrigger() + "." + key, def);
     }
 
     public final boolean getConfigBoolean(String key, boolean def) {
-        return plugin.getConfig().getBoolean(trigger + "." + key, def);
+        return plugin.getConfig().getBoolean(getTrigger() + "." + key, def);
     }
 
     public final String getConfigString(String key, String def) {
-        return plugin.getConfig().getString(trigger + "." + key, def);
+        return plugin.getConfig().getString(getTrigger() + "." + key, def);
     }
 
     public final void saveConfiguration() {
@@ -233,38 +231,36 @@ public class CowNetThingy implements CommandExecutor {
 
     @SubCommand(opOnly = true)
     public final boolean doSet(CommandSender sender, String settingName, String settingValue) {
-        if (sender.isOp()) {
-            // set <setting> <value>
-            Class c = getClass();
-            while (c != null && !c.equals(Object.class)) {
-                for (Field field : c.getDeclaredFields()) {
-                    if (field.isAnnotationPresent(Setting.class) && field.getName().equalsIgnoreCase(settingName)) {
-                        try {
-                            field.setAccessible(true);
-                            if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
-                                field.set(this, Boolean.valueOf(settingValue));
-                                return true;
-                            } else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
-                                field.set(this, Integer.valueOf(settingValue));
-                                return true;
-                            } else if (field.getType().equals(String.class)) {
-                                field.set(this, settingValue);
-                                return true;
-                            }
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                        } finally {
-                            field.setAccessible(false);
+        // set <setting> <value>
+        Class c = getClass();
+        while (c != null && !c.equals(Object.class)) {
+            for (Field field : c.getDeclaredFields()) {
+                if (field.isAnnotationPresent(Setting.class) && field.getName().equalsIgnoreCase(settingName)) {
+                    try {
+                        field.setAccessible(true);
+                        if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
+                            field.set(this, Boolean.valueOf(settingValue));
+                            doSettings(sender);
+                            return true;
+                        } else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
+                            field.set(this, Integer.valueOf(settingValue));
+                            doSettings(sender);
+                            return true;
+                        } else if (field.getType().equals(String.class)) {
+                            field.set(this, settingValue);
+                            doSettings(sender);
+                            return true;
                         }
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    } finally {
+                        field.setAccessible(false);
                     }
                 }
-                c = c.getSuperclass();
             }
-            sender.sendMessage("Setting not found.");
-            return true;
-        } else {
-            sender.sendMessage("You don't have permission.");
+            c = c.getSuperclass();
         }
+        sender.sendMessage("Setting not found.");
         return true;
     }
 
@@ -325,7 +321,7 @@ public class CowNetThingy implements CommandExecutor {
                 }
             }
         }
-        Method method = findHandlerMethod(sender, generateMethodName(trigger), args.length);
+        Method method = findHandlerMethod(sender, generateMethodName(getTrigger()), args.length);
         if (method != null) {
             try {
                 method.setAccessible(true);

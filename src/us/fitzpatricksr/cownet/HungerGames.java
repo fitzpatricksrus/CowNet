@@ -86,8 +86,8 @@ public class HungerGames extends CowNetThingy implements Listener {
         //testing only
     }
 
-    public HungerGames(JavaPlugin plugin, String permissionRoot, String trigger) {
-        super(plugin, permissionRoot, trigger);
+    public HungerGames(JavaPlugin plugin, String permissionRoot) {
+        super(plugin, permissionRoot);
         if (isEnabled()) {
             reload();
             PluginManager pm = plugin.getServer().getPluginManager();

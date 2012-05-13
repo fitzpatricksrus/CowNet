@@ -10,9 +10,9 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
-public class Nicknames extends CowNetThingy implements Listener {
-    public Nicknames(JavaPlugin plugin, String permissionRoot, String trigger) {
-        super(plugin, permissionRoot, trigger);
+public class Nickname extends CowNetThingy implements Listener {
+    public Nickname(JavaPlugin plugin, String permissionRoot) {
+        super(plugin, permissionRoot);
         PluginManager pm = plugin.getServer().getPluginManager();
         pm.registerEvents(this, plugin);
     }

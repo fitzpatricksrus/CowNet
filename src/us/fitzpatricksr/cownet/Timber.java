@@ -18,8 +18,8 @@ public class Timber extends CowNetThingy {
     @Setting
     private String worlds = "ALL";
 
-    public Timber(JavaPlugin plugin, String permissionRoot, String trigger) {
-        super(plugin, permissionRoot, trigger);
+    public Timber(JavaPlugin plugin, String permissionRoot) {
+        super(plugin, permissionRoot);
         if (isEnabled()) {
             reload();
             plugin.getServer().getPluginManager().registerEvents(

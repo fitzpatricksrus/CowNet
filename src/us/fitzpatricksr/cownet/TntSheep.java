@@ -14,7 +14,7 @@ import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 import java.util.Random;
 
-public class ExplodingSheep extends CowNetThingy {
+public class TntSheep extends CowNetThingy {
     private Random rand = new Random();
     @Setting
     private int chanceToExplode = 25;
@@ -31,8 +31,8 @@ public class ExplodingSheep extends CowNetThingy {
     @Setting
     private int wreckage = 5;
 
-    public ExplodingSheep(JavaPlugin plugin, String permissionRoot, String trigger) {
-        super(plugin, permissionRoot, trigger);
+    public TntSheep(JavaPlugin plugin, String permissionRoot) {
+        super(plugin, permissionRoot);
         if (isEnabled()) {
             reload();
             plugin.getServer().getPluginManager().registerEvents(

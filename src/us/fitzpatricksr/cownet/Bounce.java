@@ -10,7 +10,7 @@ import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 import java.util.List;
 
-public class BounceCommand extends CowNetThingy {
+public class Bounce extends CowNetThingy {
     private static final int MAX_RADIUS = 100;
     private static final int MAX_VELOCITY = 5;
     private static final int DEFAULT_RADIUS = 5;
@@ -20,11 +20,11 @@ public class BounceCommand extends CowNetThingy {
     @Setting
     private int standardVelocity;
 
-    private BounceCommand() {
+    private Bounce() {
     }
 
-    public BounceCommand(JavaPlugin plugin, String permissionRoot, String trigger) {
-        super(plugin, permissionRoot, trigger);
+    public Bounce(JavaPlugin plugin, String permissionRoot) {
+        super(plugin, permissionRoot);
         if (isEnabled()) {
             reload();
         }
@@ -94,7 +94,7 @@ public class BounceCommand extends CowNetThingy {
 
 
     public static void main(String[] args) {
-        BounceCommand thingy = new BounceCommand();
+        Bounce thingy = new Bounce();
         thingy.findHandlerMethod(null, "doStats", 0);
         thingy.findHandlerMethod(null, "doTp", 1);
         thingy.findHandlerMethod(null, "doSettings", 0);

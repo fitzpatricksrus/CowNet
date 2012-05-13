@@ -6,15 +6,15 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
-import us.fitzpatricksr.cownet.Plots;
+import us.fitzpatricksr.cownet.Plot;
 
 /**
- * Plots centered around where the player is standing.
+ * Plot centered around where the player is standing.
  */
-public class PlayerCenteredClaim implements Plots.AbstractClaim {
+public class PlayerCenteredClaim implements Plot.AbstractClaim {
     private final Vector sizeVectorOffset;
 
-    public PlayerCenteredClaim(Plots plugin) {
+    public PlayerCenteredClaim(Plot plugin) {
         int gridSizeX = plugin.getConfigInt("plotSize", 64);
         int gridSizeZ = plugin.getConfigInt("plotSize", 64);
         sizeVectorOffset = new Vector(gridSizeX / 2, 0, gridSizeZ / 2);

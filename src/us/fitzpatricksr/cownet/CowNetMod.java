@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 public class CowNetMod extends JavaPlugin {
     private static final String COWNET = "cownet";
     private final Logger logger = Logger.getLogger("Minecraft");
-    private Plots plots;
+    private Plot plot;
 
     @Override
     public void onDisable() {
@@ -25,17 +25,17 @@ public class CowNetMod extends JavaPlugin {
         this.getConfig().options().copyDefaults(true);
         if (getConfig().getBoolean("cownet.enable", true)) {
             logger.info("CowNetMod enabled.");
-            new StarveCommand(this, COWNET, "starve");
-            new BounceCommand(this, COWNET, "bounce");
+            new Starve(this, COWNET);
+            new Bounce(this, COWNET);
             NoSwearing noSwearingMod = new NoSwearing(this, COWNET, "noswearing");
-            new ExplodingSheep(this, COWNET, "tntsheep");
-            new LoginHistory(this, COWNET, "logins");
-            plots = new Plots(this, COWNET, "plot", noSwearingMod);
-            new Rank(this, COWNET, "rank");
-            new Timber(this, COWNET, "timber");
-            new HardCoreCow(this, COWNET, "hardcore");
-            new HungerGames(this, COWNET, "hungergames");
-            new Nicknames(this, COWNET, "nickname");
+            new TntSheep(this, COWNET);
+            new Logins(this, COWNET);
+            plot = new Plot(this, COWNET, noSwearingMod);
+            new Rank(this, COWNET);
+            new Timber(this, COWNET);
+            new HardCore(this, COWNET);
+            new HungerGames(this, COWNET);
+            new Nickname(this, COWNET);
 //            new FlingPortal(this, COWNET, "flingportal");
 //            new Hide(this, COWNET, "Hide");
         } else {
@@ -48,7 +48,7 @@ public class CowNetMod extends JavaPlugin {
     @Override
     public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
         logger.info("CowNetMod is the terrain generator for " + worldName + "  id:" + id);
-        return plots.getDefaultWorldGenerator(worldName, id);
+        return plot.getDefaultWorldGenerator(worldName, id);
     }
 
 }

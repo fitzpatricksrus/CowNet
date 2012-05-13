@@ -236,7 +236,7 @@ public class PlotsBackup extends CowNetThingy {
 
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
         String playerName = (args.length == 1) ? player.getName() : args[1];
-        player.sendMessage("Plots claimed by " + playerName);
+        player.sendMessage("Plot claimed by " + playerName);
         for (Map.Entry<String, ProtectedRegion> entry : regionManager.getRegions().entrySet()) {
             for (String owner : entry.getValue().getOwners().getPlayers()) {
                 if (owner.equalsIgnoreCase(playerName)) {

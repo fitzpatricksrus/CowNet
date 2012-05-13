@@ -9,7 +9,7 @@ import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 import java.util.List;
 
-public class StarveCommand extends CowNetThingy {
+public class Starve extends CowNetThingy {
     private static final int MAX_RADIUS = 100;
     private static final int MAX_DAMAGE = 100;
     private static final int DEFAULT_RADIUS = 5;
@@ -19,8 +19,8 @@ public class StarveCommand extends CowNetThingy {
     @Setting
     private int standardDamage;
 
-    public StarveCommand(JavaPlugin plugin, String permissionRoot, String trigger) {
-        super(plugin, permissionRoot, trigger);
+    public Starve(JavaPlugin plugin, String permissionRoot) {
+        super(plugin, permissionRoot);
         if (isEnabled()) {
             reload();
         }
