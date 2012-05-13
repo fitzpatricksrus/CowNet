@@ -228,6 +228,11 @@ public class Plots extends CowNetThingy {
     }
 
     @SubCommand
+    private boolean doTeleport(Player player, String plotName) {
+        return doTp(player, plotName);
+    }
+
+    @SubCommand
     private boolean doTp(Player player, String plotName) {
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
         ProtectedRegion region = regionManager.getRegion(plotName);

@@ -157,6 +157,10 @@ public class HardCoreCow extends CowNetThingy implements Listener {
         };
     }
 
+    //--------------------------------------------------
+    //  Command handlers
+    //
+
     @SubCommand
     protected boolean doHardCore(Player player) {
         return doHardCore(player, null);
