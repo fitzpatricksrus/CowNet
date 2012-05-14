@@ -162,13 +162,16 @@ public class HardCore extends CowNetThingy implements Listener {
     //
 
     @SubCommand
-    protected boolean doHardCore(Player player) {
-        return doHardCore(player, null);
+    protected boolean doHardcore(Player player) {
+        return doHardcore(player, null);
     }
 
     @SubCommand
-    protected boolean doHardCore(Player player, String worldName) {
-        if (!isHardCoreWorld(worldName)) return false;
+    protected boolean doHardcore(Player player, String worldName) {
+        if (worldName != null && !isHardCoreWorld(worldName)) {
+            player.sendMessage(worldName + " is not HARD CORE.");
+            return true;
+        }
         if (isHardCoreWorld(player.getWorld()) && (worldName == null)) {
             //Player is on HARD CORE world already and wants to leave.
             //if they are close to spawn we will rescue them

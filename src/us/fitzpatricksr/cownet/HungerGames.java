@@ -157,39 +157,6 @@ public class HungerGames extends CowNetThingy implements Listener {
         };
     }
 
-/*    @Override
-    protected boolean handleCommand(CommandSender sender, Command cmd, String[] args) {
-        if (args.length == 1) {
-            if ("info".equalsIgnoreCase(args[0]) || "list".equalsIgnoreCase(args[0])) {
-                return doInfo(sender);
-            } else if ("stats".equalsIgnoreCase(args[0])) {
-                return doStats(sender);
-            }
-        }
-        return false;
-    }
-
-    @Override
-    protected boolean handleCommand(Player sender, Command cmd, String[] args) {
-        if (args.length == 0) {
-            return doJoin(sender);
-        } else if (args.length == 1) {
-            if ("quit".equalsIgnoreCase(args[0])) {
-                return doQuit(sender);
-            } else if ("start".equalsIgnoreCase(args[0])) {
-                return doStart(sender);
-            } else if ("join".equalsIgnoreCase(args[0])) {
-                return doJoin(sender);
-            }
-        } else if (args.length == 2) {
-            if ("tp".equalsIgnoreCase(args[0])) {
-                return doTeleport(sender, args[1]);
-            }
-        }
-        return false;
-    }
-*/
-
     //------------------------------------------------
     //  command handlers
     //
@@ -204,6 +171,10 @@ public class HungerGames extends CowNetThingy implements Listener {
         gameHistory.dumpRecentHistory(sender);
         gameHistory.dumpLeaderBoard(sender);
         return true;
+    }
+
+    private boolean doHungergames(Player player) {
+        return doJoin(player);
     }
 
     @SubCommand
@@ -339,6 +310,7 @@ public class HungerGames extends CowNetThingy implements Listener {
             }
             if (gameInstance.isInProgress() && !hasPlayedStartSound) {
                 playGameStartedSound();
+                hasPlayedStartSound = true;
             }
         }
     }
@@ -359,10 +331,10 @@ public class HungerGames extends CowNetThingy implements Listener {
     }
 
     private void playGameStartedSound() {
-        for (PlayerInfo playerInfo : gameInstance.getPlayersInGame()) {
-            Player player = playerInfo.getPlayer();
-            player.getWorld().strikeLightningEffect(player.getLocation());
-        }
+        PlayerInfo p = gameInstance.getPlayersInGame().get(0);
+        World w = p.getPlayer().getWorld();
+        Location loc = w.getSpawnLocation();
+        w.strikeLightningEffect(loc);
     }
 
     private void playPlayerDeathSound(Player player) {
