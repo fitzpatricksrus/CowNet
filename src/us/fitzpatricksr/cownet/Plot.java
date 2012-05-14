@@ -30,6 +30,10 @@ import java.util.List;
 import java.util.Map;
 
 public class Plot extends CowNetThingy {
+    private Material plotBase = Material.STONE;
+    private Material plotSurface = Material.GRASS;
+    private Material plotPath = Material.DOUBLE_STEP;
+
     private WorldGuardPlugin worldGuard;
     private BOSEconomy economy;
     private NoSwearing noSwearingMod;
@@ -44,9 +48,6 @@ public class Plot extends CowNetThingy {
     private int plotSize = 64;
     @Setting
     private int plotHeight = 20;
-    private Material plotBase = Material.STONE;
-    private Material plotSurface = Material.GRASS;
-    private Material plotPath = Material.DOUBLE_STEP;
 
     /**
      * Interface for different type of claim shapes and decorations
@@ -228,12 +229,12 @@ public class Plot extends CowNetThingy {
     }
 
     @SubCommand
-    private boolean doTeleport(Player player, String plotName) {
-        return doTp(player, plotName);
+    private boolean doTp(Player player, String plotName) {
+        return doTeleport(player, plotName);
     }
 
     @SubCommand
-    private boolean doTp(Player player, String plotName) {
+    private boolean doTeleport(Player player, String plotName) {
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
         ProtectedRegion region = regionManager.getRegion(plotName);
         if (region == null) {
