@@ -13,12 +13,10 @@ import java.util.List;
 public class Bounce extends CowNetThingy {
     private static final int MAX_RADIUS = 100;
     private static final int MAX_VELOCITY = 5;
-    private static final int DEFAULT_RADIUS = 5;
-    private static final int DEFAULT_VELOCITY = 1;
     @Setting
-    private int standardRadius;
+    private int standardRadius = 5;
     @Setting
-    private int standardVelocity;
+    private int standardVelocity = 1;
 
     private Bounce() {
     }
@@ -32,8 +30,8 @@ public class Bounce extends CowNetThingy {
 
     @Override
     protected void reload() {
-        this.standardRadius = getConfigInt("radius", DEFAULT_RADIUS);
-        this.standardVelocity = getConfigInt("velocity", DEFAULT_VELOCITY);
+        standardRadius = getConfigInt("radius", standardRadius);
+        standardVelocity = getConfigInt("velocity", standardVelocity);
         logInfo("radius=" + standardRadius + ",velocity=" + standardVelocity);
     }
 
@@ -42,17 +40,14 @@ public class Bounce extends CowNetThingy {
         return "usage: bounce [radius] [velocity]";
     }
 
-    @SubCommand
     protected boolean doBounce(Player player) {
         return doBounce(player, "" + standardRadius, "" + standardVelocity);
     }
 
-    @SubCommand
     protected boolean doBounce(Player player, String radius) {
         return doBounce(player, radius, "" + standardVelocity);
     }
 
-    @SubCommand
     protected boolean doBounce(Player player, String radiusStr, String velocityStr) {
         int radius;
         try {

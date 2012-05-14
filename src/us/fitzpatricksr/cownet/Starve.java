@@ -42,12 +42,10 @@ public class Starve extends CowNetThingy {
         return doStarve(player, "" + standardRadius, "" + standardDamage);
     }
 
-    @SubCommand
     protected boolean doStarve(Player player, String radius) {
         return doStarve(player, radius, "" + standardDamage);
     }
 
-    @SubCommand
     protected boolean doStarve(Player player, String radiusStr, String damageStr) {
         int range = standardRadius;
         try {

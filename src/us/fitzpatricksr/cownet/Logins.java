@@ -158,12 +158,10 @@ public class Logins extends CowNetThingy implements Listener {
         }
     }
 
-    @SubCommand
     protected boolean doLogins(CommandSender player) {
         return doLogins(player, "-inout");
     }
 
-    @SubCommand
     protected boolean doLogins(CommandSender player, String filterString) {
         Filter filterType;
         // it's -in, -out, or a filter
