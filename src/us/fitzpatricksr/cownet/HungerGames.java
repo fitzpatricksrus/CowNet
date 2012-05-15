@@ -144,6 +144,21 @@ public class HungerGames extends CowNetThingy implements Listener {
     }
 
     @Override
+    protected void updateConfiguration() {
+        setConfigString("worldName", gameWorldName);
+        setConfigInt("arenaSize", arenaSize);
+        setConfigBoolean("allowFly", allowFly);
+        setConfigBoolean("allowXRay", allowXRay);
+        setConfigLong("timeToGather", GameInstance.timeToGather);
+        setConfigLong("timeToAcclimate", GameInstance.timeToAcclimate);
+        setConfigLong("timeBetweenGifts", PlayerInfo.timeBetweenGifts);
+        setConfigInt("minTributes", GameInstance.minTributes);
+        setConfigInt("landingPadSize", landingPadSize);
+        setConfigInt("giftsPerPlayer", giftsPerPlayer);
+        setConfigInt("trapsPerPlayer", trapsPerPlayer);
+    }
+
+    @Override
     protected String[] getHelpText(CommandSender player) {
         return new String[]{
                 "usage: /hungergames or /hg   join | info | quit | tp <player> | start",

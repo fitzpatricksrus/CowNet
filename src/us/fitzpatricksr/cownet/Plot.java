@@ -100,6 +100,14 @@ public class Plot extends CowNetThingy {
     }
 
     @Override
+    protected void updateConfiguration() {
+        setConfigInt("plotCost", plotCost);
+        setConfigInt("maxPlots", maxPlots);
+        setConfigInt("plotSize", plotSize);
+        setConfigInt("plotHeight", plotHeight);
+    }
+
+    @Override
     protected String getHelpString(CommandSender sender) {
         return "usage: plot [ claim <plotName> | release | share <player> | unshare <player> | " +
                 "info | list [player] | giveto <player> | tp <plotName> ]";

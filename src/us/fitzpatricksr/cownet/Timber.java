@@ -34,6 +34,11 @@ public class Timber extends CowNetThingy {
     }
 
     @Override
+    protected void updateConfiguration() {
+        setConfigString("worlds", worlds);
+    }
+
+    @Override
     protected String getHelpString(CommandSender sender) {
         return "Timer doesn't have any useful commands.";
     }

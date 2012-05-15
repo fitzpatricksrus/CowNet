@@ -21,7 +21,7 @@ public class TntSheep extends CowNetThingy {
     @Setting
     private String allowedWorlds = "ALL";
     @Setting
-    private float explosionRadius = 3; //4 = tnt
+    private int explosionRadius = 3; //4 = tnt
     @Setting
     private int explosionDamage = 3; //4 = tnt
     @Setting
@@ -43,14 +43,25 @@ public class TntSheep extends CowNetThingy {
 
     @Override
     public void reload() {
-        this.chanceToExplode = getConfigInt("chanceToExplode", this.chanceToExplode);
-        this.explosionRadius = getConfigInt("explosionRadius", (int) this.explosionRadius);
-        this.explosionDamage = getConfigInt("explosionDamage", this.explosionDamage);
-        this.allowedWorlds = getConfigString("allowedWords", this.allowedWorlds);
-        this.sheepExplode = getConfigBoolean("sheepExplode", this.sheepExplode);
-        this.cowsExplode = getConfigBoolean("cowsExplode", this.cowsExplode);
-        this.wreckage = getConfigInt("wreckage", this.wreckage);
+        chanceToExplode = getConfigInt("chanceToExplode", chanceToExplode);
+        explosionRadius = getConfigInt("explosionRadius", explosionRadius);
+        explosionDamage = getConfigInt("explosionDamage", explosionDamage);
+        allowedWorlds = getConfigString("allowedWords", allowedWorlds);
+        sheepExplode = getConfigBoolean("sheepExplode", sheepExplode);
+        cowsExplode = getConfigBoolean("cowsExplode", cowsExplode);
+        wreckage = getConfigInt("wreckage", wreckage);
         logInfo("(chanceToExplode=" + chanceToExplode + ",explosionRadius=" + explosionRadius + ",explosionDamage=" + explosionDamage + ",wreckage=" + wreckage + ",allowedWorlds=" + allowedWorlds + ")");
+    }
+
+    @Override
+    protected void updateConfiguration() {
+        setConfigInt("chanceToExplode", chanceToExplode);
+        setConfigInt("explosionRadius", explosionRadius);
+        setConfigInt("explosionDamage", explosionDamage);
+        setConfigString("allowedWords", allowedWorlds);
+        setConfigBoolean("sheepExplode", sheepExplode);
+        setConfigBoolean("cowsExplode", cowsExplode);
+        setConfigInt("wreckage", wreckage);
     }
 
     @Override

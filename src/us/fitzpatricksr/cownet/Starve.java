@@ -12,12 +12,10 @@ import java.util.List;
 public class Starve extends CowNetThingy {
     private static final int MAX_RADIUS = 100;
     private static final int MAX_DAMAGE = 100;
-    private static final int DEFAULT_RADIUS = 5;
-    private static final int DEFAULT_DAMAGE = 20;
     @Setting
-    private int standardRadius;
+    private int standardRadius = 5;
     @Setting
-    private int standardDamage;
+    private int standardDamage = 20;
 
     public Starve(JavaPlugin plugin, String permissionRoot) {
         super(plugin, permissionRoot);
@@ -26,10 +24,17 @@ public class Starve extends CowNetThingy {
         }
     }
 
+    @Override
     protected void reload() {
-        this.standardRadius = getConfigInt("radius", DEFAULT_RADIUS);
-        this.standardDamage = getConfigInt("damage", DEFAULT_DAMAGE);
+        this.standardRadius = getConfigInt("radius", standardRadius);
+        this.standardDamage = getConfigInt("damage", standardDamage);
         logInfo("radius=" + standardRadius + ", damage=" + standardDamage);
+    }
+
+    @Override
+    protected void updateConfiguration() {
+        setConfigInt("radius", standardRadius);
+        setConfigInt("damage", standardDamage);
     }
 
     @Override

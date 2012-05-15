@@ -40,9 +40,9 @@ public class Logins extends CowNetThingy implements Listener {
     private static final String JOIN_STRING = "<JOIN>";
     private static final String QUIT_STRING = "<QUIT>";
     @Setting
-    private static final int MAX_QUEUE_SIZE = 5000;
+    private int maxQueueSize = 5000;
     @Setting
-    private static final int MAX_DISPLAYED_TO_PLAYER = 10;
+    private int maxDisplayedToPlayer = 10;
     private Plugin plugin;
     private HashMap<String, GameMode> gameModeSave = new HashMap<String, GameMode>();
     private PrintWriter log;
@@ -182,7 +182,7 @@ public class Logins extends CowNetThingy implements Listener {
             if (filterType.shouldDisplayEntry(entry, filterString)) {
                 if (player instanceof Player) {
                     player.sendMessage(entry.toHumanReadableString());
-                    if (++count > MAX_DISPLAYED_TO_PLAYER) return true;
+                    if (++count > maxDisplayedToPlayer) return true;
                 } else {
                     logInfo(entry.toHumanReadableString());
                 }
@@ -206,7 +206,7 @@ public class Logins extends CowNetThingy implements Listener {
 
     private void queueEntry(LogEntry e) {
         recentLogEntries.addLast(e);
-        if (recentLogEntries.size() > MAX_QUEUE_SIZE) {
+        if (recentLogEntries.size() > maxQueueSize) {
             recentLogEntries.removeFirst();
         }
     }
