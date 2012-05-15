@@ -115,7 +115,7 @@ public class Plot extends CowNetThingy {
             player.sendMessage("Nothing to share.");
         } else {
             for (ProtectedRegion region : regions) {
-                if (region.isOwner(wgPlayer)) {
+                if (player.isOp() || region.isOwner(wgPlayer)) {
                     region.getMembers().addPlayer(playerName);
                     if (saveRegions(regionManager)) {
                         player.sendMessage("Sharing " + region.getId() + " with " + playerName);
@@ -140,7 +140,7 @@ public class Plot extends CowNetThingy {
             player.sendMessage("Nothing to unshare.");
         } else {
             for (ProtectedRegion region : regions) {
-                if (region.isOwner(wgPlayer)) {
+                if (player.isOp() || region.isOwner(wgPlayer)) {
                     region.getMembers().removePlayer(playerName);
                     if (saveRegions(regionManager)) {
                         player.sendMessage("No longer sharing " + region.getId() + " with " + playerName);
@@ -165,7 +165,7 @@ public class Plot extends CowNetThingy {
             player.sendMessage("Nothing to release.");
         } else {
             for (ProtectedRegion region : regions) {
-                if (region.isOwner(wgPlayer)) {
+                if (player.isOp() || region.isOwner(wgPlayer)) {
                     regionManager.removeRegion(region.getId());
                     if (saveRegions(regionManager)) {
                         player.sendMessage("Releasing region " + region.getId());
@@ -265,7 +265,7 @@ public class Plot extends CowNetThingy {
             player.sendMessage("Nothing to give.");
         } else {
             for (ProtectedRegion region : regions) {
-                if (region.isOwner(wgPlayer)) {
+                if (player.isOp() || region.isOwner(wgPlayer)) {
                     // add designated player to owners and remove from sharing
                     region.getOwners().addPlayer(playerName);
                     region.getMembers().removePlayer(playerName);
