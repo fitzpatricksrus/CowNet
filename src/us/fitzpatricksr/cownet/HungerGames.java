@@ -384,9 +384,7 @@ public class HungerGames extends CowNetThingy implements Listener {
             Location to = event.getTo().getBlock().getLocation();
             Location from = event.getFrom().getBlock().getLocation();
             Player player = event.getPlayer();
-            if (to.getBlockX() != from.getBlockX() ||
-//                    to.getY() != from.getY() ||
-                    to.getBlockZ() != from.getBlockZ()) {
+            if (to.getBlockX() != from.getBlockX() || to.getBlockZ() != from.getBlockZ()) {
                 // if they do anything but spin or move their head, strike with lightning.
                 event.setCancelled(true);
                 debugInfo("Player " + event.getPlayer().getName() + " is moving during acclimation");
