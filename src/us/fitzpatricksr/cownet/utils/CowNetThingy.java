@@ -24,18 +24,14 @@ public class CowNetThingy implements CommandExecutor {
     @Retention(RetentionPolicy.RUNTIME)
     public @interface SubCommand {
         boolean opOnly() default false;
-
-        String permission() default "";
-
-        String help() default "";
     }
 
     private Logger logger = Logger.getLogger("Minecraft");
     private JavaPlugin plugin;
-    //    private String trigger = "";
     private String permissionNode = "";
     private boolean isEnabled = false;
-    @Setting()
+
+    @Setting
     private boolean isDebug = false;
 
     protected CowNetThingy() {
@@ -52,7 +48,7 @@ public class CowNetThingy implements CommandExecutor {
             //allow this common alias
             this.isEnabled = getConfigBoolean("enabled", true);
         }
-        this.isDebug = getConfigBoolean("debug", false);
+        isDebug = getConfigBoolean("debug", isDebug);
         if (isEnabled) {
             logInfo(getTrigger() + " enabled");
             plugin.getCommand(getTrigger()).setExecutor(this);
@@ -86,20 +82,40 @@ public class CowNetThingy implements CommandExecutor {
         return plugin.getConfig().getInt(getTrigger() + "." + key, def);
     }
 
+    public final void setConfigInt(String key, int newValue) {
+        plugin.getConfig().set(getTrigger() + "." + key, newValue);
+    }
+
     public final long getConfigLong(String key, long def) {
         return plugin.getConfig().getLong(getTrigger() + "." + key, def);
+    }
+
+    public final void setConfigLong(String key, long newValue) {
+        plugin.getConfig().set(getTrigger() + "." + key, newValue);
     }
 
     public final double getConfigDouble(String key, double def) {
         return plugin.getConfig().getDouble(getTrigger() + "." + key, def);
     }
 
+    public final void setConfigDouble(String key, double newValue) {
+        plugin.getConfig().set(getTrigger() + "." + key, newValue);
+    }
+
     public final boolean getConfigBoolean(String key, boolean def) {
         return plugin.getConfig().getBoolean(getTrigger() + "." + key, def);
     }
 
+    public final void setConfigBoolean(String key, boolean newValue) {
+        plugin.getConfig().set(getTrigger() + "." + key, newValue);
+    }
+
     public final String getConfigString(String key, String def) {
         return plugin.getConfig().getString(getTrigger() + "." + key, def);
+    }
+
+    public final void setConfigString(String key, String newValue) {
+        plugin.getConfig().set(getTrigger() + "." + key, newValue);
     }
 
     public final void saveConfiguration() {
@@ -161,6 +177,11 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     protected void reload() {
+        isDebug = getConfigBoolean("debug", isDebug);
+    }
+
+    protected void updateConfiguration() {
+        setConfigBoolean("debug", isDebug);
     }
 
     protected String[] getHelpText(CommandSender sender) {
@@ -171,21 +192,11 @@ public class CowNetThingy implements CommandExecutor {
         return "There isn't any help for you...";
     }
 
-    @Deprecated
-    protected boolean handleCommand(Player sender, Command cmd, String[] args) {
-        return false;
-    }
-
-    @Deprecated
-    protected boolean handleCommand(CommandSender sender, Command cmd, String[] args) {
-        return false;
-    }
-
     //------------------------------------
     // built-in command
 
     @SubCommand
-    public final boolean doHelp(CommandSender sender) {
+    private final boolean doHelp(CommandSender sender) {
         for (String help : getHelpText(sender)) {
             sender.sendMessage(help);
         }
@@ -193,7 +204,7 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     @SubCommand(opOnly = true)
-    public final boolean doReload(CommandSender sender) {
+    private final boolean doReload(CommandSender sender) {
         if (sender.isOp()) {
             getPlugin().reloadConfig();
             reload();
@@ -201,6 +212,13 @@ public class CowNetThingy implements CommandExecutor {
         } else {
             sender.sendMessage("Permission denied.");
         }
+        return true;
+    }
+
+    @SubCommand(opOnly = true)
+    private final boolean doSaveconfig(CommandSender sender) {
+        updateConfiguration();
+        saveConfiguration();
         return true;
     }
 
@@ -230,7 +248,7 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     @SubCommand(opOnly = true)
-    public final boolean doSet(CommandSender sender, String settingName, String settingValue) {
+    private final boolean doSet(CommandSender sender, String settingName, String settingValue) {
         // set <setting> <value>
         Class c = getClass();
         while (c != null && !c.equals(Object.class)) {
@@ -299,24 +317,29 @@ public class CowNetThingy implements CommandExecutor {
             if (method != null) {
                 if (method.getAnnotation(SubCommand.class) != null) {
                     //looks like we have a subcommand method.  If it's marked a subcommand execute it.
-                    try {
-                        method.setAccessible(true);
-                        LinkedList<Object> paramList = new LinkedList<Object>();
-                        paramList.addFirst(sender);
-                        for (int i = 1; i < args.length; i++) {
-                            paramList.addLast(args[i]);
+                    SubCommand annotation = method.getAnnotation(SubCommand.class);
+                    if (annotation.opOnly() && !sender.isOp()) {
+                        sender.sendMessage("You don't have permissions.");
+                    } else {
+                        try {
+                            method.setAccessible(true);
+                            LinkedList<Object> paramList = new LinkedList<Object>();
+                            paramList.addFirst(sender);
+                            for (int i = 1; i < args.length; i++) {
+                                paramList.addLast(args[i]);
+                            }
+                            Object[] params = paramList.toArray();
+                            Object result = method.invoke(this, params);
+                            return (Boolean) result;
+                        } catch (InvocationTargetException e) {
+                            e.printStackTrace();
+                            return false;
+                        } catch (IllegalAccessException e) {
+                            e.printStackTrace();
+                            return false;
+                        } finally {
+                            method.setAccessible(false);
                         }
-                        Object[] params = paramList.toArray();
-                        Object result = method.invoke(this, params);
-                        return (Boolean) result;
-                    } catch (InvocationTargetException e) {
-                        e.printStackTrace();
-                        return false;
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                        return false;
-                    } finally {
-                        method.setAccessible(false);
                     }
                 }
             }
@@ -344,7 +367,7 @@ public class CowNetThingy implements CommandExecutor {
             }
         }
 
-        return (sender instanceof Player) ? handleCommand((Player) sender, null, args) || handleCommand(sender, null, args) : handleCommand(sender, null, args);
+        return false;
     }
 
     protected Method findHandlerMethod(CommandSender sender, String methodName, int stringParamCount) {
