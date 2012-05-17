@@ -49,15 +49,16 @@ public class NoSwearing implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerChat(PlayerChatEvent event) {
         Player player = event.getPlayer();
         if (player.hasPermission(permissionNode)) {
-            logger.info(player.getName() + " said a bad word, but has permissions.");
             return;
         }
 
-        scanForBadWords(event.getPlayer(), event.getMessage());
+        if (scanForBadWords(event.getPlayer(), event.getMessage())) {
+            event.setCancelled(true);
+        }
     }
 
     public boolean scanForBadWords(Player player, String textToScan) {

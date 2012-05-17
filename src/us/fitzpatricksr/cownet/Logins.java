@@ -62,7 +62,7 @@ public class Logins extends CowNetThingy implements Listener {
         return "usage: <command> [-in|-out|-inout] | [<filter>]";
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEnable(PluginEnableEvent event) {
         Plugin pl = event.getPlugin();
         if (pl.equals(plugin)) {
@@ -81,7 +81,7 @@ public class Logins extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDisable(PluginDisableEvent event) {
         Plugin pl = event.getPlugin();
         if (pl.equals(plugin)) {
@@ -92,7 +92,7 @@ public class Logins extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerLogin(PlayerLoginEvent event) {
         if (log != null) {
             LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage(JOIN_STRING);
@@ -103,7 +103,7 @@ public class Logins extends CowNetThingy implements Listener {
         setGameMode(event.getPlayer());
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
         if (log != null) {
             LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage(QUIT_STRING);
@@ -114,18 +114,18 @@ public class Logins extends CowNetThingy implements Listener {
         saveGameMode(event.getPlayer());
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerChat(PlayerChatEvent event) {
         if (event.isCancelled()) return;
         if (log != null) {
             LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage(event.getMessage());
-            log.println(entry.toString());
+            log.println(entry.toString() + (event.isCancelled() ? " (CANCELED)" : ""));
             log.flush();
             queueEntry(entry);
         }
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
         if (event.isCancelled()) return;
         if (log != null) {
@@ -136,7 +136,7 @@ public class Logins extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerCommand(PlayerGameModeChangeEvent event) {
         if (event.isCancelled()) return;
         if (log != null) {
@@ -147,7 +147,7 @@ public class Logins extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         if (event.isCancelled()) return;
         if (log != null) {

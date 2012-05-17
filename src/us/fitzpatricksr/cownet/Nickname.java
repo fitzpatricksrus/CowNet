@@ -3,6 +3,7 @@ package us.fitzpatricksr.cownet;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -22,7 +23,7 @@ public class Nickname extends CowNetThingy implements Listener {
         return "usage: Nickname";
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         String nickname = getConfigString(player.getName().toLowerCase(), player.getDisplayName());
@@ -32,7 +33,7 @@ public class Nickname extends CowNetThingy implements Listener {
         event.setJoinMessage(nickname + " joined the game");
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         String nickname = getConfigString(player.getName().toLowerCase(), player.getDisplayName());

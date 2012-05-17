@@ -45,7 +45,7 @@ public class Timber extends CowNetThingy {
 
     private class TreeListener implements Listener {
         @SuppressWarnings("unused")
-        @EventHandler(priority = EventPriority.HIGHEST)
+        @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
         public void onBlockBreak(BlockBreakEvent event) {
             if (event.isCancelled()) return;
             String worldName = event.getPlayer().getWorld().getName().toLowerCase();

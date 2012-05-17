@@ -87,7 +87,7 @@ public class TntSheep extends CowNetThingy {
 
     private class ExplodingSheepListener implements Listener {
         @SuppressWarnings("unused")
-        @EventHandler(priority = EventPriority.HIGH)
+        @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
         public void onEntityDamage(EntityDamageEvent event) {
             // Oh please be a sheep
             if ((sheepExplode && event.getEntity() instanceof org.bukkit.entity.Sheep) ||
