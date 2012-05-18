@@ -72,7 +72,7 @@ permissions:
         default: op
     cownet.hide:
         description: if true player has permission to hide
-        default: false
+        default: op
     cownet.hide.joinHidden:
         description: if true player joins the game hidden
         default: false

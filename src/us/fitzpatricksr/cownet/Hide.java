@@ -3,8 +3,6 @@ package us.fitzpatricksr.cownet;
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -48,38 +46,42 @@ public class Hide extends CowNetThingy implements Listener {
         return "usage: hide [ on | off | check | join | quit ]";
     }
 
-    protected boolean handleCommand(Player player, Command cmd, String[] args) {
-        if (hasPermissions(player)) {
-            if (args.length == 0) {
-                toggleHiddenState(player);
-                return true;
-            } else if (args.length == 1) {
-                String subCmd = args[0];
-                if (subCmd.equalsIgnoreCase("on")) {
-                    hidePlayer(player, true);
-                    return true;
-                } else if (subCmd.equalsIgnoreCase("off")) {
-                    unhidePlayer(player, true);
-                    return true;
-                } else if (subCmd.equalsIgnoreCase("check")) {
-                    player.sendMessage((isHidden(player) ? "You are hidden" : "You are visible"));
-                    return true;
-                } else if (subCmd.equalsIgnoreCase("join")) {
-                    fakeJoin(player);
-                    return true;
-                } else if (subCmd.equalsIgnoreCase("quit")) {
-                    fakeQuit(player);
-                    return true;
-                }
-            }
-            return false;
-        } else {
-            player.sendMessage("You don't have permission.");
-            return true;
-        }
+    public boolean doHide(Player player) {
+        toggleHiddenState(player);
+        return true;
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @SubCommand
+    public boolean doOn(Player player) {
+        hidePlayer(player, true);
+        return true;
+    }
+
+    @SubCommand
+    public boolean doOff(Player player) {
+        unhidePlayer(player, true);
+        return true;
+    }
+
+    @SubCommand
+    public boolean doCheck(Player player) {
+        player.sendMessage((isHidden(player) ? "You are hidden" : "You are visible"));
+        return true;
+    }
+
+    @SubCommand
+    public boolean doJoin(Player player) {
+        fakeJoin(player);
+        return true;
+    }
+
+    @SubCommand
+    public boolean doQuit(Player player) {
+        fakeQuit(player);
+        return true;
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
         final Entity smacked = event.getEntity();
         if (smacked instanceof Player) {
@@ -102,7 +104,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onEntityTarget(EntityTargetEvent event) {
         if ((event.getTarget() instanceof Player) && isHidden((Player) event.getTarget())) {
             event.setCancelled(true);
@@ -118,18 +120,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onPlayer(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        if (hasPermissions(player, "joinHidden")) {
-            hidePlayer(player, false);
-            player.sendMessage("Joining hidden...");
-            event.setJoinMessage(null);
-        }
-        hideInvisiblePlayersFrom(event.getPlayer());
-    }
-
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerChat(PlayerChatEvent event) {
         if (isHidden(event.getPlayer())) {
             event.setCancelled(true);
@@ -137,7 +128,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onBucketFill(PlayerBucketFillEvent event) {
         if (isHidden(event.getPlayer())) {
             event.setCancelled(true);
@@ -145,7 +136,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (isHidden(event.getPlayer())) {
             event.setCancelled(true);
@@ -153,7 +144,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerPickupItem(PlayerPickupItemEvent event) {
         if (isHidden(event.getPlayer())) {
             event.setCancelled(true);
@@ -161,15 +152,7 @@ public class Hide extends CowNetThingy implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        if (isHidden(event.getPlayer())) {
-            unhidePlayer(event.getPlayer(), false);
-            event.setQuitMessage(null);
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onShear(PlayerShearEntityEvent event) {
         if (isHidden(event.getPlayer())) {
             event.setCancelled(true);
@@ -178,22 +161,34 @@ public class Hide extends CowNetThingy implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onWorldChange(PlayerChangedWorldEvent event) {
-        hideInvisiblePlayersFrom(event.getPlayer());
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        if (hasPermissions(player, "joinHidden")) {
+            hidePlayer(player, false);
+            player.sendMessage("Joining hidden...");
+            event.setJoinMessage(null);
+        }
+        hideInvisiblePlayersFrom(player);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+        if (isHidden(player)) {
+            unhidePlayer(player, false);
+            event.setQuitMessage(null);
+        }
     }
 
     public void hidePlayer(Player p, boolean poof) {
         if (isHidden(p)) return;
         invisiblePlayers.put(p.getName(), p);
-        World w = p.getWorld();
         if (poof) smokeScreenEffect(p.getLocation());
-        for (Player other : w.getPlayers()) {
+        for (Player other : getPlugin().getServer().getOnlinePlayers()) {
             if (!other.equals(p)) {
                 if (!hasPermissions(other, "seesInvisible")) {
                     debugInfo("Hiding " + p.getName() + " from " + other.getName());
-                    if (other.canSee(p)) {
-                        other.hidePlayer(p);
-                    }
+                    other.hidePlayer(p);
                 }
             }
         }
@@ -205,9 +200,7 @@ public class Hide extends CowNetThingy implements Listener {
         for (Player other : invisiblePlayers.values()) {
             if (!other.equals(p)) {
                 debugInfo("Hiding " + other.getName() + " from " + p.getName());
-                if (p.canSee(other)) {
-                    p.hidePlayer(other);
-                }
+                p.hidePlayer(other);
             }
         }
     }
@@ -215,13 +208,10 @@ public class Hide extends CowNetThingy implements Listener {
     public void unhidePlayer(Player p, boolean poof) {
         if (!isHidden(p)) return;
         invisiblePlayers.remove(p.getName());
-        World w = p.getWorld();
         if (poof) smokeScreenEffect(p.getLocation());
-        for (Player other : w.getPlayers()) {
+        for (Player other : getPlugin().getServer().getOnlinePlayers()) {
             if (!other.equals(p)) {
-                if (!other.canSee(p)) {
-                    other.showPlayer(p);
-                }
+                other.showPlayer(p);
             }
         }
         p.sendMessage("You are now unhidden");

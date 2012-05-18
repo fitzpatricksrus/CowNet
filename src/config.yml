@@ -80,4 +80,8 @@ hungergames:
   timeToGather: 60000
   timeToAcclimate: 10000
 
+hide:
+  enable: true
+  debug: false
+
 
