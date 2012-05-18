@@ -43,25 +43,25 @@ public class TntSheep extends CowNetThingy {
 
     @Override
     public void reload() {
-        chanceToExplode = getConfigInt("chanceToExplode", chanceToExplode);
-        explosionRadius = getConfigInt("explosionRadius", explosionRadius);
-        explosionDamage = getConfigInt("explosionDamage", explosionDamage);
-        allowedWorlds = getConfigString("allowedWords", allowedWorlds);
-        sheepExplode = getConfigBoolean("sheepExplode", sheepExplode);
-        cowsExplode = getConfigBoolean("cowsExplode", cowsExplode);
-        wreckage = getConfigInt("wreckage", wreckage);
+        chanceToExplode = getConfigValue("chanceToExplode", chanceToExplode);
+        explosionRadius = getConfigValue("explosionRadius", explosionRadius);
+        explosionDamage = getConfigValue("explosionDamage", explosionDamage);
+        allowedWorlds = getConfigValue("allowedWords", allowedWorlds);
+        sheepExplode = getConfigValue("sheepExplode", sheepExplode);
+        cowsExplode = getConfigValue("cowsExplode", cowsExplode);
+        wreckage = getConfigValue("wreckage", wreckage);
         logInfo("(chanceToExplode=" + chanceToExplode + ",explosionRadius=" + explosionRadius + ",explosionDamage=" + explosionDamage + ",wreckage=" + wreckage + ",allowedWorlds=" + allowedWorlds + ")");
     }
 
     @Override
     protected void updateConfiguration() {
-        setConfigInt("chanceToExplode", chanceToExplode);
-        setConfigInt("explosionRadius", explosionRadius);
-        setConfigInt("explosionDamage", explosionDamage);
-        setConfigString("allowedWords", allowedWorlds);
-        setConfigBoolean("sheepExplode", sheepExplode);
-        setConfigBoolean("cowsExplode", cowsExplode);
-        setConfigInt("wreckage", wreckage);
+        updateConfigValue("chanceToExplode", chanceToExplode);
+        updateConfigValue("explosionRadius", explosionRadius);
+        updateConfigValue("explosionDamage", explosionDamage);
+        updateConfigValue("allowedWords", allowedWorlds);
+        updateConfigValue("sheepExplode", sheepExplode);
+        updateConfigValue("cowsExplode", cowsExplode);
+        updateConfigValue("wreckage", wreckage);
     }
 
     @Override

@@ -26,15 +26,15 @@ public class Starve extends CowNetThingy {
 
     @Override
     protected void reload() {
-        this.standardRadius = getConfigInt("radius", standardRadius);
-        this.standardDamage = getConfigInt("damage", standardDamage);
+        this.standardRadius = getConfigValue("radius", standardRadius);
+        this.standardDamage = getConfigValue("damage", standardDamage);
         logInfo("radius=" + standardRadius + ", damage=" + standardDamage);
     }
 
     @Override
     protected void updateConfiguration() {
-        setConfigInt("radius", standardRadius);
-        setConfigInt("damage", standardDamage);
+        updateConfigValue("radius", standardRadius);
+        updateConfigValue("damage", standardDamage);
     }
 
     @Override

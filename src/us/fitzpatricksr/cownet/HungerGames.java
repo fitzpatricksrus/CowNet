@@ -106,17 +106,17 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @Override
     protected void reload() {
-        gameWorldName = getConfigString("worldName", gameWorldName);
-        arenaSize = getConfigInt("arenaSize", arenaSize);
-        allowFly = getConfigBoolean("allowFly", allowFly);
-        allowXRay = getConfigBoolean("allowXRay", allowXRay);
-        GameInstance.timeToGather = getConfigLong("timeToGather", GameInstance.timeToGather);
-        GameInstance.timeToAcclimate = getConfigLong("timeToAcclimate", GameInstance.timeToAcclimate);
-        PlayerInfo.timeBetweenGifts = getConfigLong("timeBetweenGifts", PlayerInfo.timeBetweenGifts);
-        GameInstance.minTributes = getConfigInt("minTributes", GameInstance.minTributes);
-        landingPadSize = getConfigInt("landingPadSize", landingPadSize);
-        giftsPerPlayer = getConfigInt("giftsPerPlayer", giftsPerPlayer);
-        trapsPerPlayer = getConfigInt("trapsPerPlayer", trapsPerPlayer);
+        gameWorldName = getConfigValue("worldName", gameWorldName);
+        arenaSize = getConfigValue("arenaSize", arenaSize);
+        allowFly = getConfigValue("allowFly", allowFly);
+        allowXRay = getConfigValue("allowXRay", allowXRay);
+        GameInstance.timeToGather = getConfigValue("timeToGather", GameInstance.timeToGather);
+        GameInstance.timeToAcclimate = getConfigValue("timeToAcclimate", GameInstance.timeToAcclimate);
+        PlayerInfo.timeBetweenGifts = getConfigValue("timeBetweenGifts", PlayerInfo.timeBetweenGifts);
+        GameInstance.minTributes = getConfigValue("minTributes", GameInstance.minTributes);
+        landingPadSize = getConfigValue("landingPadSize", landingPadSize);
+        giftsPerPlayer = getConfigValue("giftsPerPlayer", giftsPerPlayer);
+        trapsPerPlayer = getConfigValue("trapsPerPlayer", trapsPerPlayer);
         gameHistory = new GameHistory(getPlugin(), getTrigger() + ".yml");
         try {
             gameHistory.loadConfig();
@@ -145,17 +145,17 @@ public class HungerGames extends CowNetThingy implements Listener {
 
     @Override
     protected void updateConfiguration() {
-        setConfigString("worldName", gameWorldName);
-        setConfigInt("arenaSize", arenaSize);
-        setConfigBoolean("allowFly", allowFly);
-        setConfigBoolean("allowXRay", allowXRay);
-        setConfigLong("timeToGather", GameInstance.timeToGather);
-        setConfigLong("timeToAcclimate", GameInstance.timeToAcclimate);
-        setConfigLong("timeBetweenGifts", PlayerInfo.timeBetweenGifts);
-        setConfigInt("minTributes", GameInstance.minTributes);
-        setConfigInt("landingPadSize", landingPadSize);
-        setConfigInt("giftsPerPlayer", giftsPerPlayer);
-        setConfigInt("trapsPerPlayer", trapsPerPlayer);
+        updateConfigValue("worldName", gameWorldName);
+        updateConfigValue("arenaSize", arenaSize);
+        updateConfigValue("allowFly", allowFly);
+        updateConfigValue("allowXRay", allowXRay);
+        updateConfigValue("timeToGather", GameInstance.timeToGather);
+        updateConfigValue("timeToAcclimate", GameInstance.timeToAcclimate);
+        updateConfigValue("timeBetweenGifts", PlayerInfo.timeBetweenGifts);
+        updateConfigValue("minTributes", GameInstance.minTributes);
+        updateConfigValue("landingPadSize", landingPadSize);
+        updateConfigValue("giftsPerPlayer", giftsPerPlayer);
+        updateConfigValue("trapsPerPlayer", trapsPerPlayer);
     }
 
     @Override

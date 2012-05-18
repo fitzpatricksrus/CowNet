@@ -30,15 +30,15 @@ public class Bounce extends CowNetThingy {
 
     @Override
     protected void reload() {
-        standardRadius = getConfigInt("radius", standardRadius);
-        standardVelocity = getConfigInt("velocity", standardVelocity);
+        standardRadius = getConfigValue("radius", standardRadius);
+        standardVelocity = getConfigValue("velocity", standardVelocity);
         logInfo("radius=" + standardRadius + ",velocity=" + standardVelocity);
     }
 
     @Override
     protected void updateConfiguration() {
-        setConfigInt("radius", standardRadius);
-        setConfigInt("velocity", standardVelocity);
+        updateConfigValue("radius", standardRadius);
+        updateConfigValue("velocity", standardVelocity);
     }
 
     @Override

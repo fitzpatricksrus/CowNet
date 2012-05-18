@@ -93,15 +93,15 @@ public class HardCore extends CowNetThingy implements Listener {
     protected void reload() {
         if (mvPlugin != null) mvPlugin.decrementPluginCount();
         try {
-            hardCoreWorldNames = getConfigString("worldname", hardCoreWorldNames);
-            safeDistance = getConfigInt("safedistance", safeDistance);
-            PlayerState.liveTimeout = getConfigLong("livetimeout", PlayerState.liveTimeout);
-            PlayerState.deathDuration = getConfigLong("deathduration", PlayerState.deathDuration);
-            PlayerState.timeOutGrowth = getConfigDouble("timeoutgrowth", PlayerState.timeOutGrowth);
-            difficulty = Difficulty.valueOf(getConfigString("dificulty", difficulty.toString()));
-            monsterBoost = Double.valueOf(getConfigString("monsterBoost", Double.toString(monsterBoost)));
-            allowFly = getConfigBoolean("allowFly", allowFly);
-            allowXRay = getConfigBoolean("allowXRay", allowXRay);
+            hardCoreWorldNames = getConfigValue("worldname", hardCoreWorldNames);
+            safeDistance = getConfigValue("safedistance", safeDistance);
+            PlayerState.liveTimeout = getConfigValue("livetimeout", PlayerState.liveTimeout);
+            PlayerState.deathDuration = getConfigValue("deathduration", PlayerState.deathDuration);
+            PlayerState.timeOutGrowth = getConfigValue("timeoutgrowth", PlayerState.timeOutGrowth);
+            difficulty = Difficulty.valueOf(getConfigValue("dificulty", difficulty.toString()));
+            monsterBoost = Double.valueOf(getConfigValue("monsterBoost", Double.toString(monsterBoost)));
+            allowFly = getConfigValue("allowFly", allowFly);
+            allowXRay = getConfigValue("allowXRay", allowXRay);
             config = new HardCoreState(getPlugin(), getTrigger() + ".yml");
             config.loadConfig();
             mvPlugin = (MultiverseCore) getPlugin().getServer().getPluginManager().getPlugin("Multiverse-Core");
@@ -130,6 +130,17 @@ public class HardCore extends CowNetThingy implements Listener {
             disable();
         }
     }
+
+    @Override
+    protected void updateConfiguration() {
+        updateConfigValue("hardCoreWorldNames", hardCoreWorldNames);
+        updateConfigValue("safeDistance", safeDistance);
+        updateConfigValue("liveTimeout", PlayerState.liveTimeout);
+        updateConfigValue("deathDuration", PlayerState.deathDuration);
+        updateConfigValue("timeOutGrowth", PlayerState.timeOutGrowth);
+        updateConfigValue("monsterBoost", monsterBoost);
+    }
+
 
     @EventHandler
     protected void handlePluginDisabled(PluginDisableEvent event) {

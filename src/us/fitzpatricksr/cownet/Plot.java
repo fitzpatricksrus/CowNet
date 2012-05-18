@@ -88,23 +88,23 @@ public class Plot extends CowNetThingy {
 
     @Override
     protected void reload() {
-        this.plotCost = getConfigInt("plotCost", plotCost);
-        this.maxPlots = getConfigInt("maxPlots", maxPlots);
-        this.plotSize = getConfigInt("plotSize", plotSize);
-        this.plotHeight = getConfigInt("plotHeight", plotHeight);
-        this.plotBase = Material.valueOf(getConfigString("plotBase", plotBase.toString()));
-        this.plotSurface = Material.valueOf(getConfigString("plotSurface", plotSurface.toString()));
-        this.plotPath = Material.valueOf(getConfigString("plotPath", plotPath.toString()));
+        this.plotCost = getConfigValue("plotCost", plotCost);
+        this.maxPlots = getConfigValue("maxPlots", maxPlots);
+        this.plotSize = getConfigValue("plotSize", plotSize);
+        this.plotHeight = getConfigValue("plotHeight", plotHeight);
+        this.plotBase = Material.valueOf(getConfigValue("plotBase", plotBase.toString()));
+        this.plotSurface = Material.valueOf(getConfigValue("plotSurface", plotSurface.toString()));
+        this.plotPath = Material.valueOf(getConfigValue("plotPath", plotPath.toString()));
 
         this.ipc = new InfinitePlotClaim(plotSize);
     }
 
     @Override
     protected void updateConfiguration() {
-        setConfigInt("plotCost", plotCost);
-        setConfigInt("maxPlots", maxPlots);
-        setConfigInt("plotSize", plotSize);
-        setConfigInt("plotHeight", plotHeight);
+        updateConfigValue("plotCost", plotCost);
+        updateConfigValue("maxPlots", maxPlots);
+        updateConfigValue("plotSize", plotSize);
+        updateConfigValue("plotHeight", plotHeight);
     }
 
     @Override

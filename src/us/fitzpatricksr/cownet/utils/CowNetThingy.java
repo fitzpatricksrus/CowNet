@@ -43,12 +43,12 @@ public class CowNetThingy implements CommandExecutor {
     public CowNetThingy(JavaPlugin plugin, String permissionRoot) {
         this.plugin = plugin;
         this.permissionNode = permissionRoot + "." + getTrigger();
-        this.isEnabled = getConfigBoolean("enable", false);
+        this.isEnabled = getConfigValue("enable", false);
         if (!this.isEnabled()) {
             //allow this common alias
-            this.isEnabled = getConfigBoolean("enabled", true);
+            this.isEnabled = getConfigValue("enabled", true);
         }
-        isDebug = getConfigBoolean("debug", isDebug);
+        isDebug = getConfigValue("debug", isDebug);
         if (isEnabled) {
             logInfo(getTrigger() + " enabled");
             plugin.getCommand(getTrigger()).setExecutor(this);
@@ -78,44 +78,44 @@ public class CowNetThingy implements CommandExecutor {
         return (ConfigurationSection) plugin.getConfig().get(getTrigger());
     }
 
-    public final int getConfigInt(String key, int def) {
+    public final int getConfigValue(String key, int def) {
         return plugin.getConfig().getInt(getTrigger() + "." + key, def);
     }
 
-    public final void setConfigInt(String key, int newValue) {
-        plugin.getConfig().set(getTrigger() + "." + key, newValue);
-    }
-
-    public final long getConfigLong(String key, long def) {
+    public final long getConfigValue(String key, long def) {
         return plugin.getConfig().getLong(getTrigger() + "." + key, def);
     }
 
-    public final void setConfigLong(String key, long newValue) {
-        plugin.getConfig().set(getTrigger() + "." + key, newValue);
-    }
-
-    public final double getConfigDouble(String key, double def) {
+    public final double getConfigValue(String key, double def) {
         return plugin.getConfig().getDouble(getTrigger() + "." + key, def);
     }
 
-    public final void setConfigDouble(String key, double newValue) {
-        plugin.getConfig().set(getTrigger() + "." + key, newValue);
-    }
-
-    public final boolean getConfigBoolean(String key, boolean def) {
+    public final boolean getConfigValue(String key, boolean def) {
         return plugin.getConfig().getBoolean(getTrigger() + "." + key, def);
     }
 
-    public final void setConfigBoolean(String key, boolean newValue) {
-        plugin.getConfig().set(getTrigger() + "." + key, newValue);
-    }
-
-    public final String getConfigString(String key, String def) {
+    public final String getConfigValue(String key, String def) {
         return plugin.getConfig().getString(getTrigger() + "." + key, def);
     }
 
-    public final void setConfigString(String key, String newValue) {
-        plugin.getConfig().set(getTrigger() + "." + key, newValue);
+    public final void updateConfigValue(String key, int value) {
+        plugin.getConfig().set(getTrigger() + "." + key, value);
+    }
+
+    public final void updateConfigValue(String key, long value) {
+        plugin.getConfig().set(getTrigger() + "." + key, value);
+    }
+
+    public final void updateConfigValue(String key, double value) {
+        plugin.getConfig().set(getTrigger() + "." + key, value);
+    }
+
+    public final void updateConfigValue(String key, boolean value) {
+        plugin.getConfig().set(getTrigger() + "." + key, value);
+    }
+
+    public final void updateConfigValue(String key, String value) {
+        plugin.getConfig().set(getTrigger() + "." + key, value);
     }
 
     public final void saveConfiguration() {
@@ -177,11 +177,11 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     protected void reload() {
-        isDebug = getConfigBoolean("debug", isDebug);
+        isDebug = getConfigValue("debug", isDebug);
     }
 
     protected void updateConfiguration() {
-        setConfigBoolean("debug", isDebug);
+        updateConfigValue("debug", isDebug);
     }
 
     protected String[] getHelpText(CommandSender sender) {

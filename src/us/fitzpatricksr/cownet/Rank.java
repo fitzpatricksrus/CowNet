@@ -33,7 +33,7 @@ public class Rank extends CowNetThingy {
             logInfo("Could not find permissions plugin.");
             disable();
         } else {
-            String groupNamesString = getConfigString("groupNames", null);
+            String groupNamesString = getConfigValue("groupNames", null);
             if (groupNamesString == null) {
                 logInfo("Could not find groupNames in config file.  ");
                 disable();

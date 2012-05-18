@@ -30,12 +30,12 @@ public class Timber extends CowNetThingy {
 
     @Override
     public void reload() {
-        worlds = getConfigString("worlds", worlds);
+        worlds = getConfigValue("worlds", worlds);
     }
 
     @Override
     protected void updateConfiguration() {
-        setConfigString("worlds", worlds);
+        updateConfigValue("worlds", worlds);
     }
 
     @Override

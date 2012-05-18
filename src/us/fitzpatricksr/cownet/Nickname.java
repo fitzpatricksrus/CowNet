@@ -26,7 +26,7 @@ public class Nickname extends CowNetThingy implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        String nickname = getConfigString(player.getName().toLowerCase(), player.getDisplayName());
+        String nickname = getConfigValue(player.getName().toLowerCase(), player.getDisplayName());
         logInfo(player.getName() + "'s nickname is " + nickname);
         player.setDisplayName(nickname);
         player.setPlayerListName(nickname);
@@ -36,7 +36,7 @@ public class Nickname extends CowNetThingy implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        String nickname = getConfigString(player.getName().toLowerCase(), player.getDisplayName());
+        String nickname = getConfigValue(player.getName().toLowerCase(), player.getDisplayName());
         event.setQuitMessage(nickname + " left the game");
     }
 }
