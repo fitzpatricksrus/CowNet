@@ -27,7 +27,7 @@ public class CowNetMod extends JavaPlugin {
             logger.info("CowNetMod enabled.");
             new Starve(this, COWNET);
             new Bounce(this, COWNET);
-            NoSwearing noSwearingMod = new NoSwearing(this, COWNET, "noswearing");
+            NoSwearing noSwearingMod = new NoSwearing(this, COWNET);
             new TntSheep(this, COWNET);
             new Logins(this, COWNET);
             plot = new Plot(this, COWNET, noSwearingMod);

@@ -1,6 +1,9 @@
 package us.fitzpatricksr.cownet;
 
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -8,10 +11,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.noswearing.CreepThemOut;
-import us.fitzpatricksr.cownet.noswearing.Launch;
-import us.fitzpatricksr.cownet.noswearing.Lightning;
-import us.fitzpatricksr.cownet.noswearing.SetOnFire;
+import org.bukkit.util.Vector;
+import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,39 +21,36 @@ import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-import java.util.logging.Logger;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-public class NoSwearing implements Listener {
+public class NoSwearing extends CowNetThingy implements Listener {
     private Random rand = new Random();
-    private Logger logger = Logger.getLogger("Minecraft");
-    private String permissionNode;
     private String[] bannedPhrases;
     private Consequence[] consequences;
 
-    public NoSwearing(JavaPlugin plugin, String permissionRoot, String trigger) {
+    public NoSwearing(JavaPlugin plugin, String permissionRoot) {
+        String trigger = getTrigger();
         FileConfiguration config = plugin.getConfig();
-        if (config.getBoolean(trigger + ".enable")) {
-            this.permissionNode = permissionRoot + "." + trigger + ".allowed";
-            String fileName = config.getString(trigger + "badwords.txt", "badwords.txt");
+        if (isEnabled()) {
+            String fileName = getConfigValue("bannedPhrases", "badwords.txt");
             bannedPhrases = loadBadWords(plugin, fileName, trigger);
             consequences = new Consequence[]{
-                    new SetOnFire(plugin, trigger),
-                    new CreepThemOut(plugin, trigger),
-                    new Launch(plugin, trigger),
-                    new Lightning(plugin, trigger)
+                    new SetOnFire(),
+                    new CreepThemOut(),
+                    new Launch(),
+                    new Lightning()
             };
             PluginManager pm = plugin.getServer().getPluginManager();
             pm.registerEvents(this, plugin);
-            logger.info(trigger + " enable");
-        } else {
-            logger.info("CowNet - " + trigger + ".enable: false");
         }
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerChat(PlayerChatEvent event) {
         Player player = event.getPlayer();
-        if (player.hasPermission(permissionNode)) {
+        if (hasPermissions(player, "allowed")) {
             return;
         }
 
@@ -93,8 +91,97 @@ public class NoSwearing implements Listener {
             return words.toArray(new String[words.size()]);
         } catch (IOException e) {
             e.printStackTrace();
-            logger.severe(trigger + " could not load bad word list.");
+            logInfo(trigger + " could not load bad word list.");
             return new String[0];
+        }
+    }
+
+    private class SetOnFire implements Consequence {
+        private int fireTicks;
+
+        public SetOnFire() {
+            fireTicks = getConfigValue("fireTicks", 5) * 20; // 5 seconds
+        }
+
+        public void handleBadWord(Player player, String word) {
+            player.setFireTicks(fireTicks);
+            player.sendMessage("You've been very naughty!  Saying words like " + word + "!");
+        }
+    }
+
+    private class Lightning implements Consequence {
+        private int damage;
+
+        public Lightning() {
+            damage = getConfigValue("lightningDamage", 5);
+        }
+
+        public void handleBadWord(Player player, String word) {
+            player.getWorld().strikeLightningEffect(player.getLocation());
+            player.damage(damage, player);
+            player.sendMessage("I call down lightning for saying words like " + word + "!");
+        }
+    }
+
+    public class Launch implements Consequence {
+        private int launchVelocity;
+
+        public Launch() {
+            launchVelocity = getConfigValue("launchVelocity", 5);
+        }
+
+        public void handleBadWord(Player player, String word) {
+            player.setVelocity(new Vector(0, launchVelocity, 0));
+            player.sendMessage("You say " + word + " and I fling you!");
+        }
+    }
+
+    // spawn random mobs in front of them for a while
+    private static EntityType[] creatureTypes = new EntityType[]{
+            EntityType.SKELETON,
+            EntityType.CREEPER,
+            EntityType.SPIDER,
+            EntityType.ZOMBIE,
+    };
+
+    public class CreepThemOut implements NoSwearing.Consequence, Runnable {
+        private Random rand = new Random();
+        private ConcurrentMap<Player, Integer> remainingCreepers = new ConcurrentHashMap<Player, Integer>();
+        private int mobsToSpawn;
+
+        public CreepThemOut() {
+            mobsToSpawn = getConfigValue("mobsToSpawn", 5); // 5 mobs will be spawned
+            //we schedule a task that runs every second to spawn ALL mobs for all players that cycle
+            getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), this, 0L, 20L);
+        }
+
+        public void handleBadWord(Player player, String word) {
+            player.sendMessage("You're creepin me out using worlds like " + word + "!");
+            remainingCreepers.putIfAbsent(player, mobsToSpawn);
+        }
+
+        public void run() {
+            Set<Player> players = remainingCreepers.keySet();
+            for (Player p : players) {
+                Location loc = p.getLocation();
+                Vector v = loc.getDirection();
+                loc.add(v);
+                loc.add(v);
+                loc.add(v);
+                loc.add(new Vector(0, 1, 0));
+                if (loc.getBlock().isEmpty()) {
+                    int remaining = remainingCreepers.get(p);
+                    if (remaining == 1) {
+                        remainingCreepers.remove(p);
+                    } else {
+                        remainingCreepers.put(p, remaining - 1);
+                    }
+                    //then spawn a mob at loc
+                    EntityType type = creatureTypes[rand.nextInt(creatureTypes.length)];
+                    World world = p.getWorld();
+                    world.spawnCreature(loc, type);
+                }
+            }
         }
     }
 }
