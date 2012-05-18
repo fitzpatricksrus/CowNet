@@ -115,14 +115,19 @@ public class TntSheep extends CowNetThingy {
                     // Time to whip out the random number generator and get the chance that this sheep is going to blow.
                     if (sheepShouldExplode(victim)) {
                         logInfo("Sheep asploded.");
-                        victim.getWorld().createExplosion(victim.getLocation(), getExplosionRadius(), false);
+                        if (rand.nextBoolean()) {
+                            victim.getWorld().createExplosion(victim.getLocation(), getExplosionRadius(), false);
 
-                        // Damage the killer
-                        killer.damage(explosionDamage, victim);
+                            // Damage the killer
+                            killer.damage(explosionDamage, victim);
 
-                        // Make sure the sheep goes away in the explosion.
-                        victim.remove();
-                        buildWreckage(killer, victim.getLocation());
+                            // Make sure the sheep goes away in the explosion.
+                            victim.remove();
+                            buildWreckage(killer, victim.getLocation());
+                        } else {
+                            // no boom.  just fire.
+                            victim.setFireTicks(5 * 20);
+                        }
                     }
                 } else if (killer != null) {
 //	                	logger.info("killer of type "+killer.getClass().getName());
