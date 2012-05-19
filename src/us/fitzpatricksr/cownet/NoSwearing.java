@@ -31,6 +31,7 @@ public class NoSwearing extends CowNetThingy implements Listener {
     private Consequence[] consequences;
 
     public NoSwearing(JavaPlugin plugin, String permissionRoot) {
+        super(plugin, permissionRoot);
         String trigger = getTrigger();
         FileConfiguration config = plugin.getConfig();
         if (isEnabled()) {

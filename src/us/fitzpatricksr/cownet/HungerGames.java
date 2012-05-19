@@ -81,11 +81,6 @@ public class HungerGames extends CowNetThingy implements Listener {
     private int arenaSizeThisGame = 0;                      //the actual size of the arena once game has started
     private boolean hasPlayedStartSound = false;            //set to true if the start sound has been played this game
 
-
-    private HungerGames() {
-        //testing only
-    }
-
     public HungerGames(JavaPlugin plugin, String permissionRoot) {
         super(plugin, permissionRoot);
         if (isEnabled()) {
@@ -831,14 +826,6 @@ public class HungerGames extends CowNetThingy implements Listener {
             Material.COOKED_BEEF,
             Material.COOKED_CHICKEN
     };
-
-
-    public static void main(String[] args) {
-        HungerGames thingy = new HungerGames();
-        thingy.findHandlerMethod(null, "doStats", 0);
-        thingy.findHandlerMethod(null, "doTp", 1);
-        thingy.findHandlerMethod(null, "doSettings", 0);
-    }
 }
 
 

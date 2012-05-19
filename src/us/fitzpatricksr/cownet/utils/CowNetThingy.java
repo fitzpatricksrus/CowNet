@@ -34,12 +34,6 @@ public class CowNetThingy implements CommandExecutor {
     @Setting
     private boolean isDebug = false;
 
-    protected CowNetThingy() {
-        //for testing only
-        isEnabled = true;
-        isDebug = true;
-    }
-
     public CowNetThingy(JavaPlugin plugin, String permissionRoot) {
         this.plugin = plugin;
         this.permissionNode = permissionRoot + "." + getTrigger();
@@ -428,10 +422,5 @@ public class CowNetThingy implements CommandExecutor {
         result.addAll(methods);
         Collections.sort(result);
         return result;
-    }
-
-    public static void main(String[] args) {
-        CowNetThingy thingy = new CowNetThingy();
-        thingy.dispatchMethod(null, null, new String[]{"commands"});
     }
 }

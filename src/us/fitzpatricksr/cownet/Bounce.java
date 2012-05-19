@@ -18,9 +18,6 @@ public class Bounce extends CowNetThingy {
     @Setting
     private int standardVelocity = 1;
 
-    private Bounce() {
-    }
-
     public Bounce(JavaPlugin plugin, String permissionRoot) {
         super(plugin, permissionRoot);
         if (isEnabled()) {
@@ -91,14 +88,6 @@ public class Bounce extends CowNetThingy {
             }
         }
         return true;
-    }
-
-
-    public static void main(String[] args) {
-        Bounce thingy = new Bounce();
-        thingy.findHandlerMethod(null, "doStats", 0);
-        thingy.findHandlerMethod(null, "doTp", 1);
-        thingy.findHandlerMethod(null, "doSettings", 0);
     }
 }
 
