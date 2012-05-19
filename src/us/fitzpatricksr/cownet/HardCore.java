@@ -344,15 +344,14 @@ public class HardCore extends CowNetThingy implements Listener {
 
     // ---- Event handlers
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
         debugInfo("onPlayerChangedWorld");
         handleWorldChange(event.getPlayer(), event.getFrom());
     }
 
-    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
-        if (event.isCancelled()) return;
         handleWorldChange(event.getPlayer(), event.getFrom().getWorld());
     }
 
@@ -390,7 +389,6 @@ public class HardCore extends CowNetThingy implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onPlayerInteract(PlayerInteractEvent event) {
         // --- Stop Ghosts from doing things
-        if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
         if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_AIR) {
             return;
@@ -407,7 +405,6 @@ public class HardCore extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
         String playerName = event.getPlayer().getName();
         if (config.isDead(playerName)) {
@@ -422,7 +419,6 @@ public class HardCore extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
-        if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
         String playerName = event.getPlayer().getName();
         if (config.isDead(playerName)) {
@@ -437,7 +433,6 @@ public class HardCore extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPickupItem(PlayerPickupItemEvent event) {
-        if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
         String playerName = event.getPlayer().getName();
         if (config.isDead(playerName)) {
@@ -451,7 +446,6 @@ public class HardCore extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onPlayerDropItem(PlayerDropItemEvent event) {
-        if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
         String playerName = event.getPlayer().getName();
         if (config.isDead(playerName)) {
@@ -465,7 +459,6 @@ public class HardCore extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
-        if (event.isCancelled()) return;
         World world = event.getPlayer().getWorld();
         if (isHardCoreWorld(world)) {
             event.setCancelled(true);
@@ -475,7 +468,6 @@ public class HardCore extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityDamage(EntityDamageEvent event) {
-        if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getEntity().getWorld())) return;
         Entity entity = event.getEntity();
         if (entity instanceof Player) {
@@ -529,7 +521,7 @@ public class HardCore extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityTarget(EntityTargetEvent event) {
-        if (event.isCancelled() || event.getTarget() == null) return;
+        if (event.getTarget() == null) return;
         if (!isHardCoreWorld(event.getTarget().getWorld())) return;
         if (event.getTarget() instanceof Player) {
             String playerName = ((Player) event.getTarget()).getName();
@@ -541,7 +533,6 @@ public class HardCore extends CowNetThingy implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onVehicleEntityCollision(VehicleEntityCollisionEvent event) {
-        if (event.isCancelled()) return;
         if (!isHardCoreWorld(event.getEntity().getWorld())) return;
         if (event.getEntity() instanceof Player) {
             String playerName = ((Player) event.getEntity()).getName();
@@ -555,7 +546,7 @@ public class HardCore extends CowNetThingy implements Listener {
     public void onPlayerLogin(PlayerLoginEvent event) {
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         debugInfo("onPlayerJoin: " + player.getName());
@@ -569,7 +560,7 @@ public class HardCore extends CowNetThingy implements Listener {
         doInfo(player);
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
         debugInfo("onPlayerQuit");
         Player player = event.getPlayer();

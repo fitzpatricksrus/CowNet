@@ -184,6 +184,17 @@ public class CowNetThingy implements CommandExecutor {
         updateConfigValue("debug", isDebug);
     }
 
+    //------------------------------------
+    // built-in commands
+
+    @SubCommand
+    private boolean doHelp(CommandSender sender) {
+        for (String help : getHelpText(sender)) {
+            sender.sendMessage(help);
+        }
+        return true;
+    }
+
     protected String[] getHelpText(CommandSender sender) {
         return new String[]{getHelpString(sender)};
     }
@@ -192,19 +203,8 @@ public class CowNetThingy implements CommandExecutor {
         return "There isn't any help for you...";
     }
 
-    //------------------------------------
-    // built-in command
-
-    @SubCommand
-    private final boolean doHelp(CommandSender sender) {
-        for (String help : getHelpText(sender)) {
-            sender.sendMessage(help);
-        }
-        return true;
-    }
-
     @SubCommand(opOnly = true)
-    private final boolean doReload(CommandSender sender) {
+    private boolean doReload(CommandSender sender) {
         if (sender.isOp()) {
             getPlugin().reloadConfig();
             reload();
@@ -216,14 +216,14 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     @SubCommand(opOnly = true)
-    private final boolean doSaveconfig(CommandSender sender) {
+    private boolean doSaveconfig(CommandSender sender) {
         updateConfiguration();
         saveConfiguration();
         return true;
     }
 
     @SubCommand
-    private final boolean doSettings(CommandSender sender) {
+    private boolean doSettings(CommandSender sender) {
         HashMap<String, String> settings = new HashMap<String, String>();
         Class c = getClass();
         while (c != null && !c.equals(Object.class)) {
@@ -248,7 +248,7 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     @SubCommand(opOnly = true)
-    private final boolean doSet(CommandSender sender, String settingName, String settingValue) {
+    private boolean doSet(CommandSender sender, String settingName, String settingValue) {
         // set <setting> <value>
         Class c = getClass();
         while (c != null && !c.equals(Object.class)) {
@@ -257,20 +257,33 @@ public class CowNetThingy implements CommandExecutor {
                     try {
                         field.setAccessible(true);
                         if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
-                            field.set(this, Boolean.valueOf(settingValue));
-                            doSettings(sender);
-                            return true;
+                            Boolean value = Boolean.valueOf(settingValue);
+                            field.set(this, value);
+                            updateConfigValue(settingName, value);
                         } else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
-                            field.set(this, Integer.valueOf(settingValue));
-                            doSettings(sender);
-                            return true;
+                            Integer value = Integer.valueOf(settingValue);
+                            field.set(this, value);
+                            updateConfigValue(settingName, value);
+                        } else if (field.getType().equals(Long.class) || field.getType().equals(long.class)) {
+                            Long value = Long.valueOf(settingValue);
+                            field.set(this, value);
+                            updateConfigValue(settingName, value);
+                        } else if (field.getType().equals(Double.class) || field.getType().equals(double.class)) {
+                            Double value = Double.valueOf(settingValue);
+                            field.set(this, value);
+                            updateConfigValue(settingName, value);
                         } else if (field.getType().equals(String.class)) {
                             field.set(this, settingValue);
-                            doSettings(sender);
+                            updateConfigValue(settingName, settingValue);
+                        } else {
+                            sender.sendMessage("Setting not found.");
                             return true;
                         }
+                        doSettings(sender);
+                        saveConfiguration();
+                        return true;
                     } catch (IllegalAccessException e) {
-                        e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                        e.printStackTrace();
                     } finally {
                         field.setAccessible(false);
                     }
