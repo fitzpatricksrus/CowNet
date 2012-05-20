@@ -41,6 +41,9 @@ commands:
   nickname:
       description: nicknames duh?
       usage: Use "/nickname help"
+  noswearing:
+      description: Keep it clean.  This is a family show.
+      usage: Nice, clean words.
 
 permissions:
     cownet.starve:
