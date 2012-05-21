@@ -54,17 +54,6 @@ public class TntSheep extends CowNetThingy {
     }
 
     @Override
-    protected void updateConfiguration() {
-        updateConfigValue("chanceToExplode", chanceToExplode);
-        updateConfigValue("explosionRadius", explosionRadius);
-        updateConfigValue("explosionDamage", explosionDamage);
-        updateConfigValue("allowedWords", allowedWorlds);
-        updateConfigValue("sheepExplode", sheepExplode);
-        updateConfigValue("cowsExplode", cowsExplode);
-        updateConfigValue("wreckage", wreckage);
-    }
-
-    @Override
     protected String getHelpString(CommandSender sender) {
         return "usage: tntsheep";
     }

@@ -116,8 +116,9 @@ public class CowNetThingy implements CommandExecutor {
         plugin.saveConfig();
     }
 
+    // check if player has permission to use this plugin
     public final boolean hasPermissions(Player player) {
-        if (player.isOp() || player.hasPermission(permissionNode)) {
+        if (player.hasPermission(permissionNode)) {
             return true;
         } else {
             logInfo(player.getName() + " does not have " + permissionNode);
@@ -125,16 +126,14 @@ public class CowNetThingy implements CommandExecutor {
         }
     }
 
+    // check if player has the specified permission for this plugin
     public final boolean hasPermissions(CommandSender player, String perm) {
-        return hasPermissions(player, perm, false) || player.hasPermission("*");
+        return checkPermissions(player, perm) || player.hasPermission("*");
     }
 
-    public final boolean hasPermissionsOrOp(CommandSender player, String perm) {
-        return hasPermissions(player, perm, true) || player.hasPermission("*");
-    }
-
-    private boolean hasPermissions(CommandSender player, String perm, boolean allowOps) {
-        if ((allowOps && player.isOp()) || player.hasPermission(permissionNode + "." + perm)) {
+    // just a utility to help with the multiple checks above.
+    private boolean checkPermissions(CommandSender player, String perm) {
+        if (player.hasPermission(permissionNode + "." + perm)) {
             return true;
         } else {
             logInfo(player.getName() + " does not have explicit " + permissionNode + "." + perm);
@@ -174,10 +173,6 @@ public class CowNetThingy implements CommandExecutor {
         isDebug = getConfigValue("debug", isDebug);
     }
 
-    protected void updateConfiguration() {
-        updateConfigValue("debug", isDebug);
-    }
-
     //------------------------------------
     // built-in commands
 
@@ -206,13 +201,6 @@ public class CowNetThingy implements CommandExecutor {
         } else {
             sender.sendMessage("Permission denied.");
         }
-        return true;
-    }
-
-    @SubCommand(opOnly = true)
-    private boolean doSaveconfig(CommandSender sender) {
-        updateConfiguration();
-        saveConfiguration();
         return true;
     }
 

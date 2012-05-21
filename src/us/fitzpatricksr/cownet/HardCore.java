@@ -131,17 +131,6 @@ public class HardCore extends CowNetThingy implements Listener {
         }
     }
 
-    @Override
-    protected void updateConfiguration() {
-        updateConfigValue("hardCoreWorldNames", hardCoreWorldNames);
-        updateConfigValue("safeDistance", safeDistance);
-        updateConfigValue("liveTimeout", PlayerState.liveTimeout);
-        updateConfigValue("deathDuration", PlayerState.deathDuration);
-        updateConfigValue("timeOutGrowth", PlayerState.timeOutGrowth);
-        updateConfigValue("monsterBoost", monsterBoost);
-    }
-
-
     @EventHandler
     protected void handlePluginDisabled(PluginDisableEvent event) {
         if (event.getPlugin() == getPlugin()) {
@@ -254,7 +243,7 @@ public class HardCore extends CowNetThingy implements Listener {
 
     @SubCommand
     protected boolean doInfo(CommandSender player) {
-        if (!hasPermissionsOrOp(player, "info")) {
+        if (!hasPermissions(player, "info")) {
             player.sendMessage("Sorry, you don't have permission.");
             return true;
         }
@@ -287,7 +276,7 @@ public class HardCore extends CowNetThingy implements Listener {
 
     @SubCommand
     protected boolean doRegen(CommandSender player) {
-        if (!hasPermissionsOrOp(player, "regen")) {
+        if (!hasPermissions(player, "regen")) {
             player.sendMessage("Sorry, you're not HARD CORE enough.  Come back when you're more HARD CORE.");
             return true;
         }
@@ -299,7 +288,7 @@ public class HardCore extends CowNetThingy implements Listener {
 
     @SubCommand
     protected boolean doRevive(CommandSender player, String arg) {
-        if (!hasPermissionsOrOp(player, "revive")) {
+        if (!hasPermissions(player, "revive")) {
             player.sendMessage("Sorry, you're not HARD CORE enough to revive other players.");
         } else if (!config.isDead(arg)) {
             player.sendMessage(arg + " is still going at it HARD CORE and isn't dead.");
@@ -313,7 +302,7 @@ public class HardCore extends CowNetThingy implements Listener {
 
     @SubCommand
     protected boolean doTwiddle(CommandSender player, String playerName, String param) {
-        if (hasPermissionsOrOp(player, "twiddle")) {
+        if (hasPermissions(player, "twiddle")) {
             PlayerState ps = config.getPlayerState(playerName);
             if (ps == null) {
                 player.sendMessage(playerName + " is not in the game.");

@@ -37,7 +37,7 @@ public class CowNetMod extends JavaPlugin {
             new HungerGames(this, COWNET);
             new Nickname(this, COWNET);
 //            new FlingPortal(this, COWNET, "flingportal");
-//            new Hide(this, COWNET);
+            new Hide(this, COWNET);
         } else {
             logger.info("CowNetMod disabled");
             getPluginLoader().disablePlugin(this);

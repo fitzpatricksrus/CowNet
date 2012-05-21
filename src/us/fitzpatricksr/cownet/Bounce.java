@@ -33,12 +33,6 @@ public class Bounce extends CowNetThingy {
     }
 
     @Override
-    protected void updateConfiguration() {
-        updateConfigValue("radius", standardRadius);
-        updateConfigValue("velocity", standardVelocity);
-    }
-
-    @Override
     protected String getHelpString(CommandSender sender) {
         return "usage: bounce [radius] [velocity]";
     }

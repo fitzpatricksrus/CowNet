@@ -43,7 +43,11 @@ public class Hide extends CowNetThingy implements Listener {
 
     @Override
     protected String getHelpString(CommandSender sender) {
-        return "usage: hide [ on | off | check | join | quit ]";
+        if (sender.isOp()) {
+            return "usage: hide [ on | off | check | join | quit ]";
+        } else {
+            return "";
+        }
     }
 
     public boolean doHide(Player player) {
@@ -109,14 +113,6 @@ public class Hide extends CowNetThingy implements Listener {
         if ((event.getTarget() instanceof Player) && isHidden((Player) event.getTarget())) {
             event.setCancelled(true);
             debugInfo("Canceled target.");
-        } else {
-            if (isDebug()) {
-                if (!(event.getTarget() instanceof Player)) {
-                    debugInfo("Didn't cancel TARGET - not a player: " + event.getTarget().getClass().getName());
-                } else {
-                    debugInfo("Didn't cancel TARGET to player " + ((Player) event.getTarget()).getName());
-                }
-            }
         }
     }
 
@@ -164,6 +160,7 @@ public class Hide extends CowNetThingy implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (hasPermissions(player, "joinHidden")) {
+            debugInfo(player.getName() + " joined hidden");
             hidePlayer(player, false);
             player.sendMessage("Joining hidden...");
             event.setJoinMessage(null);

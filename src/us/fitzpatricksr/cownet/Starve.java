@@ -32,12 +32,6 @@ public class Starve extends CowNetThingy {
     }
 
     @Override
-    protected void updateConfiguration() {
-        updateConfigValue("radius", standardRadius);
-        updateConfigValue("damage", standardDamage);
-    }
-
-    @Override
     protected String getHelpString(CommandSender player) {
         return "Usage: /starve [radius] [damage]";
     }

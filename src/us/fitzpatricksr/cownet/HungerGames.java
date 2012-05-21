@@ -139,21 +139,6 @@ public class HungerGames extends CowNetThingy implements Listener {
     }
 
     @Override
-    protected void updateConfiguration() {
-        updateConfigValue("worldName", gameWorldName);
-        updateConfigValue("arenaSize", arenaSize);
-        updateConfigValue("allowFly", allowFly);
-        updateConfigValue("allowXRay", allowXRay);
-        updateConfigValue("timeToGather", GameInstance.timeToGather);
-        updateConfigValue("timeToAcclimate", GameInstance.timeToAcclimate);
-        updateConfigValue("timeBetweenGifts", PlayerInfo.timeBetweenGifts);
-        updateConfigValue("minTributes", GameInstance.minTributes);
-        updateConfigValue("landingPadSize", landingPadSize);
-        updateConfigValue("giftsPerPlayer", giftsPerPlayer);
-        updateConfigValue("trapsPerPlayer", trapsPerPlayer);
-    }
-
-    @Override
     protected String[] getHelpText(CommandSender player) {
         return new String[]{
                 "usage: /hungergames or /hg   join | info | quit | tp <player> | start",
@@ -542,7 +527,6 @@ public class HungerGames extends CowNetThingy implements Listener {
         debugInfo("PlayerJoinEvent");
         doInfo(event.getPlayer());
         doStats(event.getPlayer());
-//        if (!gameInstance.isGameOn()) return;
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -655,7 +639,6 @@ public class HungerGames extends CowNetThingy implements Listener {
                 giftLoc = BlockUtils.getHighestLandLocation(giftLoc);
             } while (giftLoc.getBlock().getType().equals(Material.CHEST));
             giftLoc.add(0, 1, 0);
-//            w.dropItemNaturally(giftLoc, new ItemStack(gift, 1));
 
             Block c = giftLoc.getBlock();
             c.setType(Material.CHEST);
