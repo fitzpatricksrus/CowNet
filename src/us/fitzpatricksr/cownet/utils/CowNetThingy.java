@@ -128,12 +128,13 @@ public class CowNetThingy implements CommandExecutor {
 
     // check if player has the specified permission for this plugin
     public final boolean hasPermissions(CommandSender player, String perm) {
-        return checkPermissions(player, perm) || player.hasPermission("*");
+        return checkPermissions(player, perm);
     }
 
     // just a utility to help with the multiple checks above.
     private boolean checkPermissions(CommandSender player, String perm) {
         if (player.hasPermission(permissionNode + "." + perm)) {
+            debugInfo(player.getName() + " has " + permissionNode + "." + perm);
             return true;
         } else {
             logInfo(player.getName() + " does not have explicit " + permissionNode + "." + perm);
