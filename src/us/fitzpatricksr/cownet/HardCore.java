@@ -161,12 +161,12 @@ public class HardCore extends CowNetThingy implements Listener {
     //  Command handlers
     //
 
-    @SubCommand
+    @CowCommand
     protected boolean doHardcore(Player player) {
         return doHardcore(player, null);
     }
 
-    @SubCommand
+    @CowCommand
     protected boolean doHardcore(Player player, String worldName) {
         if (worldName != null && !isHardCoreWorld(worldName)) {
             player.sendMessage(worldName + " is not HARD CORE.");
@@ -231,22 +231,18 @@ public class HardCore extends CowNetThingy implements Listener {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     protected boolean doList(CommandSender player) {
         return doInfo(player);
     }
 
-    @SubCommand
+    @CowCommand
     protected boolean doStats(CommandSender player) {
         return doInfo(player);
     }
 
-    @SubCommand
+    @CowCommand(permission = "info")
     protected boolean doInfo(CommandSender player) {
-        if (!hasPermissions(player, "info")) {
-            player.sendMessage("Sorry, you don't have permission.");
-            return true;
-        }
         String playerName = player.getName();
         String duration = StringUtils.durationString(config.getSecondsTillTimeout(playerName));
         if (config.isDead(playerName)) {
@@ -274,23 +270,17 @@ public class HardCore extends CowNetThingy implements Listener {
         return true;
     }
 
-    @SubCommand
+    @CowCommand(permission = "regen")
     protected boolean doRegen(CommandSender player) {
-        if (!hasPermissions(player, "regen")) {
-            player.sendMessage("Sorry, you're not HARD CORE enough.  Come back when you're more HARD CORE.");
-            return true;
-        }
         config.generateNewWorlds();
         player.sendMessage("The HARD CORE worlds have been regenerated HARDer and more CORE than ever.");
         logFile.log(hardCoreWorldNames + " regenerated");
         return true;
     }
 
-    @SubCommand
+    @CowCommand(permission = "revive")
     protected boolean doRevive(CommandSender player, String arg) {
-        if (!hasPermissions(player, "revive")) {
-            player.sendMessage("Sorry, you're not HARD CORE enough to revive other players.");
-        } else if (!config.isDead(arg)) {
+        if (!config.isDead(arg)) {
             player.sendMessage(arg + " is still going at it HARD CORE and isn't dead.");
         } else {
             config.markPlayerUndead(arg);
@@ -300,33 +290,29 @@ public class HardCore extends CowNetThingy implements Listener {
         return true;
     }
 
-    @SubCommand
+    @CowCommand(permission = "twiddle")
     protected boolean doTwiddle(CommandSender player, String playerName, String param) {
-        if (hasPermissions(player, "twiddle")) {
-            PlayerState ps = config.getPlayerState(playerName);
-            if (ps == null) {
-                player.sendMessage(playerName + " is not in the game.");
-            } else {
-                String option = param.substring(0, 2).toLowerCase();
-                long arg = Long.parseLong(param.substring(2).toLowerCase());
-                if ("d:".equals(option)) {
-                    ps.deathCount = (int) arg;
-                } else if ("t:".equals(option)) {
-                    ps.timeInGame = arg;
-                } else if ("p:".equals(option)) {
-                    ps.blocksPlaced = arg;
-                } else if ("b:".equals(option)) {
-                    ps.blocksBroken = arg;
-                } else if ("k:".equals(option)) {
-                    ps.mobsKilled = arg;
-                } else if ("l:".equals(option)) {
-                    ps.lastActivity = arg;
-                } else {
-                    player.sendMessage("Could not set property " + option + " on player " + playerName);
-                }
-            }
+        PlayerState ps = config.getPlayerState(playerName);
+        if (ps == null) {
+            player.sendMessage(playerName + " is not in the game.");
         } else {
-            player.sendMessage("You don't have permissions to set player properties");
+            String option = param.substring(0, 2).toLowerCase();
+            long arg = Long.parseLong(param.substring(2).toLowerCase());
+            if ("d:".equals(option)) {
+                ps.deathCount = (int) arg;
+            } else if ("t:".equals(option)) {
+                ps.timeInGame = arg;
+            } else if ("p:".equals(option)) {
+                ps.blocksPlaced = arg;
+            } else if ("b:".equals(option)) {
+                ps.blocksBroken = arg;
+            } else if ("k:".equals(option)) {
+                ps.mobsKilled = arg;
+            } else if ("l:".equals(option)) {
+                ps.lastActivity = arg;
+            } else {
+                player.sendMessage("Could not set property " + option + " on player " + playerName);
+            }
         }
         return true;
     }

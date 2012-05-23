@@ -156,7 +156,7 @@ public class HungerGames extends CowNetThingy implements Listener {
     //  command handlers
     //
 
-    @SubCommand
+    @CowCommand
     private boolean doStats(CommandSender sender) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
@@ -168,11 +168,12 @@ public class HungerGames extends CowNetThingy implements Listener {
         return true;
     }
 
+    @CowCommand
     private boolean doHungergames(Player player) {
         return doJoin(player);
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doJoin(Player player) {
         if (!gameInstance.isGameOn()) {
             gameInstance.addPlayerToGame(player);
@@ -186,7 +187,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doStart(Player player) {
         if (!gameInstance.isGameOn()) {
             gameInstance.startNow();
@@ -194,7 +195,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doInfo(CommandSender sender) {
         sender.sendMessage(gameInstance.getGameStatusMessage());
         for (Player player : getPlugin().getServer().getOnlinePlayers()) {
@@ -204,7 +205,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doQuit(Player player) {
         if (playerIsInGame(player)) {
             gameInstance.removePlayerFromGame(player);
@@ -215,12 +216,12 @@ public class HungerGames extends CowNetThingy implements Listener {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doTp(Player sender, String destName) {
         return doTeleport(sender, destName);
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doTeleport(Player sender, String destName) {
         PlayerInfo source = gameInstance.getPlayerInfo(sender);
         if (source.isInGame()) {
@@ -240,7 +241,7 @@ public class HungerGames extends CowNetThingy implements Listener {
         return false;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doSchematics(CommandSender sender) {
         File[] schematics = SchematicUtils.getSchematics(getSchematicsFolder());
         String[] fileNames = new String[schematics.length];

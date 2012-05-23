@@ -55,31 +55,31 @@ public class Hide extends CowNetThingy implements Listener {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     public boolean doOn(Player player) {
         hidePlayer(player, true);
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     public boolean doOff(Player player) {
         unhidePlayer(player, true);
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     public boolean doCheck(Player player) {
         player.sendMessage((isHidden(player) ? "You are hidden" : "You are visible"));
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     public boolean doJoin(Player player) {
         fakeJoin(player);
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     public boolean doQuit(Player player) {
         fakeQuit(player);
         return true;

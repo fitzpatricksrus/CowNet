@@ -37,16 +37,19 @@ public class Starve extends CowNetThingy {
     }
 
     //    protected boolean handleCommand(Player player, Command cmd, String[] args) {
+    @CowCommand
     protected boolean doStarve(Player player) {
         return doStarve(player, "" + standardRadius, "" + standardDamage);
     }
 
+    @CowCommand
     protected boolean doStarve(Player player, String radius) {
         return doStarve(player, radius, "" + standardDamage);
     }
 
+    @CowCommand
     protected boolean doStarve(Player player, String radiusStr, String damageStr) {
-        int range = standardRadius;
+        int range;
         try {
             range = Integer.parseInt(radiusStr);
         } catch (Exception e) {
@@ -57,7 +60,7 @@ public class Starve extends CowNetThingy {
             player.sendMessage("usage: standardRadius must be a number between 1 and " + MAX_RADIUS);
             return false;
         }
-        int damage = standardDamage;
+        int damage;
         try {
             damage = Integer.parseInt(damageStr);
         } catch (Exception e) {

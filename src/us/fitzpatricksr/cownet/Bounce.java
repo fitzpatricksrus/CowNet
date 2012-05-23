@@ -37,14 +37,17 @@ public class Bounce extends CowNetThingy {
         return "usage: bounce [radius] [velocity]";
     }
 
+    @CowCommand
     protected boolean doBounce(Player player) {
         return doBounce(player, "" + standardRadius, "" + standardVelocity);
     }
 
+    @CowCommand
     protected boolean doBounce(Player player, String radius) {
         return doBounce(player, radius, "" + standardVelocity);
     }
 
+    @CowCommand
     protected boolean doBounce(Player player, String radiusStr, String velocityStr) {
         int radius;
         try {

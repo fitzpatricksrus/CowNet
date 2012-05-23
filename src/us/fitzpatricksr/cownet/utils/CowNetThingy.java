@@ -22,8 +22,10 @@ public class CowNetThingy implements CommandExecutor {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface SubCommand {
+    public @interface CowCommand {
         boolean opOnly() default false;
+
+        String permission() default "";
     }
 
     private Logger logger = Logger.getLogger("Minecraft");
@@ -177,7 +179,7 @@ public class CowNetThingy implements CommandExecutor {
     //------------------------------------
     // built-in commands
 
-    @SubCommand
+    @CowCommand
     private boolean doHelp(CommandSender sender) {
         for (String help : getHelpText(sender)) {
             sender.sendMessage(help);
@@ -193,7 +195,7 @@ public class CowNetThingy implements CommandExecutor {
         return "There isn't any help for you...";
     }
 
-    @SubCommand(opOnly = true)
+    @CowCommand(opOnly = true)
     private boolean doReload(CommandSender sender) {
         if (sender.isOp()) {
             getPlugin().reloadConfig();
@@ -205,7 +207,7 @@ public class CowNetThingy implements CommandExecutor {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doSettings(CommandSender sender) {
         HashMap<String, String> settings = new HashMap<String, String>();
         Class c = getClass();
@@ -230,7 +232,7 @@ public class CowNetThingy implements CommandExecutor {
         return true;
     }
 
-    @SubCommand(opOnly = true)
+    @CowCommand(opOnly = true)
     private boolean doSet(CommandSender sender, String settingName, String settingValue) {
         // set <setting> <value>
         Class c = getClass();
@@ -278,7 +280,7 @@ public class CowNetThingy implements CommandExecutor {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doCommands(CommandSender sender) {
         for (String i : getHandlerMethods()) {
             sender.sendMessage(i);
@@ -311,31 +313,32 @@ public class CowNetThingy implements CommandExecutor {
             // check to see if it's a subcommand
             Method method = findHandlerMethod(sender, generateMethodName(args[0]), args.length - 1);
             if (method != null) {
-                if (method.getAnnotation(SubCommand.class) != null) {
+                if (method.getAnnotation(CowCommand.class) != null) {
                     //looks like we have a subcommand method.  If it's marked a subcommand execute it.
-                    SubCommand annotation = method.getAnnotation(SubCommand.class);
-                    if (annotation.opOnly() && !sender.isOp()) {
+                    CowCommand annotation = method.getAnnotation(CowCommand.class);
+                    if (!hasMethodPermissions(sender, annotation.opOnly(), annotation.permission())) {
                         sender.sendMessage("You don't have permissions.");
-                    } else {
-                        try {
-                            method.setAccessible(true);
-                            LinkedList<Object> paramList = new LinkedList<Object>();
-                            paramList.addFirst(sender);
-                            for (int i = 1; i < args.length; i++) {
-                                paramList.addLast(args[i]);
-                            }
-                            Object[] params = paramList.toArray();
-                            Object result = method.invoke(this, params);
-                            return (Boolean) result;
-                        } catch (InvocationTargetException e) {
-                            e.printStackTrace();
-                            return false;
-                        } catch (IllegalAccessException e) {
-                            e.printStackTrace();
-                            return false;
-                        } finally {
-                            method.setAccessible(false);
+                        return true;
+                    }
+
+                    try {
+                        method.setAccessible(true);
+                        LinkedList<Object> paramList = new LinkedList<Object>();
+                        paramList.addFirst(sender);
+                        for (int i = 1; i < args.length; i++) {
+                            paramList.addLast(args[i]);
                         }
+                        Object[] params = paramList.toArray();
+                        Object result = method.invoke(this, params);
+                        return (Boolean) result;
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                        return false;
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                        return false;
+                    } finally {
+                        method.setAccessible(false);
                     }
                 }
             }
@@ -343,15 +346,26 @@ public class CowNetThingy implements CommandExecutor {
         Method method = findHandlerMethod(sender, generateMethodName(getTrigger()), args.length);
         if (method != null) {
             try {
-                method.setAccessible(true);
-                LinkedList<Object> paramList = new LinkedList<Object>();
-                paramList.addFirst(sender);
-                for (String arg : args) {
-                    paramList.addLast(arg);
+                if (method.getAnnotation(CowCommand.class) != null) {
+                    //looks like we have a CowCommand method.  If it's marked a CowCommand execute it.
+                    CowCommand annotation = method.getAnnotation(CowCommand.class);
+                    if (!hasMethodPermissions(sender, annotation.opOnly(), annotation.permission())) {
+                        sender.sendMessage("You don't have permissions.");
+                        return true;
+                    }
+
+                    //hey jf - do we REALLY want to REQUIRE a CowCommand annotation?
+
+                    method.setAccessible(true);
+                    LinkedList<Object> paramList = new LinkedList<Object>();
+                    paramList.addFirst(sender);
+                    for (String arg : args) {
+                        paramList.addLast(arg);
+                    }
+                    Object[] params = paramList.toArray();
+                    Object result = method.invoke(this, params);
+                    return (Boolean) result;
                 }
-                Object[] params = paramList.toArray();
-                Object result = method.invoke(this, params);
-                return (Boolean) result;
             } catch (InvocationTargetException e) {
                 e.printStackTrace();
                 return false;
@@ -364,6 +378,22 @@ public class CowNetThingy implements CommandExecutor {
         }
 
         return false;
+    }
+
+    private boolean hasMethodPermissions(CommandSender sender, boolean opOnly, String permNeeded) {
+        if (opOnly && !sender.isOp()) {
+            return false;
+        } else {
+            //if it's a player and the method has an annotated permission, check it.
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                if (!permNeeded.isEmpty() && !hasPermissions(player, permNeeded)) {
+                    sender.sendMessage("You don't have permissions.");
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     protected Method findHandlerMethod(CommandSender sender, String methodName, int stringParamCount) {
@@ -399,7 +429,7 @@ public class CowNetThingy implements CommandExecutor {
         Class clazz = getClass();
         while (clazz != Object.class) {
             for (Method method : clazz.getDeclaredMethods()) {
-                if ((method.getAnnotation(SubCommand.class) != null) || (method.getName().equals(generateMethodName(getTrigger())))) {
+                if ((method.getAnnotation(CowCommand.class) != null) || (method.getName().equals(generateMethodName(getTrigger())))) {
                     String name = method.getName().substring(2).toLowerCase();
                     methods.add(name);
                 }

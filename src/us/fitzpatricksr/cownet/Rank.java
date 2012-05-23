@@ -50,10 +50,12 @@ public class Rank extends CowNetThingy {
         return "usage: rank <userName> [UP | DOWN]";
     }
 
+    @CowCommand(opOnly = true)
     protected boolean doRank(CommandSender sender, String playerName) {
         return doRank(sender, playerName, NONE_CMD);
     }
 
+    @CowCommand(opOnly = true)
     protected boolean doRank(CommandSender sender, String playerName, String subCmd) {
         try {
             if (UP_CMD.equalsIgnoreCase(subCmd)) {

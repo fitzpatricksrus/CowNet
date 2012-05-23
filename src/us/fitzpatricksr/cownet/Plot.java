@@ -105,7 +105,7 @@ public class Plot extends CowNetThingy {
                 "info | list [player] | giveto <player> | tp <plotName> ]";
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doShare(Player player, String playerName) {
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
@@ -130,7 +130,7 @@ public class Plot extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doUnshare(Player player, String playerName) {
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
@@ -155,7 +155,7 @@ public class Plot extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doRelease(Player player) {
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
@@ -181,7 +181,7 @@ public class Plot extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doInfo(Player player) {
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
 
@@ -208,12 +208,12 @@ public class Plot extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doList(Player player) {
         return doList(player, player.getName());
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doList(Player player, String playerName) {
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
         player.sendMessage("Plot claimed by " + playerName);
@@ -228,12 +228,12 @@ public class Plot extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doTp(Player player, String plotName) {
         return doTeleport(player, plotName);
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doTeleport(Player player, String plotName) {
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
         ProtectedRegion region = regionManager.getRegion(plotName);
@@ -255,7 +255,7 @@ public class Plot extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doGiveto(Player player, String playerName) {
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
@@ -286,7 +286,7 @@ public class Plot extends CowNetThingy {
         return true;
     }
 
-    @SubCommand
+    @CowCommand
     private boolean doClaim(Player player, String claimName) {
         BukkitPlayer wgPlayer = new BukkitPlayer(worldGuard, player);
         RegionManager regionManager = worldGuard.getRegionManager(player.getWorld());
