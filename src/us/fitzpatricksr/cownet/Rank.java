@@ -12,97 +12,97 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Rank extends CowNetThingy {
-    private static final String UP_CMD = "up";
-    private static final String DOWN_CMD = "down";
-    private static final String NONE_CMD = "none";
-    private PermissionsPlugin permsPlugin;
-    private PermissionsUtils permsUtils;
-    private LinkedList<String> permsGroups = new LinkedList<String>();
+	private static final String UP_CMD = "up";
+	private static final String DOWN_CMD = "down";
+	private static final String NONE_CMD = "none";
+	private PermissionsPlugin permsPlugin;
+	private PermissionsUtils permsUtils;
+	private LinkedList<String> permsGroups = new LinkedList<String>();
 
-    public Rank(JavaPlugin plugin, String permissionRoot) {
-        super(plugin, permissionRoot);
-        if (isEnabled()) {
-            reload();
-        }
-    }
+	public Rank(JavaPlugin plugin, String permissionRoot) {
+		super(plugin, permissionRoot);
+		if (isEnabled()) {
+			reloadSettings();
+		}
+	}
 
-    protected void reload() {
-        permsPlugin = (PermissionsPlugin) getPlugin().getServer().getPluginManager().getPlugin("PermissionsBukkit");
-        permsUtils = new PermissionsUtils(permsPlugin);
-        if (permsPlugin == null) {
-            logInfo("Could not find permissions plugin.");
-            disable();
-        } else {
-            String groupNamesString = getConfigValue("groupNames", null);
-            if (groupNamesString == null) {
-                logInfo("Could not find groupNames in config file.  ");
-                disable();
-            } else {
-                String[] groupNames = groupNamesString.split(",");
-                permsGroups.addAll(Arrays.asList(groupNames));
-                logInfo("found " + permsGroups.size() + " groups: " + groupNamesString);
-            }
-        }
-    }
+	protected void reloadManualSettings() {
+		permsPlugin = (PermissionsPlugin) getPlugin().getServer().getPluginManager().getPlugin("PermissionsBukkit");
+		permsUtils = new PermissionsUtils(permsPlugin);
+		if (permsPlugin == null) {
+			logInfo("Could not find permissions plugin.");
+			disable();
+		} else {
+			String groupNamesString = getConfigValue("groupNames", null);
+			if (groupNamesString == null) {
+				logInfo("Could not find groupNames in config file.  ");
+				disable();
+			} else {
+				String[] groupNames = groupNamesString.split(",");
+				permsGroups.addAll(Arrays.asList(groupNames));
+				logInfo("found " + permsGroups.size() + " groups: " + groupNamesString);
+			}
+		}
+	}
 
-    @Override
-    protected String getHelpString(CommandSender sender) {
-        return "usage: rank <userName> [UP | DOWN]";
-    }
+	@Override
+	protected String getHelpString(CommandSender sender) {
+		return "usage: rank <userName> [UP | DOWN]";
+	}
 
-    @CowCommand(opOnly = true)
-    protected boolean doRank(CommandSender sender, String playerName) {
-        return doRank(sender, playerName, NONE_CMD);
-    }
+	@CowCommand(opOnly = true)
+	protected boolean doRank(CommandSender sender, String playerName) {
+		return doRank(sender, playerName, NONE_CMD);
+	}
 
-    @CowCommand(opOnly = true)
-    protected boolean doRank(CommandSender sender, String playerName, String subCmd) {
-        try {
-            if (UP_CMD.equalsIgnoreCase(subCmd)) {
-                int ndx = getPlayerGroup(playerName);
-                if (ndx == -1) {
-                    sender.sendMessage("Could not find " + playerName);
-                } else if (ndx < permsGroups.size() - 1) {
-                    permsUtils.playerAddGroup(playerName, permsGroups.get(ndx + 1));
-                    permsUtils.playerRemoveGroup(playerName, permsGroups.get(ndx));
-                    sender.sendMessage("Change player " + playerName + " from " + permsGroups.get(ndx) + " to " + permsGroups.get(ndx + 1));
-                }
-            } else if (DOWN_CMD.equalsIgnoreCase(subCmd)) {
-                int ndx = getPlayerGroup(playerName);
-                if (ndx == -1) {
-                    sender.sendMessage("Could not find " + playerName);
-                } else if (ndx > 0) {
-                    permsUtils.playerAddGroup(playerName, permsGroups.get(ndx - 1));
-                    permsUtils.playerRemoveGroup(playerName, permsGroups.get(ndx));
-                    sender.sendMessage("Change player " + playerName + " from " + permsGroups.get(ndx) + " to " + permsGroups.get(ndx - 1));
-                }
-            } else if (NONE_CMD.equalsIgnoreCase(subCmd)) {
-                int ndx = getPlayerGroup(playerName);
-                if (ndx == -1) {
-                    sender.sendMessage("Could not find " + playerName);
-                } else if (ndx > 0) {
-                    sender.sendMessage(playerName + " is in group " + permsGroups.get(ndx));
-                }
-            } else {
-                return false;
-            }
-        } catch (IndexOutOfBoundsException e) {
-            return false;
-        }
-        return true;
-    }
+	@CowCommand(opOnly = true)
+	protected boolean doRank(CommandSender sender, String playerName, String subCmd) {
+		try {
+			if (UP_CMD.equalsIgnoreCase(subCmd)) {
+				int ndx = getPlayerGroup(playerName);
+				if (ndx == -1) {
+					sender.sendMessage("Could not find " + playerName);
+				} else if (ndx < permsGroups.size() - 1) {
+					permsUtils.playerAddGroup(playerName, permsGroups.get(ndx + 1));
+					permsUtils.playerRemoveGroup(playerName, permsGroups.get(ndx));
+					sender.sendMessage("Change player " + playerName + " from " + permsGroups.get(ndx) + " to " + permsGroups.get(ndx + 1));
+				}
+			} else if (DOWN_CMD.equalsIgnoreCase(subCmd)) {
+				int ndx = getPlayerGroup(playerName);
+				if (ndx == -1) {
+					sender.sendMessage("Could not find " + playerName);
+				} else if (ndx > 0) {
+					permsUtils.playerAddGroup(playerName, permsGroups.get(ndx - 1));
+					permsUtils.playerRemoveGroup(playerName, permsGroups.get(ndx));
+					sender.sendMessage("Change player " + playerName + " from " + permsGroups.get(ndx) + " to " + permsGroups.get(ndx - 1));
+				}
+			} else if (NONE_CMD.equalsIgnoreCase(subCmd)) {
+				int ndx = getPlayerGroup(playerName);
+				if (ndx == -1) {
+					sender.sendMessage("Could not find " + playerName);
+				} else if (ndx > 0) {
+					sender.sendMessage(playerName + " is in group " + permsGroups.get(ndx));
+				}
+			} else {
+				return false;
+			}
+		} catch (IndexOutOfBoundsException e) {
+			return false;
+		}
+		return true;
+	}
 
-    private int getPlayerGroup(String player) {
-        List<Group> playerGroups = permsPlugin.getGroups(player);
-        for (Group g : playerGroups) {
-            int i = 0;
-            for (String permGroup : permsGroups) {
-                if (permGroup.equalsIgnoreCase(g.getName())) {
-                    return i;
-                }
-                i++;
-            }
-        }
-        return -1;
-    }
+	private int getPlayerGroup(String player) {
+		List<Group> playerGroups = permsPlugin.getGroups(player);
+		for (Group g : playerGroups) {
+			int i = 0;
+			for (String permGroup : permsGroups) {
+				if (permGroup.equalsIgnoreCase(g.getName())) {
+					return i;
+				}
+				i++;
+			}
+		}
+		return -1;
+	}
 }

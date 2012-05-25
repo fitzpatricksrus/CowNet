@@ -12,31 +12,32 @@ import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 public class Nickname extends CowNetThingy implements Listener {
-    public Nickname(JavaPlugin plugin, String permissionRoot) {
-        super(plugin, permissionRoot);
-        PluginManager pm = plugin.getServer().getPluginManager();
-        pm.registerEvents(this, plugin);
-    }
+	public Nickname(JavaPlugin plugin, String permissionRoot) {
+		super(plugin, permissionRoot);
+		reloadSettings();
+		PluginManager pm = plugin.getServer().getPluginManager();
+		pm.registerEvents(this, plugin);
+	}
 
-    @Override
-    protected String getHelpString(CommandSender sender) {
-        return "usage: Nickname";
-    }
+	@Override
+	protected String getHelpString(CommandSender sender) {
+		return "usage: Nickname";
+	}
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        String nickname = getConfigValue(player.getName().toLowerCase(), player.getDisplayName());
-        logInfo(player.getName() + "'s nickname is " + nickname);
-        player.setDisplayName(nickname);
-        player.setPlayerListName(nickname);
-        event.setJoinMessage(nickname + " joined the game");
-    }
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	public void onPlayerJoin(PlayerJoinEvent event) {
+		Player player = event.getPlayer();
+		String nickname = getConfigValue(player.getName().toLowerCase(), player.getDisplayName());
+		logInfo(player.getName() + "'s nickname is " + nickname);
+		player.setDisplayName(nickname);
+		player.setPlayerListName(nickname);
+		event.setJoinMessage(nickname + " joined the game");
+	}
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        Player player = event.getPlayer();
-        String nickname = getConfigValue(player.getName().toLowerCase(), player.getDisplayName());
-        event.setQuitMessage(nickname + " left the game");
-    }
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	public void onPlayerQuit(PlayerQuitEvent event) {
+		Player player = event.getPlayer();
+		String nickname = getConfigValue(player.getName().toLowerCase(), player.getDisplayName());
+		event.setQuitMessage(nickname + " left the game");
+	}
 }

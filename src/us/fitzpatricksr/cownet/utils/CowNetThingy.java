@@ -13,6 +13,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,6 +23,7 @@ public class CowNetThingy implements CommandExecutor {
 
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface Setting {
+		String name() default "";
 	}
 
 	@Retention(RetentionPolicy.RUNTIME)
@@ -37,7 +39,11 @@ public class CowNetThingy implements CommandExecutor {
 	private boolean isEnabled = false;
 
 	@Setting
-	private boolean isDebug = false;
+	private boolean debug = false;
+
+	public CowNetThingy() {
+		// for testing only
+	}
 
 	public CowNetThingy(JavaPlugin plugin, String permissionRoot) {
 		this.plugin = plugin;
@@ -47,7 +53,6 @@ public class CowNetThingy implements CommandExecutor {
 			//allow this common alias
 			this.isEnabled = getConfigValue("enabled", true);
 		}
-		isDebug = getConfigValue("debug", isDebug);
 		if (isEnabled) {
 			logInfo(getTrigger() + " enabled");
 			plugin.getCommand(getTrigger()).setExecutor(this);
@@ -156,7 +161,7 @@ public class CowNetThingy implements CommandExecutor {
 	}
 
 	public final void debugInfo(String msg) {
-		if (isDebug) {
+		if (debug) {
 			logger.info("[" + permissionNode + "]: " + msg);
 		}
 	}
@@ -166,17 +171,13 @@ public class CowNetThingy implements CommandExecutor {
 	}
 
 	public final boolean isDebug() {
-		return isDebug;
+		return debug;
 	}
 
 	// disable the plugin if there was some critical startup error.
-	protected void disable() {
+	protected final void disable() {
 		isEnabled = false;
 		logInfo("Plugin disabled.");
-	}
-
-	protected void reload() {
-		isDebug = getConfigValue("debug", isDebug);
 	}
 
 	//------------------------------------
@@ -199,24 +200,57 @@ public class CowNetThingy implements CommandExecutor {
 	}
 
 	//------------------------------------
-	// methods and commands related to settings
+	// methods related to settings
+
+	// reload any settings not handled by @Setting
+	protected void reloadManualSettings() {
+	}
+
+	// return any custom settings that are not handled by @Settings code
+	protected HashMap<String, String> getManualSettings() {
+		//return name, value
+		return new HashMap<String, String>();
+	}
+
+	// update a setting that was not handled by @Setting and return true if it has been updated.
+	protected boolean updateManualSetting(String settingName, String settingValue) {
+		return false;
+	}
+
+	@CowCommand(opOnly = true)
+	private boolean doReload(CommandSender sender) {
+		getPlugin().reloadConfig();
+		reloadSettings(sender);
+		sender.sendMessage("Reloaded.");
+		return true;
+	}
 
 	@CowCommand(opOnly = true)
 	private boolean doSettings(CommandSender sender) {
-		for (String settingName : getSettings()) {
-			Field f = null;
-			try {
-				f = getClass().getField(settingName);
-				f.setAccessible(true);
-				sender.sendMessage(settingName + ": " + f.get(this));
-			} catch (IllegalAccessException e) {
-				e.printStackTrace();
-			} catch (NoSuchFieldException e) {
-				e.printStackTrace();
-			} finally {
-				if (f != null) {
+		HashMap<String, Field> autoSettings = getAutomaticSettings(this);
+		HashMap<String, String> manualSettings = getManualSettings();
+		List<String> settingNames = new LinkedList<String>(autoSettings.keySet());
+		settingNames.addAll(manualSettings.keySet());
+		Collections.sort(settingNames);
+		for (String settingName : settingNames) {
+			Object value = manualSettings.get(settingName);
+			if (value == null || value instanceof Field) {
+				// it's not a manual setting
+				Field f = (value != null) ? (Field) value : autoSettings.get(settingName);
+				try {
+					f.setAccessible(true);
+					value = f.get(this).toString();
+				} catch (IllegalAccessException e) {
+					e.printStackTrace();
+				} finally {
 					f.setAccessible(false);
 				}
+			}
+			if (sender != null) {
+				sender.sendMessage(settingName + ": " + value);
+			} else {
+				// this is a hack to show settings at startup time since there's no sender then
+				logInfo(settingName + ": " + value);
 			}
 		}
 		return true;
@@ -225,50 +259,155 @@ public class CowNetThingy implements CommandExecutor {
 	@CowCommand(opOnly = true)
 	private boolean doSet(CommandSender sender, String settingName, String settingValue) {
 		// set <setting> <value>
-		Class c = getClass();
-		while (c != null && !c.equals(Object.class)) {
-			for (Field field : c.getDeclaredFields()) {
-				if (field.isAnnotationPresent(Setting.class) && field.getName().equalsIgnoreCase(settingName)) {
-					try {
-						field.setAccessible(true);
-						if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
-							Boolean value = Boolean.valueOf(settingValue);
-							field.set(this, value);
-							updateConfigValue(settingName, value);
-						} else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
-							Integer value = Integer.valueOf(settingValue);
-							field.set(this, value);
-							updateConfigValue(settingName, value);
-						} else if (field.getType().equals(Long.class) || field.getType().equals(long.class)) {
-							Long value = Long.valueOf(settingValue);
-							field.set(this, value);
-							updateConfigValue(settingName, value);
-						} else if (field.getType().equals(Double.class) || field.getType().equals(double.class)) {
-							Double value = Double.valueOf(settingValue);
-							field.set(this, value);
-							updateConfigValue(settingName, value);
-						} else if (field.getType().equals(String.class)) {
-							field.set(this, settingValue);
-							updateConfigValue(settingName, settingValue);
-						} else {
-							sender.sendMessage("Setting not found.");
-							return true;
-						}
-						doSettings(sender);
-						saveConfiguration();
-						return true;
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-					} finally {
-						field.setAccessible(false);
-					}
-				}
-			}
-			c = c.getSuperclass();
+		if (!setAutoSettingValue(settingName, settingValue) && !updateManualSetting(settingName, settingValue)) {
+			sender.sendMessage("Setting not found.");
+		} else {
+			saveConfiguration();
+			doSettings(sender);
 		}
-		sender.sendMessage("Setting not found.");
 		return true;
 	}
+
+	// reload all manual and magic settings and dump them to the sender/console
+	protected final void reloadSettings() {
+		reloadSettings(null);
+	}
+
+	protected final void reloadSettings(CommandSender sender) {
+		reloadAutoSettings();
+		reloadManualSettings();
+		doSettings(sender);
+	}
+
+	private Object getAutoSettingValue(String settingName) {
+		return getAutoSettingValue(this, settingName);
+	}
+
+	private Object getAutoSettingValue(Object source, String settingName) {
+		Field field = getAutomaticSettings(source).get(settingName);
+		if (field != null) {
+			try {
+				field.setAccessible(true);
+				return field.get(source);
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} finally {
+				field.setAccessible(false);
+			}
+		}
+		return null;
+	}
+
+	private boolean setAutoSettingValue(String settingName, String settingValue) {
+		return setAutoSettingValue(this, settingName, settingValue);
+	}
+
+	protected final boolean setAutoSettingValue(Object source, String settingName, String settingValue) {
+		Field field = getAutomaticSettings(source).get(settingName);
+		if (field != null) {
+			try {
+				field.setAccessible(true);
+				if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
+					Boolean value = Boolean.valueOf(settingValue);
+					field.set(source, value);
+					updateConfigValue(settingName, value);
+					return true;
+				} else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
+					Integer value = Integer.valueOf(settingValue);
+					field.set(source, value);
+					updateConfigValue(settingName, value);
+					return true;
+				} else if (field.getType().equals(Long.class) || field.getType().equals(long.class)) {
+					Long value = Long.valueOf(settingValue);
+					field.set(source, value);
+					updateConfigValue(settingName, value);
+					return true;
+				} else if (field.getType().equals(Double.class) || field.getType().equals(double.class)) {
+					Double value = Double.valueOf(settingValue);
+					field.set(source, value);
+					updateConfigValue(settingName, value);
+					return true;
+				} else if (field.getType().equals(String.class)) {
+					field.set(source, settingValue);
+					updateConfigValue(settingName, settingValue);
+					return true;
+				}
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} finally {
+				field.setAccessible(false);
+			}
+		}
+		return false;
+	}
+
+	// reload settings that are handled by the settings magic
+	private void reloadAutoSettings() {
+		reloadAutoSettings(this);
+	}
+
+	protected final void reloadAutoSettings(Object source) {
+		HashMap<String, Field> settings = getAutomaticSettings(source);
+		for (String settingName : settings.keySet()) {
+			Field field = settings.get(settingName);
+			try {
+				field.setAccessible(true);
+				if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
+					field.set(source, getConfigValue(settingName, field.getBoolean(source)));
+				} else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
+					field.set(source, getConfigValue(settingName, field.getInt(source)));
+				} else if (field.getType().equals(Long.class) || field.getType().equals(long.class)) {
+					field.set(source, getConfigValue(settingName, field.getLong(source)));
+				} else if (field.getType().equals(Double.class) || field.getType().equals(double.class)) {
+					field.set(source, getConfigValue(settingName, field.getDouble(source)));
+				} else if (field.getType().equals(String.class)) {
+					field.set(source, getConfigValue(settingName, field.get(source).toString()));
+				}
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} finally {
+				field.setAccessible(false);
+			}
+		}
+	}
+
+	private HashMap<String, Field> getAutoSettings() {
+		return getAutomaticSettings(this);
+	}
+
+	private HashMap<String, Field> getAutomaticSettings(Object source) {
+		Class clazz = (source instanceof Class) ? (Class) source : source.getClass();
+		HashMap<String, Field> settings = new HashMap<String, Field>();
+		while (clazz != null && !clazz.equals(Object.class)) {
+			for (Field f : clazz.getDeclaredFields()) {
+				if (f.isAnnotationPresent(Setting.class)) {
+					Setting settingAnnotation = f.getAnnotation(Setting.class);
+					String name = (settingAnnotation.name().isEmpty()) ? f.getName() : settingAnnotation.name();
+					settings.put(name, f);
+				}
+			}
+			clazz = clazz.getSuperclass();
+		}
+		return settings;
+	}
+
+	protected final HashMap<String, String> getAutomaticSettingsAsManualSettings(Object source) {
+		//this is a very expensive type cast.  I hate java generics.
+		HashMap<String, Field> auto = getAutomaticSettings(source);
+		HashMap<String, String> result = new HashMap<String, String>(auto.size());
+		for (String key : auto.keySet()) {
+			try {
+				result.put(key, auto.get(key).get(source).toString());
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			}
+		}
+		return result;
+	}
+
+
+	//------------------------------------
+	// command dispatch methods
 
 	@CowCommand
 	private boolean doCommands(CommandSender sender) {
@@ -277,66 +416,6 @@ public class CowNetThingy implements CommandExecutor {
 		}
 		return true;
 	}
-
-	@CowCommand(opOnly = true)
-	private boolean doReload(CommandSender sender) {
-		getPlugin().reloadConfig();
-		reloadSettings();
-		reload();
-		sender.sendMessage("Reloaded.");
-		return true;
-	}
-
-	private void reloadSettings() {
-		Class clazz = getClass();
-		for (String settingName : getSettings()) {
-			Field field = null;
-			try {
-				field = clazz.getField(settingName);
-				field.setAccessible(true);
-				if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
-					field.set(this, getConfigValue(settingName, field.getBoolean(this)));
-				} else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
-					field.set(this, getConfigValue(settingName, field.getInt(this)));
-				} else if (field.getType().equals(Long.class) || field.getType().equals(long.class)) {
-					field.set(this, getConfigValue(settingName, field.getLong(this)));
-				} else if (field.getType().equals(Double.class) || field.getType().equals(double.class)) {
-					field.set(this, getConfigValue(settingName, field.getDouble(this)));
-				} else if (field.getType().equals(String.class)) {
-					field.set(this, getConfigValue(settingName, field.get(this).toString()));
-				} else {
-					//hey jf - what do we do here?
-					logInfo("Could not reload setting: " + settingName);
-				}
-			} catch (NoSuchFieldException e) {
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				e.printStackTrace();
-			} finally {
-				if (field != null) {
-					field.setAccessible(false);
-				}
-			}
-		}
-	}
-
-	private String[] getSettings() {
-		List<String> settingNames = new LinkedList<String>();
-		Class c = getClass();
-		while (c != null && !c.equals(Object.class)) {
-			for (Field f : c.getDeclaredFields()) {
-				if (f.isAnnotationPresent(Setting.class)) {
-					settingNames.add(f.getName());
-				}
-			}
-			c = c.getSuperclass();
-		}
-		Collections.sort(settingNames);
-		return settingNames.toArray(new String[settingNames.size()]);
-	}
-
-	//------------------------------------
-	// command dispatch methods
 
 	static Class[] args0 = new Class[] {CommandSender.class};
 	static Class[] args0p = new Class[] {Player.class};
