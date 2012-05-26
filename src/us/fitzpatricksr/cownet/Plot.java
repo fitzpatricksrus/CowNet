@@ -26,6 +26,7 @@ import us.fitzpatricksr.cownet.utils.BlockUtils;
 import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -86,13 +87,40 @@ public class Plot extends CowNetThingy {
 	}
 
 	@Override
+	// reload any settings not handled by @Setting
 	protected void reloadManualSettings() {
-		this.plotBase = Material.valueOf(getConfigValue("plotBase", plotBase.toString()));
-		this.plotSurface = Material.valueOf(getConfigValue("plotSurface", plotSurface.toString()));
-		this.plotPath = Material.valueOf(getConfigValue("plotPath", plotPath.toString()));
-
+		this.plotBase = Material.matchMaterial(getConfigValue("plotBase", plotBase.toString()));
+		this.plotSurface = Material.matchMaterial(getConfigValue("plotSurface", plotSurface.toString()));
+		this.plotPath = Material.matchMaterial(getConfigValue("plotPath", plotPath.toString()));
 		this.ipc = new InfinitePlotClaim(plotSize);
 	}
+
+	// return any custom settings that are not handled by @Settings code
+	protected HashMap<String, String> getManualSettings() {
+		HashMap<String, String> result = new HashMap<String, String>();
+		result.put("plotBase", plotBase.toString());
+		result.put("plotSurface", plotSurface.toString());
+		result.put("plotPath", plotPath.toString());
+		return result;
+	}
+
+	// update a setting that was not handled by @Setting and return true if it has been updated.
+	protected boolean updateManualSetting(String settingName, String settingValue) {
+		if (settingName.equalsIgnoreCase("plotBase")) {
+			plotBase = Material.valueOf(settingValue);
+			updateConfigValue("plotBase", settingValue);
+		} else if (settingName.equalsIgnoreCase("plotSurface")) {
+			plotSurface = Material.valueOf(settingValue);
+			updateConfigValue("plotSurface", settingValue);
+		} else if (settingName.equalsIgnoreCase("plotPath")) {
+			plotPath = Material.valueOf(settingValue);
+			updateConfigValue("plotPath", settingValue);
+		} else {
+			return false;
+		}
+		return true;
+	}
+
 
 	@Override
 	protected String getHelpString(CommandSender sender) {

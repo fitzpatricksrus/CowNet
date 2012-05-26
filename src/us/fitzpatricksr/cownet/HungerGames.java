@@ -125,8 +125,8 @@ public class HungerGames extends CowNetThingy implements Listener {
 
 	@Override
 	protected HashMap<String, String> getManualSettings() {
-		HashMap<String, String> result = getAutomaticSettingsAsManualSettings(GameInstance.class);
-		result.putAll(getAutomaticSettingsAsManualSettings(PlayerInfo.class));
+		HashMap<String, String> result = getSettingValueMapFor(GameInstance.class);
+		result.putAll(getSettingValueMapFor(PlayerInfo.class));
 		return result;
 	}
 

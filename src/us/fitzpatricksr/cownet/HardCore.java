@@ -133,7 +133,7 @@ public class HardCore extends CowNetThingy implements Listener {
 
 	@Override
 	protected HashMap<String, String> getManualSettings() {
-		HashMap<String, String> result = getAutomaticSettingsAsManualSettings(PlayerState.class);
+		HashMap<String, String> result = getSettingValueMapFor(PlayerState.class);
 		result.put("difficulty", difficulty.toString());
 		return result;
 	}
@@ -143,6 +143,7 @@ public class HardCore extends CowNetThingy implements Listener {
 		if (!setAutoSettingValue(PlayerState.class, settingName, settingValue)) {
 			if (settingName.equalsIgnoreCase("difficulty")) {
 				difficulty = Difficulty.valueOf(settingValue);
+				updateConfigValue("difficulty", difficulty.toString());
 			} else {
 				return false;
 			}
