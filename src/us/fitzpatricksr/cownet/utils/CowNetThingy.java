@@ -72,7 +72,7 @@ public class CowNetThingy implements CommandExecutor {
 				return true;
 			}
 		}
-		return dispatchMethod(sender, cmd, args);
+		return dispatchMethod(sender, args);
 	}
 
 	public final String getTrigger() {
@@ -419,13 +419,13 @@ public class CowNetThingy implements CommandExecutor {
 			try {
 				field.setAccessible(true);
 				if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
-					field.set(source, getConfigValue(settingName, field.getBoolean(source)));
+					field.setBoolean(source, getConfigValue(settingName, field.getBoolean(source)));
 				} else if (field.getType().equals(Integer.class) || field.getType().equals(int.class)) {
-					field.set(source, getConfigValue(settingName, field.getInt(source)));
+					field.setInt(source, getConfigValue(settingName, field.getInt(source)));
 				} else if (field.getType().equals(Long.class) || field.getType().equals(long.class)) {
-					field.set(source, getConfigValue(settingName, field.getLong(source)));
+					field.setLong(source, getConfigValue(settingName, field.getLong(source)));
 				} else if (field.getType().equals(Double.class) || field.getType().equals(double.class)) {
-					field.set(source, getConfigValue(settingName, field.getDouble(source)));
+					field.setDouble(source, getConfigValue(settingName, field.getDouble(source)));
 				} else if (field.getType().equals(String.class)) {
 					field.set(source, getConfigValue(settingName, field.get(source).toString()));
 				}
@@ -514,7 +514,7 @@ public class CowNetThingy implements CommandExecutor {
 	private static final Class[][] argsXp = {args0p, args1p, args2p, args3p, args4p};
 	private static final String COMMAND_METHOD_PREFIX = "do";
 
-	private boolean dispatchMethod(CommandSender sender, Command cmd, String[] args) {
+	private boolean dispatchMethod(CommandSender sender, String[] args) {
 		if (args.length > 0) {
 			// check to see if it's a subcommand
 			Method method = findHandlerMethod(sender, generateMethodName(args[0]), args.length - 1);
@@ -559,8 +559,6 @@ public class CowNetThingy implements CommandExecutor {
 						sender.sendMessage("You don't have permissions.");
 						return true;
 					}
-
-					//hey jf - do we REALLY want to REQUIRE a CowCommand annotation?
 
 					method.setAccessible(true);
 					LinkedList<Object> paramList = new LinkedList<Object>();
