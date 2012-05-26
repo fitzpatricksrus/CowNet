@@ -15,30 +15,30 @@ import java.util.Date;
  * This class is a simple text file repository for event information in HardCore.  Output only.
  */
 public class HardCoreLog extends CowNetConfig {
-    private static final DateFormat TIME_STAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-    private PrintWriter log;
-    private String nameRoot;
+	private static final DateFormat TIME_STAMP_FORMAT = new SimpleDateFormat("HH:mm:ss");
+	private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+	private PrintWriter log;
+	private String nameRoot;
 
-    public HardCoreLog(JavaPlugin plugin, String name) throws IOException {
-        super(plugin);
-        nameRoot = name;
-    }
+	public HardCoreLog(JavaPlugin plugin, String name) throws IOException {
+		super(plugin);
+		nameRoot = name;
+	}
 
-    protected String getFileName() {
-        return nameRoot + "-" + DATE_FORMAT.format(new Date()) + ".txt";
-    }
+	protected String getFileName() {
+		return nameRoot + "-" + DATE_FORMAT.format(new Date()) + ".txt";
+	}
 
-    public void log(String message) {
-        try {
-            log = new PrintWriter(new BufferedWriter(new FileWriter(getConfigFile(), true)));
-            String timeStamp = TIME_STAMP_FORMAT.format(new Date());
-            log.println("[" + timeStamp + "] " + message);
-            log.flush();
-            log.close();
-        } catch (Exception e) {
-            //if we can't write log file, whatever
-            e.printStackTrace();
-        }
-    }
+	public void log(String message) {
+		try {
+			log = new PrintWriter(new BufferedWriter(new FileWriter(getConfigFile(), true)));
+			String timeStamp = TIME_STAMP_FORMAT.format(new Date());
+			log.println("[" + timeStamp + "] " + message);
+			log.flush();
+			log.close();
+		} catch (Exception e) {
+			//if we can't write log file, whatever
+			e.printStackTrace();
+		}
+	}
 }
