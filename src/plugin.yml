@@ -1,7 +1,7 @@
 name: CowNetPlugin
 main: us.fitzpatricksr.cownet.CowNetMod
 author: minecraft@fitzpatricksr.us
-version: 1.0.1
+version: $Id:$
 load: startup
 softdepend: [Multiverse-Core, WorldGuard, BOSEconomy]
 commands:

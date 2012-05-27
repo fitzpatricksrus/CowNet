@@ -67,7 +67,7 @@ import java.util.Set;
     of live players goes to 0, the world regenerates.
 
     Timeouts.  Urg.
-    If player is dead past timeout, remove them from dead queue.  If they queues are now
+    If player is dead past timeout, remove them from dead queue.  If the queues are now
     empty, regen the world.  So, if they're a ghost and they try to do something, they
     will be removed from dead because of the timeout and re-added to because of the interaction.
     If they were just dead for a long time, we just remove them.  It's passive and only happens
