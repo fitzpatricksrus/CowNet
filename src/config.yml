@@ -84,4 +84,8 @@ hide:
   enable: true
   debug: false
 
+jail:
+  enable: true
+  debug: false
+
 

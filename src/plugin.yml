@@ -3,7 +3,7 @@ main: us.fitzpatricksr.cownet.CowNetMod
 author: minecraft@fitzpatricksr.us
 version: $Id:$
 load: startup
-softdepend: [Multiverse-Core, WorldGuard, BOSEconomy]
+softdepend: [Multiverse-Core, WorldGuard, WorldEdit, BOSEconomy]
 commands:
   starve:
       description: Starve mobs and players around you
@@ -46,6 +46,9 @@ commands:
   noswearing:
       description: Keep it clean.  This is a family show.
       usage: Nice, clean words.
+  jail:
+      description: Keepin the streets safe
+      usage: Use /jail help.
 
 permissions:
     cownet.starve:
@@ -114,5 +117,17 @@ permissions:
     cownet.hungergames.gamemaker:
         description: can you visit the arena even if games aren't underway
         default: false
+    cownet.jail.jail:
+        description: send someone to jail
+        default: op
+    cownet.jail.release:
+        description: set someone free
+        default: op
+    cownet.jail.snapshot:
+        description: create a new jail snapshot from jail region and save it
+        default: op
+    cownet.jail.reset:
+        description: restore jail from the last snapshot
+        default: op
 
 
