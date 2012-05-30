@@ -46,9 +46,10 @@ commands:
   noswearing:
       description: Keep it clean.  This is a family show.
       usage: Nice, clean words.
-  jail:
+  snapshot:
+      aliass: [ snap ]
       description: Keepin the streets safe
-      usage: Use /jail help.
+      usage: Use /snapshot help.
 
 permissions:
     cownet.starve:
@@ -117,16 +118,16 @@ permissions:
     cownet.hungergames.gamemaker:
         description: can you visit the arena even if games aren't underway
         default: false
-    cownet.jail.jail:
+    cownet.snapshot.jail:
         description: send someone to jail
         default: op
-    cownet.jail.release:
+    cownet.snapshot.release:
         description: set someone free
         default: op
-    cownet.jail.snapshot:
+    cownet.snapshot.snapshot:
         description: create a new jail snapshot from jail region and save it
         default: op
-    cownet.jail.reset:
+    cownet.snapshot.reset:
         description: restore jail from the last snapshot
         default: op
 

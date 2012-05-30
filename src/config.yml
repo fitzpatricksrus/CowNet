@@ -84,7 +84,7 @@ hide:
   enable: true
   debug: false
 
-jail:
+snapshot:
   enable: true
   debug: false
 

@@ -5,9 +5,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.annotation.Retention;
@@ -66,10 +63,10 @@ public class CowNetThingy implements CommandExecutor {
 		logInfo("commands: " + StringUtils.flatten(getHandlerMethods()));
 	}
 
-	// Load all the settings and do it early so other plugin logic can use them.
-	@EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-	private void handlePluginEnabledEventToLoadSettings(PluginEnableEvent event) {
-		reloadSettings();
+	public void onEnable() {
+	}
+
+	public void onDisable() {
 	}
 
 	@Override
@@ -310,7 +307,7 @@ public class CowNetThingy implements CommandExecutor {
 	 * at startup or after the configuration has been changed by some external source.
 	 * When complete, net settings will be dumped to the console.
 	 */
-	protected final void reloadSettings() {
+	public final void reloadSettings() {
 		reloadSettings(null);
 	}
 
