@@ -45,9 +45,9 @@ commands:
       usage: Use "/nickname help"
   noswearing:
       description: Keep it clean.  This is a family show.
-      usage: Nice, clean words.
+      usage: Nice clean words.
   snapshot:
-      aliass: [ snap ]
+      aliases: [ snap ]
       description: Keepin the streets safe
       usage: Use /snapshot help.
 

@@ -1,12 +1,10 @@
 package us.fitzpatricksr.cownet;
 
 import com.sk89q.worldedit.Vector;
-import com.sk89q.worldedit.bukkit.WorldEditPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
-import cosine.boseconomy.BOSEconomy;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
@@ -22,7 +20,7 @@ import java.io.File;
 
 public class Snapshot extends CowNetThingy {
 	@Setting
-	private long resetInterval = 60;  // in seconds
+	private long resetIntervalSeconds = 60 * 60;  // 1 hour in seconds
 
 	public Snapshot(JavaPlugin plugin, String permissionRoot) {
 		super(plugin, permissionRoot);
@@ -135,19 +133,21 @@ public class Snapshot extends CowNetThingy {
 	private void performCountdown(final long timeWhenDone) {
 		long timeLeft = timeWhenDone - System.currentTimeMillis();
 		long timeUntilNext = timeUntilNextWake(timeLeft);
-		if (TimeUtils.millisToTicks(timeUntilNext) > 0) {
-			broadcast("Regenerating jail in " + StringUtils.durationString(timeLeft / 1000));
+		long ticksUntilNext = TimeUtils.millisToTicks(timeUntilNext);
+		if (ticksUntilNext > 0) {
+			broadcast("Regenerating jails in " + StringUtils.durationString(timeLeft / 1000));
+			debugInfo("Regenerating jails in " + StringUtils.durationString(timeLeft / 1000));
 			getPlugin().getServer().getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
 				public void run() {
 					performCountdown(timeWhenDone);
 				}
-			}, TimeUtils.millisToTicks(timeUntilNext));
+			}, ticksUntilNext);
 		} else {
 			// OK, it's regen time
 			for (World w : getPlugin().getServer().getWorlds()) {
 				resetWorldRegions(w);
 			}
-			performCountdown(System.currentTimeMillis() + resetInterval * 1000);
+			performCountdown(System.currentTimeMillis() + resetIntervalSeconds * 1000);
 		}
 
 		/*		for (Player player : getPlugin().getServer().getOnlinePlayers()) {
@@ -165,13 +165,13 @@ public class Snapshot extends CowNetThingy {
 		if (timeLeft <= 0) {
 			// OK, time to regenerate
 			return 0;
-		} else if (timeLeft < 10 * 1000) {
+		} else if (timeLeft <= 10 * 1000) {
 			// final 10 seconds
 			return 1 * 1000;
-		} else if (timeLeft < 60 * 1000) {
+		} else if (timeLeft <= 60 * 1000) {
 			// final minute
 			return 10 * 1000;
-		} else if (timeLeft < 5 * 60 * 1000) {
+		} else if (timeLeft <= 5 * 60 * 1000) {
 			// final 5 minutes
 			return 60 * 1000;
 		} else {
@@ -211,34 +211,10 @@ public class Snapshot extends CowNetThingy {
 	private WorldGuardPlugin getWorldGuard() {
 		Plugin worldPlugin = getPlugin().getServer().getPluginManager().getPlugin("WorldGuard");
 		if (worldPlugin == null || !(worldPlugin instanceof WorldGuardPlugin)) {
-			logInfo("WorldGuard must be loaded first");
+			debugInfo("WorldGuard must be loaded first");
 			worldPlugin = null;
-		} else {
-			logInfo("WorldGuard found.");
 		}
 		return (WorldGuardPlugin) worldPlugin;
-	}
-
-	private WorldEditPlugin getWorldEdit() {
-		Plugin wePlugin = getPlugin().getServer().getPluginManager().getPlugin("WorldEdit");
-		if (wePlugin == null || !(wePlugin instanceof WorldEditPlugin)) {
-			logInfo("WorldEdit must be loaded first");
-			wePlugin = null;
-		} else {
-			logInfo("WorldEdit found.");
-		}
-		return (WorldEditPlugin) wePlugin;
-	}
-
-	private BOSEconomy getEconomy() {
-		Plugin econ = getPlugin().getServer().getPluginManager().getPlugin("BOSEconomy");
-		if ((econ != null) && econ instanceof BOSEconomy) {
-			logInfo("Found BOSEconomy.  Economy enable.");
-		} else {
-			econ = null;
-			logInfo("Could not find BOSEconomy.  Economy disabled.");
-		}
-		return (BOSEconomy) econ;
 	}
 }
 

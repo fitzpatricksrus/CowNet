@@ -13,20 +13,13 @@ public class CowNetMod extends JavaPlugin {
 	private CowNetThingy[] commands;
 
 	@Override
-	public void onLoad() {
-		for (CowNetThingy thingy : getCommandList()) {
-			thingy.reloadSettings();
-		}
-	}
-
-	@Override
 	public void onDisable() {
+		// cancel all tasks for this plugin
+		getServer().getScheduler().cancelTasks(this);
 		for (CowNetThingy thingy : getCommandList()) {
 			thingy.onDisable();
 		}
 		logger.info("CowNetMod is now disabled!");
-		// cancel all tasks for this plugin
-		getServer().getScheduler().cancelTasks(this);
 	}
 
 	@Override
@@ -43,6 +36,7 @@ public class CowNetMod extends JavaPlugin {
 		}
 		this.saveConfig();
 		for (CowNetThingy thingy : getCommandList()) {
+			thingy.reloadSettings();
 			thingy.onEnable();
 		}
 	}
