@@ -4,7 +4,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.List;
@@ -16,10 +15,6 @@ public class Starve extends CowNetThingy {
 	private int standardRadius = 5;
 	@Setting(name = "damage")
 	private int standardDamage = 20;
-
-	public Starve(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
 
 	@Override
 	protected String getHelpString(CommandSender player) {

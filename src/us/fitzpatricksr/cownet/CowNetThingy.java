@@ -38,29 +38,25 @@ public class CowNetThingy implements CommandExecutor {
 	private Logger logger = Logger.getLogger("Minecraft");
 	private JavaPlugin plugin;
 	private String permissionNode = "";
-	private boolean isEnabled = false;
 
 	@Setting
 	private boolean debug = false;
 
 	public CowNetThingy() {
-		// for testing only
 	}
 
-	public CowNetThingy(JavaPlugin plugin, String permissionRoot) {
-		this.plugin = plugin;
-		this.permissionNode = permissionRoot + "." + getTrigger();
-		this.isEnabled = getConfigValue("enable", false);
-		if (!this.isEnabled()) {
-			//allow this common alias
-			this.isEnabled = getConfigValue("enabled", true);
-		}
-	}
-
-	protected void onEnable() {
+	protected void onEnable() throws Exception {
 	}
 
 	protected void onDisable() {
+	}
+
+	final void setPlugin(JavaPlugin plugin) {
+		this.plugin = plugin;
+	}
+
+	final void setPermissionRoot(String permissionRoot) {
+		this.permissionNode = permissionRoot + "." + getTrigger();
 	}
 
 	@Override
@@ -72,7 +68,7 @@ public class CowNetThingy implements CommandExecutor {
 				return true;
 			}
 		}
-		return dispatchMethod(sender, args);
+		return dispatchMethod(sender, cmd, label, args);
 	}
 
 	public final String getTrigger() {
@@ -95,7 +91,7 @@ public class CowNetThingy implements CommandExecutor {
 	}
 
 	// just a utility to help with the multiple checks above.
-	private boolean checkPermissions(CommandSender player, String perm) {
+	public boolean checkPermissions(CommandSender player, String perm) {
 		if (player.hasPermission(permissionNode + "." + perm)) {
 			debugInfo(player.getName() + " has " + permissionNode + "." + perm);
 			return true;
@@ -113,24 +109,14 @@ public class CowNetThingy implements CommandExecutor {
 		logger.info(permissionNode + ": " + msg);
 	}
 
-	public final void debugInfo(String msg) {
+	protected final void debugInfo(String msg) {
 		if (debug) {
 			logger.info("[" + permissionNode + "]: " + msg);
 		}
 	}
 
-	public final boolean isEnabled() {
-		return isEnabled;
-	}
-
 	public final boolean isDebug() {
 		return debug;
-	}
-
-	// disable the plugin if there was some critical startup error.
-	protected final void disable() {
-		isEnabled = false;
-		logInfo("Plugin disabled.");
 	}
 
 	//------------------------------------
@@ -207,7 +193,7 @@ public class CowNetThingy implements CommandExecutor {
 	 * This hook allows subclasses to load non-automatic setting data.
 	 * You shouldn't call this directly, but through reloadSettings() instead.
 	 */
-	protected void reloadManualSettings() {
+	protected void reloadManualSettings() throws Exception {
 	}
 
 	/**
@@ -241,8 +227,13 @@ public class CowNetThingy implements CommandExecutor {
 	@CowCommand(opOnly = true)
 	private boolean doReload(CommandSender sender) {
 		getPlugin().reloadConfig();
-		reloadSettings(sender);
-		sender.sendMessage("Reloaded.");
+		try {
+			reloadSettings(sender);
+			sender.sendMessage("Reloaded.");
+		} catch (Exception e) {
+			sender.sendMessage("Could not reload settings.");
+			e.printStackTrace();
+		}
 		return true;
 	}
 
@@ -301,7 +292,7 @@ public class CowNetThingy implements CommandExecutor {
 	 * at startup or after the configuration has been changed by some external source.
 	 * When complete, net settings will be dumped to the console.
 	 */
-	public final void reloadSettings() {
+	public final void reloadSettings() throws Exception {
 		reloadSettings(null);
 	}
 
@@ -313,7 +304,7 @@ public class CowNetThingy implements CommandExecutor {
 	 * @param sender where to dump the new setting values when finished.  If NULL
 	 *               settings will be dumped to the console.
 	 */
-	protected final void reloadSettings(CommandSender sender) {
+	protected final void reloadSettings(CommandSender sender) throws Exception {
 		reloadAutoSettings();
 		reloadManualSettings();
 		doSettings(sender);
@@ -506,19 +497,67 @@ public class CowNetThingy implements CommandExecutor {
 
 	private static final Class[] args0 = new Class[] {CommandSender.class};
 	private static final Class[] args0p = new Class[] {Player.class};
-	private static final Class[] args1 = new Class[] {CommandSender.class, String.class};
-	private static final Class[] args1p = new Class[] {Player.class, String.class};
-	private static final Class[] args2 = new Class[] {CommandSender.class, String.class, String.class};
-	private static final Class[] args2p = new Class[] {Player.class, String.class, String.class};
-	private static final Class[] args3 = new Class[] {CommandSender.class, String.class, String.class, String.class};
-	private static final Class[] args3p = new Class[] {Player.class, String.class, String.class, String.class};
-	private static final Class[] args4 = new Class[] {CommandSender.class, String.class, String.class, String.class, String.class};
-	private static final Class[] args4p = new Class[] {Player.class, String.class, String.class, String.class, String.class};
-	private static final Class[][] argsX = {args0, args1, args2, args3, args4};
-	private static final Class[][] argsXp = {args0p, args1p, args2p, args3p, args4p};
+	private static final Class[] args1 = new Class[] {
+			CommandSender.class,
+			String.class
+	};
+	private static final Class[] args1p = new Class[] {
+			Player.class,
+			String.class
+	};
+	private static final Class[] args2 = new Class[] {
+			CommandSender.class,
+			String.class,
+			String.class
+	};
+	private static final Class[] args2p = new Class[] {
+			Player.class,
+			String.class,
+			String.class
+	};
+	private static final Class[] args3 = new Class[] {
+			CommandSender.class,
+			String.class,
+			String.class,
+			String.class
+	};
+	private static final Class[] args3p = new Class[] {
+			Player.class,
+			String.class,
+			String.class,
+			String.class
+	};
+	private static final Class[] args4 = new Class[] {
+			CommandSender.class,
+			String.class,
+			String.class,
+			String.class,
+			String.class
+	};
+	private static final Class[] args4p = new Class[] {
+			Player.class,
+			String.class,
+			String.class,
+			String.class,
+			String.class
+	};
+	private static final Class[][] argsX = {
+			args0,
+			args1,
+			args2,
+			args3,
+			args4
+	};
+	private static final Class[][] argsXp = {
+			args0p,
+			args1p,
+			args2p,
+			args3p,
+			args4p
+	};
 	private static final String COMMAND_METHOD_PREFIX = "do";
 
-	private boolean dispatchMethod(CommandSender sender, String[] args) {
+	private boolean dispatchMethod(CommandSender sender, Command cmd, String label, String[] args) {
 		if (args.length > 0) {
 			// check to see if it's a subcommand
 			Method method = findHandlerMethod(sender, generateMethodName(args[0]), args.length - 1);
@@ -627,7 +666,7 @@ public class CowNetThingy implements CommandExecutor {
 		Class clazz = getClass();
 		while (clazz != Object.class) {
 			for (Method method : clazz.getDeclaredMethods()) {
-				if ((method.getAnnotation(CowCommand.class) != null) || (method.getName().equals(generateMethodName(getTrigger())))) {
+				if (method.getAnnotation(CowCommand.class) != null) {
 					//OK, we found a command, only add it if the sender has access to it.
 					if (hasMethodPermissions(sender, method.getAnnotation(CowCommand.class))) {
 						// strip off COMMAND_METHOD_PREFIX at the beginning.

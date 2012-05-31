@@ -7,22 +7,18 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.HashMap;
 
 
-public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listener {
+public class FlingPortal extends CowNetThingy implements Listener {
 	private static final Vector LAUNCH_VECTOR = new Vector(0, 5, 0);
 	private HashMap<Player, Long> playersInFlight = new HashMap<Player, Long>();
-
-	public FlingPortal(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
 
 	@Override
 	protected String getHelpString(CommandSender sender) {

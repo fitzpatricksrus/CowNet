@@ -7,14 +7,9 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 public class Nickname extends CowNetThingy implements Listener {
-	public Nickname(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
-
 	@Override
 	protected String getHelpString(CommandSender sender) {
 		return "usage: Nickname";

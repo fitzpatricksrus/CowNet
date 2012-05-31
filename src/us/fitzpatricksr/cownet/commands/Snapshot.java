@@ -10,7 +10,6 @@ import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.utils.SchematicUtils;
 import us.fitzpatricksr.cownet.utils.StringUtils;
@@ -26,12 +25,8 @@ public class Snapshot extends CowNetThingy {
 	@Setting
 	private boolean resetAir = true;
 
-	public Snapshot(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
-
 	@Override
-	protected void onEnable() {
+	protected void onEnable() throws Exception {
 		// start the countdown
 		debugInfo("String countdown timer");
 		performCountdown(0);

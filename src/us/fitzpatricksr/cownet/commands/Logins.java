@@ -12,7 +12,6 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.io.BufferedReader;
@@ -53,24 +52,16 @@ public class Logins extends CowNetThingy implements Listener {
 	private PrintWriter log;
 	private LinkedList<LogEntry> recentLogEntries = new LinkedList<LogEntry>();
 
-	public Logins(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
-
 	@Override
-	protected void onEnable() {
-		try {
-			BufferedReader reader = new BufferedReader(new FileReader(getLogFile()));
-			for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-				LogEntry entry = new LogEntry(line);
-				queueEntry(entry);
-			}
-			reader.close();
-			logInfo("Restored " + recentLogEntries.size() + " log entries");
-			log = new PrintWriter(new BufferedWriter(new FileWriter(getLogFile(), true)));
-		} catch (IOException e) {
-			e.printStackTrace();
+	protected void onEnable() throws Exception {
+		BufferedReader reader = new BufferedReader(new FileReader(getLogFile()));
+		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+			LogEntry entry = new LogEntry(line);
+			queueEntry(entry);
 		}
+		reader.close();
+		logInfo("Restored " + recentLogEntries.size() + " log entries");
+		log = new PrintWriter(new BufferedWriter(new FileWriter(getLogFile(), true)));
 	}
 
 	@Override

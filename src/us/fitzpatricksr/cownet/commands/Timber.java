@@ -9,7 +9,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.LinkedList;
@@ -17,10 +16,6 @@ import java.util.LinkedList;
 public class Timber extends CowNetThingy implements Listener {
 	@Setting
 	private String worlds = "ALL";
-
-	public Timber(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
 
 	@Override
 	protected String getHelpString(CommandSender sender) {

@@ -19,7 +19,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.HashMap;
@@ -34,10 +33,6 @@ public class Hide extends CowNetThingy implements Listener {
 
 	private Map<String, Player> invisiblePlayers = new HashMap<String, Player>();
 	private Random rand = new Random();
-
-	public Hide(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
 
 	@Override
 	protected String getHelpString(CommandSender sender) {

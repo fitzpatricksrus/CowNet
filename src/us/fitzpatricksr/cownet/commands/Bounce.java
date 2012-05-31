@@ -4,7 +4,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
@@ -17,10 +16,6 @@ public class Bounce extends CowNetThingy {
 	private int radius = 5;
 	@Setting
 	private int velocity = 1;
-
-	public Bounce(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
 
 	@Override
 	protected String getHelpString(CommandSender sender) {

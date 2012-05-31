@@ -29,17 +29,18 @@ public class NoSwearing extends CowNetThingy implements Listener {
 	private String[] bannedPhrases;
 	private Consequence[] consequences;
 
-	public NoSwearing(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
-
 	@Override
-	protected void onEnable() {
+	protected void onEnable() throws Exception {
 		String trigger = getTrigger();
 		FileConfiguration config = getPlugin().getConfig();
 		String fileName = getConfigValue("bannedPhrases", "badwords.txt");
 		bannedPhrases = loadBadWords(getPlugin(), fileName, trigger);
-		consequences = new Consequence[] {new SetOnFire(), new CreepThemOut(), new Launch(), new Lightning()};
+		consequences = new Consequence[] {
+				new SetOnFire(),
+				new CreepThemOut(),
+				new Launch(),
+				new Lightning()
+		};
 	}
 
 	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -132,7 +133,12 @@ public class NoSwearing extends CowNetThingy implements Listener {
 	}
 
 	// spawn random mobs in front of them for a while
-	private static EntityType[] creatureTypes = new EntityType[] {EntityType.SKELETON, EntityType.CREEPER, EntityType.SPIDER, EntityType.ZOMBIE,};
+	private static EntityType[] creatureTypes = new EntityType[] {
+			EntityType.SKELETON,
+			EntityType.CREEPER,
+			EntityType.SPIDER,
+			EntityType.ZOMBIE,
+	};
 
 	public class CreepThemOut implements NoSwearing.Consequence, Runnable {
 		private Random rand = new Random();

@@ -36,7 +36,6 @@ import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
@@ -70,12 +69,12 @@ import java.util.Set;
     empty, regen the world.  So, if they're a ghost and they try to do something, they
     will be removed from dead because of the timeout and re-added to because of the interaction.
     If they were just dead for a long time, we just remove them.  It's passive and only happens
-    when the config is touched.  It's a reaper process, not something that's active.
+    when the savedState is touched.  It's a reaper process, not something that's active.
  */
 public class HardCore extends CowNetThingy implements Listener {
 	private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static final int REAPER_FREQUENCY = 20 * 30; // 30 seconds
-	private HardCoreState config;
+	private HardCoreState savedState;
 	private HardCoreLog logFile;
 	private MultiverseCore mvPlugin;
 	@Setting(name = "worldname")
@@ -91,42 +90,36 @@ public class HardCore extends CowNetThingy implements Listener {
 	//manual setting because it's an enum
 	private Difficulty difficulty = Difficulty.HARD;
 
-	public HardCore(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
-
 	@Override
-	protected void onEnable() {
+	protected void onEnable() throws Exception {
 		getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
 			public void run() {
-				config.reapDeadPlayers();
+				savedState.reapDeadPlayers();
 			}
 		}, REAPER_FREQUENCY, REAPER_FREQUENCY);
 	}
 
 	@Override
-	protected void reloadManualSettings() {
+	protected void onDisable() {
 		if (mvPlugin != null) mvPlugin.decrementPluginCount();
-		try {
-			reloadAutoSettings(PlayerState.class);
-			difficulty = Difficulty.valueOf(getConfigValue("difficulty", difficulty.toString()));
-			config = new HardCoreState(getPlugin(), getTrigger() + ".yml");
-			config.loadConfig();
-			mvPlugin = (MultiverseCore) getPlugin().getServer().getPluginManager().getPlugin("Multiverse-Core");
-			if (mvPlugin == null) {
-				logInfo("Could not find Multiverse-Core plugin.  Disabling self");
-				disable();
-			} else {
-				mvPlugin.incrementPluginCount();
-			}
-			logFile = new HardCoreLog(getPlugin(), "eventlog");
-		} catch (IOException e) {
-			e.printStackTrace();
-			disable();
-		} catch (InvalidConfigurationException e) {
-			e.printStackTrace();
-			disable();
+		if (savedState != null) savedState.saveConfig();
+	}
+
+	@Override
+	protected void reloadManualSettings() throws Exception {
+		if (mvPlugin != null) mvPlugin.decrementPluginCount();
+		reloadAutoSettings(PlayerState.class);
+		difficulty = Difficulty.valueOf(getConfigValue("difficulty", difficulty.toString()));
+		savedState = new HardCoreState(getPlugin(), getTrigger() + ".yml");
+		savedState.loadConfig();
+		mvPlugin = (MultiverseCore) getPlugin().getServer().getPluginManager().getPlugin("Multiverse-Core");
+		if (mvPlugin == null) {
+			logInfo("Could not find Multiverse-Core plugin.  Disabling self");
+			throw new IllegalStateException("Could not find Multiverse-Core plugin.");
+		} else {
+			mvPlugin.incrementPluginCount();
 		}
+		logFile = new HardCoreLog(getPlugin(), "eventlog");
 	}
 
 	@Override
@@ -149,19 +142,22 @@ public class HardCore extends CowNetThingy implements Listener {
 		return true;
 	}
 
-	@EventHandler
-	protected void handlePluginDisabled(PluginDisableEvent event) {
-		if (event.getPlugin() == getPlugin()) {
-			mvPlugin.decrementPluginCount();
-			config.saveConfig();
-		}
-	}
-
 	@Override
 	protected String[] getHelpText(CommandSender player) {
-		PlayerState ps = config.getPlayerState(player.getName());
+		PlayerState ps = savedState.getPlayerState(player.getName());
 		long timeOut = (ps != null) ? ps.getSecondsTillTimeout() : PlayerState.deathDuration;
-		return new String[] {"usage: hardcore (<worldname> | info | stats | revive <player> | regen | twiddle <params>)  ", "HardCore is played with no mods.  You're on your own.  ", "Type /HardCore (or /hc) to enter and exit HardCore world.  ", "The leave, you must be close to the spawn point.  ", "You're officially in the game once you interact with something.  ", "Until then you are an observer.  After you die,  ", "you are a ghost for a " + StringUtils.durationString(timeOut) + " and can only observer.  ", "The time you are a ghost increases with each death.  ", "If everyone is dead at the same time, the world regens.  If you don't ", "play for " + StringUtils.durationString(timeOut) + ", you're no longer considered in the game."};
+		return new String[] {
+				"usage: hardcore (<worldname> | info | stats | revive <player> | regen | twiddle <params>)  ",
+				"HardCore is played with no mods.  You're on your own.  ",
+				"Type /HardCore (or /hc) to enter and exit HardCore world.  ",
+				"The leave, you must be close to the spawn point.  ",
+				"You're officially in the game once you interact with something.  ",
+				"Until then you are an observer.  After you die,  ",
+				"you are a ghost for a " + StringUtils.durationString(timeOut) + " and can only observer.  ",
+				"The time you are a ghost increases with each death.  ",
+				"If everyone is dead at the same time, the world regens.  If you don't ",
+				"play for " + StringUtils.durationString(timeOut) + ", you're no longer considered in the game."
+		};
 	}
 
 	//--------------------------------------------------
@@ -186,7 +182,7 @@ public class HardCore extends CowNetThingy implements Listener {
 			Location spawn = world.getSpawnLocation();
 			Location loc = player.getLocation();
 			double diff = spawn.distance(loc);
-			if ((diff < safeDistance) || config.isDead(player.getName()) || hasPermissions(player, "canalwaysescape")) {
+			if ((diff < safeDistance) || savedState.isDead(player.getName()) || hasPermissions(player, "canalwaysescape")) {
 				World exitPlace = mvPlugin.getMVWorldManager().getSpawnWorld().getCBWorld();
 				SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
 				teleporter.safelyTeleport(null, player, exitPlace.getSpawnLocation(), true);
@@ -198,15 +194,15 @@ public class HardCore extends CowNetThingy implements Listener {
 			// player is in some other world and wants to go HARD CORE
 			if (worldName == null) worldName = getHardCoreWorldNames()[0];
 			MVWorldManager mgr = mvPlugin.getMVWorldManager();
-			if (!mgr.isMVWorld(worldName) && !config.generateNewWorld(worldName)) {
+			if (!mgr.isMVWorld(worldName) && !savedState.generateNewWorld(worldName)) {
 				//this is an error.  Error message sent to console already.
 				player.sendMessage("Something is wrong with HARD CORE.  You can't be transported at the moment.");
 				return true;
 			}
 			String playerName = player.getName();
-			if (config.isDead(playerName)) {
+			if (savedState.isDead(playerName)) {
 				player.sendMessage("You're dead, so you will roam the world as a ghost for the next " +
-						StringUtils.durationString(config.getSecondsTillTimeout(playerName)) + ".");
+						StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)) + ".");
 			}
 			SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
 			DestinationFactory destFactory = mvPlugin.getDestFactory();
@@ -251,10 +247,10 @@ public class HardCore extends CowNetThingy implements Listener {
 	@CowCommand(permission = "info")
 	protected boolean doInfo(CommandSender player) {
 		String playerName = player.getName();
-		String duration = StringUtils.durationString(config.getSecondsTillTimeout(playerName));
-		if (config.isDead(playerName)) {
+		String duration = StringUtils.durationString(savedState.getSecondsTillTimeout(playerName));
+		if (savedState.isDead(playerName)) {
 			player.sendMessage("You're dead for " + duration + ".  Not very HARD CORE.");
-		} else if (config.isLive(playerName)) {
+		} else if (savedState.isLive(playerName)) {
 			player.sendMessage("You've been very HARD CORE up 'till now.");
 			player.sendMessage("You need to do something in " + duration + " to stay in the game.");
 		} else {
@@ -263,7 +259,7 @@ public class HardCore extends CowNetThingy implements Listener {
 		player.sendMessage("HARE CORE worlds: " + hardCoreWorldNames);
 		player.sendMessage("  --- HARD CORE Rankings ---");
 		player.sendMessage("  Name  - Deaths TimeOn Placed Broken Kills LastActive");
-		for (PlayerState p : config.getRankedPlayers()) {
+		for (PlayerState p : savedState.getRankedPlayers()) {
 			player.sendMessage("    " + p.name + ((p.isLive) ? "" : "(dead)") + " -  D:" + p.deathCount + "  T:" + StringUtils.durationString(p.getSecondsInHardcore()) + "  P:" + p.blocksPlaced + "  B:" + p.blocksBroken + "  K:" + p.mobsKilled + "  L:" + StringUtils.durationString((System.currentTimeMillis() - p.lastActivity) / 1000));
 		}
 
@@ -272,7 +268,7 @@ public class HardCore extends CowNetThingy implements Listener {
 
 	@CowCommand(permission = "regen")
 	protected boolean doRegen(CommandSender player) {
-		config.generateNewWorlds();
+		savedState.generateNewWorlds();
 		player.sendMessage("The HARD CORE worlds have been regenerated HARDer and more CORE than ever.");
 		logFile.log(hardCoreWorldNames + " regenerated");
 		return true;
@@ -280,10 +276,10 @@ public class HardCore extends CowNetThingy implements Listener {
 
 	@CowCommand(permission = "revive")
 	protected boolean doRevive(CommandSender player, String arg) {
-		if (!config.isDead(arg)) {
+		if (!savedState.isDead(arg)) {
 			player.sendMessage(arg + " is still going at it HARD CORE and isn't dead.");
 		} else {
-			config.markPlayerUndead(arg);
+			savedState.markPlayerUndead(arg);
 			player.sendMessage(arg + " has been revived, be is still not as HARD CORE as you.");
 			logFile.log(arg + " revived by " + player.getName());
 		}
@@ -292,7 +288,7 @@ public class HardCore extends CowNetThingy implements Listener {
 
 	@CowCommand(permission = "twiddle")
 	protected boolean doTwiddle(CommandSender player, String playerName, String param) {
-		PlayerState ps = config.getPlayerState(playerName);
+		PlayerState ps = savedState.getPlayerState(playerName);
 		if (ps == null) {
 			player.sendMessage(playerName + " is not in the game.");
 		} else {
@@ -334,7 +330,7 @@ public class HardCore extends CowNetThingy implements Listener {
 		// set up the proper player settings for HARD CORE
 		if (isHardCoreWorld(player.getWorld())) {
 			// teleported to hardcore
-			config.setWasOp(player.getName(), player.isOp());
+			savedState.setWasOp(player.getName(), player.isOp());
 			if (!hasPermissions(player, "keepop")) {
 				player.setOp(false);
 				player.setAllowFlight(false);
@@ -345,7 +341,7 @@ public class HardCore extends CowNetThingy implements Listener {
 				CowZombeControl.setAllowNoClip(player, allowXRay);
 				CowZombeControl.setAllowCheat(player, allowXRay);
 			}
-			config.playerEnteredHardCore(player.getName());
+			savedState.playerEnteredHardCore(player.getName());
 			logFile.log(player.getName() + " entered " + player.getWorld().getName() + "  op = " + player.isOp());
 		} else if (isHardCoreWorld(fromWorld)) {
 			// teleported from hardcore
@@ -354,9 +350,9 @@ public class HardCore extends CowNetThingy implements Listener {
 			if (hasPermissions(player, "keepop")) {
 				player.setOp(true);
 			} else {
-				player.setOp(config.wasOp(player.getName()));
+				player.setOp(savedState.wasOp(player.getName()));
 			}
-			config.playerLeftHardCore(player.getName());
+			savedState.playerLeftHardCore(player.getName());
 			logFile.log(player.getName() + " left " + fromWorld);
 		}
 	}
@@ -369,12 +365,12 @@ public class HardCore extends CowNetThingy implements Listener {
 			return;
 		}
 		String playerName = event.getPlayer().getName();
-		if (config.isDead(playerName)) {
+		if (savedState.isDead(playerName)) {
 			debugInfo("Ghost event");
-			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
+			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
 			event.setCancelled(true);
 		} else {
-			config.playerActivity(playerName);
+			savedState.playerActivity(playerName);
 		}
 	}
 
@@ -382,13 +378,13 @@ public class HardCore extends CowNetThingy implements Listener {
 	public void onBlockPlace(BlockPlaceEvent event) {
 		if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
 		String playerName = event.getPlayer().getName();
-		if (config.isDead(playerName)) {
+		if (savedState.isDead(playerName)) {
 			debugInfo("Ghost event");
-			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
+			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
 			event.setCancelled(true);
 		} else {
-			config.accrueBlockPlaced(playerName);
-			config.playerActivity(playerName);
+			savedState.accrueBlockPlaced(playerName);
+			savedState.playerActivity(playerName);
 		}
 	}
 
@@ -396,13 +392,13 @@ public class HardCore extends CowNetThingy implements Listener {
 	public void onBlockBreak(BlockBreakEvent event) {
 		if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
 		String playerName = event.getPlayer().getName();
-		if (config.isDead(playerName)) {
+		if (savedState.isDead(playerName)) {
 			debugInfo("Ghost event");
-			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
+			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
 			event.setCancelled(true);
 		} else {
-			config.accrueBlockBroken(playerName);
-			config.playerActivity(playerName);
+			savedState.accrueBlockBroken(playerName);
+			savedState.playerActivity(playerName);
 		}
 	}
 
@@ -410,12 +406,12 @@ public class HardCore extends CowNetThingy implements Listener {
 	public void onPickupItem(PlayerPickupItemEvent event) {
 		if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
 		String playerName = event.getPlayer().getName();
-		if (config.isDead(playerName)) {
+		if (savedState.isDead(playerName)) {
 			debugInfo("Ghost event");
-			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
+			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
 			event.setCancelled(true);
 		} else {
-			config.playerActivity(playerName);
+			savedState.playerActivity(playerName);
 		}
 	}
 
@@ -423,12 +419,12 @@ public class HardCore extends CowNetThingy implements Listener {
 	public void onPlayerDropItem(PlayerDropItemEvent event) {
 		if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
 		String playerName = event.getPlayer().getName();
-		if (config.isDead(playerName)) {
+		if (savedState.isDead(playerName)) {
 			debugInfo("Ghost event");
-			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(config.getSecondsTillTimeout(playerName)));
+			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
 			event.setCancelled(true);
 		} else {
-			config.playerActivity(playerName);
+			savedState.playerActivity(playerName);
 		}
 	}
 
@@ -448,7 +444,7 @@ public class HardCore extends CowNetThingy implements Listener {
 		if (entity instanceof Player) {
 			// ghosts can't be hurt
 			String playerName = ((Player) entity).getName();
-			if (config.isDead(playerName)) {
+			if (savedState.isDead(playerName)) {
 				event.setCancelled(true);
 			}
 		}
@@ -457,7 +453,7 @@ public class HardCore extends CowNetThingy implements Listener {
 			final Entity damager = target.getDamager();
 			if (damager instanceof Player) {
 				String playerName = ((Player) damager).getName();
-				if (config.isDead(playerName)) {
+				if (savedState.isDead(playerName)) {
 					event.setCancelled(true);
 				}
 			}
@@ -471,7 +467,7 @@ public class HardCore extends CowNetThingy implements Listener {
 		if (entity instanceof Player) {
 			Player player = (Player) entity;
 			String playerName = player.getName();
-			config.markPlayerDead(playerName);
+			savedState.markPlayerDead(playerName);
 			logFile.log(player.getName() + " died ");
 		} else {
 			// OK, something else was killed.  Not a player.
@@ -488,7 +484,7 @@ public class HardCore extends CowNetThingy implements Listener {
 					killer = (Player) damager;
 				}
 				if (killer != null) {
-					config.accrueMobKilled(killer.getName());
+					savedState.accrueMobKilled(killer.getName());
 				}
 			}
 		}
@@ -500,7 +496,7 @@ public class HardCore extends CowNetThingy implements Listener {
 		if (!isHardCoreWorld(event.getTarget().getWorld())) return;
 		if (event.getTarget() instanceof Player) {
 			String playerName = ((Player) event.getTarget()).getName();
-			if (config.isDead(playerName)) {
+			if (savedState.isDead(playerName)) {
 				event.setCancelled(true);
 			}
 		}
@@ -511,7 +507,7 @@ public class HardCore extends CowNetThingy implements Listener {
 		if (!isHardCoreWorld(event.getEntity().getWorld())) return;
 		if (event.getEntity() instanceof Player) {
 			String playerName = ((Player) event.getEntity()).getName();
-			if (config.isDead(playerName)) {
+			if (savedState.isDead(playerName)) {
 				event.setCancelled(true);
 			}
 		}
@@ -526,7 +522,7 @@ public class HardCore extends CowNetThingy implements Listener {
 		Player player = event.getPlayer();
 		debugInfo("onPlayerJoin: " + player.getName());
 		if (isHardCoreWorld(player.getWorld())) {
-			config.playerEnteredHardCore(player.getName());
+			savedState.playerEnteredHardCore(player.getName());
 			debugInfo("  hardcore");
 		} else {
 			debugInfo("  softy (" + player.getWorld().getName() + ")");
@@ -540,7 +536,7 @@ public class HardCore extends CowNetThingy implements Listener {
 		debugInfo("onPlayerQuit");
 		Player player = event.getPlayer();
 		if (isHardCoreWorld(player.getWorld())) {
-			config.playerLeftHardCore(player.getName());
+			savedState.playerLeftHardCore(player.getName());
 		}
 	}
 
@@ -782,7 +778,7 @@ public class HardCore extends CowNetThingy implements Listener {
 					}
 				}
 			}
-			config.saveConfig();
+			savedState.saveConfig();
 			debug("Reaping complete");
 			if (getLivePlayers().size() == 0) {
 				// if the last live player was removed, regen the world
@@ -820,7 +816,7 @@ public class HardCore extends CowNetThingy implements Listener {
 				}
 				//TODO hey jf - can we create this world in another thread?
 				if (mgr.addWorld(worldName, World.Environment.NORMAL, "" + (new Random().nextLong()), WorldType.NORMAL, true, null, true)) {
-					config.resetWorldState();
+					savedState.resetWorldState();
 					World w = mgr.getMVWorld(worldName).getCBWorld();
 					w.setDifficulty(difficulty);
 					w.setTicksPerMonsterSpawns((int) (w.getTicksPerMonsterSpawns() * monsterBoost) + 1);

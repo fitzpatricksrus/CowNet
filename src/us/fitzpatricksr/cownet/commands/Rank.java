@@ -4,7 +4,6 @@ import com.platymuus.bukkit.permissions.Group;
 import com.platymuus.bukkit.permissions.PermissionsPlugin;
 import com.platymuus.bukkit.permissions.PermissionsUtils;
 import org.bukkit.command.CommandSender;
-import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.Arrays;
@@ -19,21 +18,17 @@ public class Rank extends CowNetThingy {
 	private PermissionsUtils permsUtils;
 	private LinkedList<String> permsGroups = new LinkedList<String>();
 
-	public Rank(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
-
-	protected void reloadManualSettings() {
+	protected void reloadManualSettings() throws Exception {
 		permsPlugin = (PermissionsPlugin) getPlugin().getServer().getPluginManager().getPlugin("PermissionsBukkit");
 		permsUtils = new PermissionsUtils(permsPlugin);
 		if (permsPlugin == null) {
 			logInfo("Could not find permissions plugin.");
-			disable();
+			throw new IllegalStateException("Could not find permissions plugin");
 		} else {
 			String groupNamesString = getConfigValue("groupNames", null);
 			if (groupNamesString == null) {
-				logInfo("Could not find groupNames in config file.  ");
-				disable();
+				logInfo("Could not find groupNames in config file.");
+				throw new IllegalArgumentException("Could not find groupNames in config file.");
 			} else {
 				String[] groupNames = groupNamesString.split(",");
 				permsGroups.addAll(Arrays.asList(groupNames));

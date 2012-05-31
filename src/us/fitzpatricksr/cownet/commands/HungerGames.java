@@ -29,7 +29,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.hungergames.GameHistory;
 import us.fitzpatricksr.cownet.commands.hungergames.GameInstance;
@@ -88,12 +87,8 @@ public class HungerGames extends CowNetThingy implements Listener {
 	private int arenaSizeThisGame = 0;                      //the actual size of the arena once game has started
 	private boolean hasPlayedStartSound = false;            //set to true if the start sound has been played this game
 
-	public HungerGames(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
-
 	@Override
-	protected void onEnable() {
+	protected void onEnable() throws Exception {
 		getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
 			public void run() {
 				gameWatcher();
@@ -102,7 +97,7 @@ public class HungerGames extends CowNetThingy implements Listener {
 	}
 
 	@Override
-	protected void reloadManualSettings() {
+	protected void reloadManualSettings() throws Exception {
 		reloadAutoSettings(GameInstance.class);
 		reloadAutoSettings(PlayerInfo.class);
 		gameHistory = new GameHistory(getPlugin(), getTrigger() + ".yml");
@@ -135,7 +130,16 @@ public class HungerGames extends CowNetThingy implements Listener {
 
 	@Override
 	protected String[] getHelpText(CommandSender player) {
-		return new String[] {"usage: /hungergames or /hg   join | info | quit | tp <player> | start", "   join - join the games as a tribute", "   info - what's the state of the current game?", "   quit - chicken out and just watch", "   tp <player> - transport to a player, if you're a sponsor", "   start - just get things started already!", "   stats - see how you stack up against others.", "Note: sponsors can drop items once a minute"};
+		return new String[] {
+				"usage: /hungergames or /hg   join | info | quit | tp <player> | start",
+				"   join - join the games as a tribute",
+				"   info - what's the state of the current game?",
+				"   quit - chicken out and just watch",
+				"   tp <player> - transport to a player, if you're a sponsor",
+				"   start - just get things started already!",
+				"   stats - see how you stack up against others.",
+				"Note: sponsors can drop items once a minute"
+		};
 	}
 
 	//------------------------------------------------
@@ -720,17 +724,80 @@ public class HungerGames extends CowNetThingy implements Listener {
 		return gameInstance.getPlayerInfo(p).isOutOfGame();
 	}
 
-	private static final Material[] gifts = {Material.TNT, Material.TORCH, Material.IRON_SPADE, Material.IRON_PICKAXE, Material.IRON_AXE, Material.FLINT_AND_STEEL, Material.APPLE, Material.BOW, Material.ARROW, Material.COAL, Material.DIAMOND, Material.IRON_SWORD, Material.WOOD_SWORD, Material.WOOD_SPADE, Material.WOOD_PICKAXE, Material.WOOD_AXE, Material.STONE_SWORD, Material.STONE_SPADE, Material.STONE_PICKAXE, Material.STONE_AXE,
+	private static final Material[] gifts = {
+			Material.TNT,
+			Material.TORCH,
+			Material.IRON_SPADE,
+			Material.IRON_PICKAXE,
+			Material.IRON_AXE,
+			Material.FLINT_AND_STEEL,
+			Material.APPLE,
+			Material.BOW,
+			Material.ARROW,
+			Material.COAL,
+			Material.DIAMOND,
+			Material.IRON_SWORD,
+			Material.WOOD_SWORD,
+			Material.WOOD_SPADE,
+			Material.WOOD_PICKAXE,
+			Material.WOOD_AXE,
+			Material.STONE_SWORD,
+			Material.STONE_SPADE,
+			Material.STONE_PICKAXE,
+			Material.STONE_AXE,
 			//            Material.DIAMOND_SWORD,
 			//            Material.DIAMOND_SPADE,
 			//            Material.DIAMOND_PICKAXE,
 			//            Material.DIAMOND_AXE,
-			Material.STICK, Material.BOWL, Material.MUSHROOM_SOUP, Material.GOLD_SWORD, Material.GOLD_SPADE, Material.GOLD_PICKAXE, Material.GOLD_AXE, Material.STRING, Material.FEATHER, Material.WOOD_HOE, Material.STONE_HOE, Material.IRON_HOE, Material.DIAMOND_HOE, Material.GOLD_HOE, Material.SEEDS, Material.WHEAT, Material.BREAD, Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE, Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS, Material.CHAINMAIL_HELMET, Material.CHAINMAIL_CHESTPLATE, Material.CHAINMAIL_LEGGINGS, Material.CHAINMAIL_BOOTS, Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS,
+			Material.STICK,
+			Material.BOWL,
+			Material.MUSHROOM_SOUP,
+			Material.GOLD_SWORD,
+			Material.GOLD_SPADE,
+			Material.GOLD_PICKAXE,
+			Material.GOLD_AXE,
+			Material.STRING,
+			Material.FEATHER,
+			Material.WOOD_HOE,
+			Material.STONE_HOE,
+			Material.IRON_HOE,
+			Material.DIAMOND_HOE,
+			Material.GOLD_HOE,
+			Material.SEEDS,
+			Material.WHEAT,
+			Material.BREAD,
+			Material.LEATHER_HELMET,
+			Material.LEATHER_CHESTPLATE,
+			Material.LEATHER_LEGGINGS,
+			Material.LEATHER_BOOTS,
+			Material.CHAINMAIL_HELMET,
+			Material.CHAINMAIL_CHESTPLATE,
+			Material.CHAINMAIL_LEGGINGS,
+			Material.CHAINMAIL_BOOTS,
+			Material.IRON_HELMET,
+			Material.IRON_CHESTPLATE,
+			Material.IRON_LEGGINGS,
+			Material.IRON_BOOTS,
 			//            Material.DIAMOND_HELMET,
 			//            Material.DIAMOND_CHESTPLATE,
 			//            Material.DIAMOND_LEGGINGS,
 			//            Material.DIAMOND_BOOTS,
-			Material.GOLD_HELMET, Material.GOLD_CHESTPLATE, Material.GOLD_LEGGINGS, Material.GOLD_BOOTS, Material.FLINT, Material.PORK, Material.GRILLED_PORK, Material.GOLDEN_APPLE, Material.BUCKET, Material.FISHING_ROD, Material.CAKE, Material.MAP, Material.SHEARS, Material.COOKED_BEEF, Material.COOKED_CHICKEN};
+			Material.GOLD_HELMET,
+			Material.GOLD_CHESTPLATE,
+			Material.GOLD_LEGGINGS,
+			Material.GOLD_BOOTS,
+			Material.FLINT,
+			Material.PORK,
+			Material.GRILLED_PORK,
+			Material.GOLDEN_APPLE,
+			Material.BUCKET,
+			Material.FISHING_ROD,
+			Material.CAKE,
+			Material.MAP,
+			Material.SHEARS,
+			Material.COOKED_BEEF,
+			Material.COOKED_CHICKEN
+	};
 }
 
 

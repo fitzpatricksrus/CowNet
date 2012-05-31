@@ -20,7 +20,6 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 
@@ -76,10 +75,6 @@ public class Eat extends CowNetThingy implements Listener {
 	private boolean nausea = false;
 	@Setting(name = "nauseaDuration")
 	private int nauseaDuration = 10;
-
-	public Eat(JavaPlugin plugin, String permissionRoot) {
-		super(plugin, permissionRoot);
-	}
 
 	@Override
 	protected String getHelpString(CommandSender sender) {

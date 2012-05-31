@@ -26,23 +26,23 @@ public class CowNetMod extends JavaPlugin {
 	private CowNetThingy[] commands;
 
 	public CowNetMod() {
-		NoSwearing noSwearingMod = new NoSwearing(this, COWNET);
-		plot = new Plot(this, COWNET, noSwearingMod);
+		NoSwearing noSwearingMod = new NoSwearing();
+		plot = new Plot(noSwearingMod);
 		commands = new CowNetThingy[] {
-				new Starve(this, COWNET),
-				new Bounce(this, COWNET),
-				new TntSheep(this, COWNET),
-				new Logins(this, COWNET),
+				new Starve(),
+				new Bounce(),
+				new TntSheep(),
+				new Logins(),
 				noSwearingMod,
 				plot,
-				new Rank(this, COWNET),
-				new Timber(this, COWNET),
-				new HardCore(this, COWNET),
-				new HungerGames(this, COWNET),
-				new Nickname(this, COWNET),
-				// new FlingPortal(this, COWNET, "flingportal");
-				new Hide(this, COWNET),
-				new Snapshot(this, COWNET),
+				new Rank(),
+				new Timber(),
+				new HardCore(),
+				new HungerGames(),
+				new Nickname(),
+				// new FlingPortal(, "flingportal");
+				new Hide(),
+				new Snapshot(),
 		};
 	}
 
@@ -65,15 +65,21 @@ public class CowNetMod extends JavaPlugin {
 		if (getConfig().getBoolean("cownet.enable", true)) {
 			logger.info("CowNetMod enabled.");
 			for (CowNetThingy thingy : commands) {
-				if (thingy.isEnabled()) {
+				thingy.setPlugin(this);
+				thingy.setPermissionRoot(COWNET);
+				if (thingy.getConfigValue("enable", false)) {
 					thingy.logInfo(thingy.getTrigger() + " enabled");
 					thingy.loadCommands();
-					thingy.reloadSettings();
-					thingy.onEnable();
-					if (thingy instanceof Listener) {
-						getServer().getPluginManager().registerEvents((Listener) thingy, this);
+					try {
+						thingy.reloadSettings();
+						thingy.onEnable();
+						if (thingy instanceof Listener) {
+							getServer().getPluginManager().registerEvents((Listener) thingy, this);
+						}
+						getCommand(thingy.getTrigger()).setExecutor(thingy);
+					} catch (Exception e) {
+						thingy.logInfo(thingy.getTrigger() + " disabled");
 					}
-					getCommand(thingy.getTrigger()).setExecutor(thingy);
 				} else {
 					thingy.logInfo(thingy.getTrigger() + " disabled");
 				}

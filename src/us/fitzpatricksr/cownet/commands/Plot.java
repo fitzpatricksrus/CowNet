@@ -18,7 +18,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.plots.InfinitePlotClaim;
 import us.fitzpatricksr.cownet.commands.plots.PlayerCenteredClaim;
@@ -61,13 +60,12 @@ public class Plot extends CowNetThingy {
 		public void dedecorateClaim(Player p, ProtectedRegion region);
 	}
 
-	public Plot(JavaPlugin plugin, String permissionRoot, NoSwearing noSwearingMod) {
-		super(plugin, permissionRoot);
+	public Plot(NoSwearing noSwearingMod) {
 		this.noSwearingMod = noSwearingMod;
 	}
 
 	@Override
-	protected void onEnable() {
+	protected void onEnable() throws Exception {
 		//get WorldGuard and WorldEdit plugins
 		Plugin worldPlugin = getPlugin().getServer().getPluginManager().getPlugin("WorldGuard");
 		if (worldPlugin == null || !(worldPlugin instanceof WorldGuardPlugin)) {
@@ -86,7 +84,7 @@ public class Plot extends CowNetThingy {
 
 	@Override
 	// reload any settings not handled by @Setting
-	protected void reloadManualSettings() {
+	protected void reloadManualSettings() throws Exception {
 		this.plotBase = Material.matchMaterial(getConfigValue("plotBase", plotBase.toString()));
 		this.plotSurface = Material.matchMaterial(getConfigValue("plotSurface", plotSurface.toString()));
 		this.plotPath = Material.matchMaterial(getConfigValue("plotPath", plotPath.toString()));
