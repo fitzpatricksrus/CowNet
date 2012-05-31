@@ -1,7 +1,7 @@
-package us.fitzpatricksr.cownet.hungergames;
+package us.fitzpatricksr.cownet.commands.hungergames;
 
 import org.bukkit.entity.Player;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.CowNetThingy;
 
 public class PlayerInfo {
 	private static enum PlayerState {

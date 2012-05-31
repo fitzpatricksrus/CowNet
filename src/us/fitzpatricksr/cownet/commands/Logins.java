@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.commands;
 
 import org.bukkit.GameMode;
 import org.bukkit.command.CommandSender;
@@ -12,12 +12,8 @@ import org.bukkit.event.player.PlayerGameModeChangeEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.event.server.PluginDisableEvent;
-import org.bukkit.event.server.PluginEnableEvent;
-import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -53,54 +49,41 @@ public class Logins extends CowNetThingy implements Listener {
 	private int maxQueueSize = 5000;
 	@Setting
 	private int maxDisplayedToPlayer = 10;
-	private Plugin plugin;
 	private HashMap<String, GameMode> gameModeSave = new HashMap<String, GameMode>();
 	private PrintWriter log;
 	private LinkedList<LogEntry> recentLogEntries = new LinkedList<LogEntry>();
 
 	public Logins(JavaPlugin plugin, String permissionRoot) {
 		super(plugin, permissionRoot);
-		this.plugin = plugin;
-		if (isEnabled()) {
-			reloadSettings();
-			PluginManager pm = plugin.getServer().getPluginManager();
-			pm.registerEvents(this, plugin);
+	}
+
+	@Override
+	protected void onEnable() {
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(getLogFile()));
+			for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+				LogEntry entry = new LogEntry(line);
+				queueEntry(entry);
+			}
+			reader.close();
+			logInfo("Restored " + recentLogEntries.size() + " log entries");
+			log = new PrintWriter(new BufferedWriter(new FileWriter(getLogFile(), true)));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	protected void onDisable() {
+		if (log != null) {
+			log.close();
+			log = null;
 		}
 	}
 
 	@Override
 	protected String getHelpString(CommandSender sender) {
 		return "usage: <command> [-in|-out|-inout] | [<filter>]";
-	}
-
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-	public void onEnable(PluginEnableEvent event) {
-		Plugin pl = event.getPlugin();
-		if (pl.equals(plugin)) {
-			try {
-				BufferedReader reader = new BufferedReader(new FileReader(getLogFile()));
-				for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-					LogEntry entry = new LogEntry(line);
-					queueEntry(entry);
-				}
-				reader.close();
-				logInfo("Restored " + recentLogEntries.size() + " log entries");
-				log = new PrintWriter(new BufferedWriter(new FileWriter(getLogFile(), true)));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-	public void onDisable(PluginDisableEvent event) {
-		Plugin pl = event.getPlugin();
-		if (pl.equals(plugin)) {
-			if (log != null) {
-				log.close();
-				log = null;
-			}
-		}
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -206,7 +189,7 @@ public class Logins extends CowNetThingy implements Listener {
 	}
 
 	private File getLogFile() throws IOException {
-		File folder = plugin.getDataFolder();
+		File folder = getPlugin().getDataFolder();
 		if (!folder.exists()) {
 			folder.mkdir();
 		}

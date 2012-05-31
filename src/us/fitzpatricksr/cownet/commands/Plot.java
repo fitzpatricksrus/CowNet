@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.commands;
 
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.LocalPlayer;
@@ -19,11 +19,11 @@ import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.plots.InfinitePlotClaim;
-import us.fitzpatricksr.cownet.plots.PlayerCenteredClaim;
-import us.fitzpatricksr.cownet.plots.PlotsChunkGenerator;
+import us.fitzpatricksr.cownet.CowNetThingy;
+import us.fitzpatricksr.cownet.commands.plots.InfinitePlotClaim;
+import us.fitzpatricksr.cownet.commands.plots.PlayerCenteredClaim;
+import us.fitzpatricksr.cownet.commands.plots.PlotsChunkGenerator;
 import us.fitzpatricksr.cownet.utils.BlockUtils;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -63,27 +63,25 @@ public class Plot extends CowNetThingy {
 
 	public Plot(JavaPlugin plugin, String permissionRoot, NoSwearing noSwearingMod) {
 		super(plugin, permissionRoot);
-		if (isEnabled()) {
-			reloadSettings();
-			//get WorldGuard and WorldEdit plugins
-			Plugin worldPlugin = plugin.getServer().getPluginManager().getPlugin("WorldGuard");
-			if (worldPlugin == null || !(worldPlugin instanceof WorldGuardPlugin)) {
-				throw new RuntimeException("WorldGuard must be loaded first");
-			}
-			worldGuard = (WorldGuardPlugin) worldPlugin;
-			Plugin econ = plugin.getServer().getPluginManager().getPlugin("BOSEconomy");
-			if (econ instanceof BOSEconomy) {
-				this.economy = (BOSEconomy) econ;
-				logInfo("Found BOSEconomy.  Plot economy enable.");
-			} else {
-				logInfo("Could not find BOSEconomy.  Plot economy disabled.");
-			}
+		this.noSwearingMod = noSwearingMod;
+	}
 
-			this.noSwearingMod = noSwearingMod;
-			this.pcc = new PlayerCenteredClaim(this);
-
-			reloadManualSettings();
+	@Override
+	protected void onEnable() {
+		//get WorldGuard and WorldEdit plugins
+		Plugin worldPlugin = getPlugin().getServer().getPluginManager().getPlugin("WorldGuard");
+		if (worldPlugin == null || !(worldPlugin instanceof WorldGuardPlugin)) {
+			throw new RuntimeException("WorldGuard must be loaded first");
 		}
+		worldGuard = (WorldGuardPlugin) worldPlugin;
+		Plugin econ = getPlugin().getServer().getPluginManager().getPlugin("BOSEconomy");
+		if (econ instanceof BOSEconomy) {
+			this.economy = (BOSEconomy) econ;
+			logInfo("Found BOSEconomy.  Plot economy enable.");
+		} else {
+			logInfo("Could not find BOSEconomy.  Plot economy disabled.");
+		}
+		this.pcc = new PlayerCenteredClaim(this);
 	}
 
 	@Override

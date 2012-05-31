@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.commands;
 
 
 import net.minecraft.server.MobEffect;
@@ -21,7 +21,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.CowNetThingy;
 
 
 public class Eat extends CowNetThingy implements Listener {
@@ -79,9 +79,6 @@ public class Eat extends CowNetThingy implements Listener {
 
 	public Eat(JavaPlugin plugin, String permissionRoot) {
 		super(plugin, permissionRoot);
-		if (isEnabled()) {
-			reloadSettings();
-		}
 	}
 
 	@Override

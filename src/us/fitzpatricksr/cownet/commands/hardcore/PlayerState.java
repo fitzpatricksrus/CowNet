@@ -1,10 +1,10 @@
-package us.fitzpatricksr.cownet.hardcore;
+package us.fitzpatricksr.cownet.commands.hardcore;
 
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.configuration.serialization.SerializableAs;
+import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.utils.CowNetConfig;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
 import java.text.DateFormat;

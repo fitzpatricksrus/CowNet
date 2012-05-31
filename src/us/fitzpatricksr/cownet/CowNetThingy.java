@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet.utils;
+package us.fitzpatricksr.cownet;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -6,6 +6,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import us.fitzpatricksr.cownet.utils.StringUtils;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -54,19 +55,12 @@ public class CowNetThingy implements CommandExecutor {
 			//allow this common alias
 			this.isEnabled = getConfigValue("enabled", true);
 		}
-		if (isEnabled) {
-			logInfo(getTrigger() + " enabled");
-			plugin.getCommand(getTrigger()).setExecutor(this);
-		} else {
-			logInfo(getTrigger() + " disabled");
-		}
-		logInfo("commands: " + StringUtils.flatten(getHandlerMethods()));
 	}
 
-	public void onEnable() {
+	protected void onEnable() {
 	}
 
-	public void onDisable() {
+	protected void onDisable() {
 	}
 
 	@Override
@@ -494,6 +488,10 @@ public class CowNetThingy implements CommandExecutor {
 
 	//------------------------------------
 	// command dispatch methods
+
+	public void loadCommands() {
+		logInfo("commands: " + StringUtils.flatten(getHandlerMethods()));
+	}
 
 	/**
 	 * dump a list of available commands to sender

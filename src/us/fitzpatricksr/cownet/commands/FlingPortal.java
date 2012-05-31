@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.commands;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -11,7 +11,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.HashMap;
 
@@ -22,12 +22,6 @@ public class FlingPortal extends CowNetThingy implements org.bukkit.event.Listen
 
 	public FlingPortal(JavaPlugin plugin, String permissionRoot) {
 		super(plugin, permissionRoot);
-		if (isEnabled()) {
-			debugInfo("adding listeners...");
-			reloadSettings();
-			plugin.getServer().getPluginManager().registerEvents(this, plugin);
-			plugin.getServer().getPluginManager().registerEvents(this, plugin);
-		}
 	}
 
 	@Override

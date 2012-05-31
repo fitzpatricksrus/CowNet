@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet.hungergames;
+package us.fitzpatricksr.cownet.commands.hungergames;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;

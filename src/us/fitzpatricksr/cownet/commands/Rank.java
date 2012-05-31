@@ -1,11 +1,11 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.commands;
 
 import com.platymuus.bukkit.permissions.Group;
 import com.platymuus.bukkit.permissions.PermissionsPlugin;
 import com.platymuus.bukkit.permissions.PermissionsUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -21,9 +21,6 @@ public class Rank extends CowNetThingy {
 
 	public Rank(JavaPlugin plugin, String permissionRoot) {
 		super(plugin, permissionRoot);
-		if (isEnabled()) {
-			reloadSettings();
-		}
 	}
 
 	protected void reloadManualSettings() {

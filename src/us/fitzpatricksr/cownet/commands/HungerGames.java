@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.commands;
 
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -29,13 +29,12 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.hungergames.GameHistory;
-import us.fitzpatricksr.cownet.hungergames.GameInstance;
-import us.fitzpatricksr.cownet.hungergames.PlayerInfo;
+import us.fitzpatricksr.cownet.CowNetThingy;
+import us.fitzpatricksr.cownet.commands.hungergames.GameHistory;
+import us.fitzpatricksr.cownet.commands.hungergames.GameInstance;
+import us.fitzpatricksr.cownet.commands.hungergames.PlayerInfo;
 import us.fitzpatricksr.cownet.utils.BlockUtils;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
 import us.fitzpatricksr.cownet.utils.SchematicUtils;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
@@ -91,16 +90,15 @@ public class HungerGames extends CowNetThingy implements Listener {
 
 	public HungerGames(JavaPlugin plugin, String permissionRoot) {
 		super(plugin, permissionRoot);
-		if (isEnabled()) {
-			reloadSettings();
-			PluginManager pm = plugin.getServer().getPluginManager();
-			pm.registerEvents(this, plugin);
-			getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
-				public void run() {
-					gameWatcher();
-				}
-			}, GAME_WATCHER_FREQUENCY, GAME_WATCHER_FREQUENCY);
-		}
+	}
+
+	@Override
+	protected void onEnable() {
+		getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
+			public void run() {
+				gameWatcher();
+			}
+		}, GAME_WATCHER_FREQUENCY, GAME_WATCHER_FREQUENCY);
 	}
 
 	@Override
@@ -614,7 +612,7 @@ public class HungerGames extends CowNetThingy implements Listener {
 				trapLoc = BlockUtils.getHighestLandLocation(trapLoc);
 				File trapSchematic = schematics[rand.nextInt(schematics.length)];
 				debugInfo("Placing schematic(" + trapSchematic.getName() + ") at " + trapLoc);
-				SchematicUtils.placeSchematic(trapSchematic, trapLoc);
+				SchematicUtils.placeSchematic(trapSchematic, trapLoc, false, 10000);
 			}
 		}
 

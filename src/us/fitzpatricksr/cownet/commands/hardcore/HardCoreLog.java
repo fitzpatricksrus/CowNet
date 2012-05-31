@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet.hardcore;
+package us.fitzpatricksr.cownet.commands.hardcore;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.CowNetConfig;

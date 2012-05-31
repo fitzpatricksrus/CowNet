@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.commands;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
@@ -6,7 +6,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.List;
 
@@ -20,9 +20,6 @@ public class Bounce extends CowNetThingy {
 
 	public Bounce(JavaPlugin plugin, String permissionRoot) {
 		super(plugin, permissionRoot);
-		if (isEnabled()) {
-			reloadSettings();
-		}
 	}
 
 	@Override

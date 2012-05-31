@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.commands;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Effect;
@@ -20,7 +20,7 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerShearEntityEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,10 +37,6 @@ public class Hide extends CowNetThingy implements Listener {
 
 	public Hide(JavaPlugin plugin, String permissionRoot) {
 		super(plugin, permissionRoot);
-		if (isEnabled()) {
-			reloadSettings();
-			plugin.getServer().getPluginManager().registerEvents(this, plugin);
-		}
 	}
 
 	@Override

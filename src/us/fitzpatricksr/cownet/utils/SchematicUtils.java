@@ -14,14 +14,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 
 public class SchematicUtils {
-	@CowNetThingy.Setting
-	private static int maxBlocks = 1000000;
-
-	public static boolean placeSchematic(File schematic, Location location) {
-		return placeSchematic(schematic, location, true);
-	}
-
-	public static boolean placeSchematic(File schematic, Location location, boolean placeAir) {
+	public static boolean placeSchematic(File schematic, Location location, boolean placeAir, int maxBlocks) {
 		try {
 			World w = location.getWorld();
 			EditSession session = new EditSession(new BukkitWorld(w), maxBlocks);
@@ -48,7 +41,7 @@ public class SchematicUtils {
 		}
 	}
 
-	public static void saveSchematic(File schematic, Location l1, Location l2) {
+	public static void saveSchematic(File schematic, Location l1, Location l2, int maxBlocks) {
 		Vector min = new Vector(l1.getX(), l1.getY(), l1.getZ());
 		Vector max = new Vector(l2.getX(), l2.getY(), l2.getZ());
 		Vector size = max.subtract(min);

@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.commands;
 
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -11,7 +11,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.utils.SchematicUtils;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 import us.fitzpatricksr.cownet.utils.TimeUtils;
@@ -21,13 +21,17 @@ import java.io.File;
 public class Snapshot extends CowNetThingy {
 	@Setting
 	private long resetIntervalSeconds = 60 * 60;  // 1 hour in seconds
+	@Setting
+	private int maxBlocks = 1000000;
+	@Setting
+	private boolean resetAir = true;
 
 	public Snapshot(JavaPlugin plugin, String permissionRoot) {
 		super(plugin, permissionRoot);
 	}
 
 	@Override
-	public void onEnable() {
+	protected void onEnable() {
 		// start the countdown
 		debugInfo("String countdown timer");
 		performCountdown(0);
@@ -100,7 +104,7 @@ public class Snapshot extends CowNetThingy {
 			debugInfo("  file: " + schematicFile);
 			debugInfo("  loc1: " + loc1);
 			debugInfo("  loc2: " + loc2);
-			SchematicUtils.saveSchematic(schematicFile, loc1, loc2);
+			SchematicUtils.saveSchematic(schematicFile, loc1, loc2, maxBlocks);
 			logInfo("Saved.");
 		}
 		return true;
@@ -122,7 +126,7 @@ public class Snapshot extends CowNetThingy {
 				Location where = new Location(w, min.getX(), min.getY(), min.getZ());
 				debugInfo("  file: " + schematicFile);
 				debugInfo("  location: " + where);
-				SchematicUtils.placeSchematic(schematicFile, where, true);
+				SchematicUtils.placeSchematic(schematicFile, where, resetAir, maxBlocks);
 			} else {
 				debugInfo("Skipping region: " + regionName);
 			}

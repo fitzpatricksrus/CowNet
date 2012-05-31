@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.commands;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -7,16 +7,12 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.CowNetThingy;
 
 public class Nickname extends CowNetThingy implements Listener {
 	public Nickname(JavaPlugin plugin, String permissionRoot) {
 		super(plugin, permissionRoot);
-		reloadSettings();
-		PluginManager pm = plugin.getServer().getPluginManager();
-		pm.registerEvents(this, plugin);
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.commands;
 
 import com.onarandombox.MultiverseCore.MultiverseCore;
 import com.onarandombox.MultiverseCore.api.MVDestination;
@@ -38,12 +38,11 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.hardcore.HardCoreLog;
-import us.fitzpatricksr.cownet.hardcore.PlayerState;
+import us.fitzpatricksr.cownet.CowNetThingy;
+import us.fitzpatricksr.cownet.commands.hardcore.HardCoreLog;
+import us.fitzpatricksr.cownet.commands.hardcore.PlayerState;
 import us.fitzpatricksr.cownet.utils.CowNetConfig;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
 import us.fitzpatricksr.cownet.utils.CowZombeControl;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
@@ -94,16 +93,15 @@ public class HardCore extends CowNetThingy implements Listener {
 
 	public HardCore(JavaPlugin plugin, String permissionRoot) {
 		super(plugin, permissionRoot);
-		if (isEnabled()) {
-			reloadSettings();
-			PluginManager pm = plugin.getServer().getPluginManager();
-			pm.registerEvents(this, plugin);
-			getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
-				public void run() {
-					config.reapDeadPlayers();
-				}
-			}, REAPER_FREQUENCY, REAPER_FREQUENCY);
-		}
+	}
+
+	@Override
+	protected void onEnable() {
+		getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
+			public void run() {
+				config.reapDeadPlayers();
+			}
+		}, REAPER_FREQUENCY, REAPER_FREQUENCY);
 	}
 
 	@Override

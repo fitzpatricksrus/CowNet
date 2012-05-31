@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet;
+package us.fitzpatricksr.cownet.commands;
 
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -9,10 +9,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChatEvent;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
-import us.fitzpatricksr.cownet.utils.CowNetThingy;
+import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,16 +31,15 @@ public class NoSwearing extends CowNetThingy implements Listener {
 
 	public NoSwearing(JavaPlugin plugin, String permissionRoot) {
 		super(plugin, permissionRoot);
+	}
+
+	@Override
+	protected void onEnable() {
 		String trigger = getTrigger();
-		FileConfiguration config = plugin.getConfig();
-		if (isEnabled()) {
-			reloadSettings();
-			String fileName = getConfigValue("bannedPhrases", "badwords.txt");
-			bannedPhrases = loadBadWords(plugin, fileName, trigger);
-			consequences = new Consequence[] {new SetOnFire(), new CreepThemOut(), new Launch(), new Lightning()};
-			PluginManager pm = plugin.getServer().getPluginManager();
-			pm.registerEvents(this, plugin);
-		}
+		FileConfiguration config = getPlugin().getConfig();
+		String fileName = getConfigValue("bannedPhrases", "badwords.txt");
+		bannedPhrases = loadBadWords(getPlugin(), fileName, trigger);
+		consequences = new Consequence[] {new SetOnFire(), new CreepThemOut(), new Launch(), new Lightning()};
 	}
 
 	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)

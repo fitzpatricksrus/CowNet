@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet.plots;
+package us.fitzpatricksr.cownet.commands.plots;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
