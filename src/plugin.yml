@@ -50,6 +50,9 @@ commands:
       aliases: [ snap ]
       description: Keepin the streets safe
       usage: Use /snapshot help.
+  jail:
+      description: Go to or escape from jail
+      usage: Use /jail help
 
 permissions:
     cownet.starve:
@@ -129,6 +132,15 @@ permissions:
         default: op
     cownet.snapshot.reset:
         description: restore jail from the last snapshot
+        default: op
+    cownet.jail:
+        description: go to or escape from jail
+        default: true
+    cownet.jail.jailor:
+        description: send a player to jail
+        default: op
+    cownet.jail.set:
+        description: set a new jail
         default: op
 
 

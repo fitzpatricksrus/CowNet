@@ -7,6 +7,7 @@ import us.fitzpatricksr.cownet.commands.Bounce;
 import us.fitzpatricksr.cownet.commands.HardCore;
 import us.fitzpatricksr.cownet.commands.Hide;
 import us.fitzpatricksr.cownet.commands.HungerGames;
+import us.fitzpatricksr.cownet.commands.Jail;
 import us.fitzpatricksr.cownet.commands.Logins;
 import us.fitzpatricksr.cownet.commands.Nickname;
 import us.fitzpatricksr.cownet.commands.NoSwearing;
@@ -43,6 +44,7 @@ public class CowNetMod extends JavaPlugin {
 				// new FlingPortal(, "flingportal");
 				new Hide(),
 				new Snapshot(),
+				new Jail(),
 		};
 	}
 

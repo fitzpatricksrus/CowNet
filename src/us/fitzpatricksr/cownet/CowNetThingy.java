@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class CowNetThingy implements CommandExecutor {
@@ -165,6 +166,18 @@ public class CowNetThingy implements CommandExecutor {
 		return plugin.getConfig().getString(getTrigger() + "." + key, def);
 	}
 
+	public final Map getConfigValue(String key, Map def) {
+		if (plugin.getConfig().isConfigurationSection(key)) {
+			ConfigurationSection config = plugin.getConfig().getConfigurationSection(key);
+			for (String k : config.getKeys(false)) {
+				def.put(k, config.get(k));
+			}
+			return def;
+		} else {
+			return def;
+		}
+	}
+
 	public final void updateConfigValue(String key, int value) {
 		plugin.getConfig().set(getTrigger() + "." + key, value);
 	}
@@ -182,6 +195,10 @@ public class CowNetThingy implements CommandExecutor {
 	}
 
 	public final void updateConfigValue(String key, String value) {
+		plugin.getConfig().set(getTrigger() + "." + key, value);
+	}
+
+	public final void updateConfigValue(String key, Map<String, ?> value) {
 		plugin.getConfig().set(getTrigger() + "." + key, value);
 	}
 
