@@ -546,12 +546,17 @@ public class CowNetThingy implements CommandExecutor {
 	 */
 	private boolean dispatchMethod(CommandSender sender, Command cmd, String label, String[] args) {
 		String[] bases = (label.equalsIgnoreCase(getTrigger()) ? new String[] {
+				"",
+				// global commands first
 				getTrigger(),
-				""
+				// then local commands
 		} : new String[] {
+				"",
+				// global commands
 				label,
+				// then alias commands
 				getTrigger(),
-				""
+				// them base commands
 		});
 		for (String command : bases) {
 			for (int i = args.length; i >= 0; i--) {

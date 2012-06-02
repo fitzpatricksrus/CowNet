@@ -36,30 +36,34 @@ public class Jail extends CowNetThingy {
 
 	@CowCommand
 	protected boolean doJail(Player player) {
+		Location oldItemsLocation = player.getLocation();
+		player.sendMessage("Your inventory has been placed in a chest at your last location.");
+		player.sendMessage("You need " + escapeFee + " before you can escape.");
+		player.sendMessage("When you think you have enough money, type /jailbreak.");
+		Location spawn = player.getWorld().getSpawnLocation();
+		String worldName = player.getWorld().getName();
+		String baseNode = "worlds." + worldName;
+		int x = getConfigValue(baseNode + ".X", spawn.getBlockX());
+		int y = getConfigValue(baseNode + ".Y", spawn.getBlockY());
+		int z = getConfigValue(baseNode + ".Z", spawn.getBlockZ());
+		Location jailLocation = new Location(player.getWorld(), x, y, z);
+		player.teleport(jailLocation);
+		//save the player's inventory in a chest and clear it.
+		Block c = oldItemsLocation.getBlock();
+		c.setType(Material.CHEST);
+		Chest chest = (Chest) c.getState();
+		Inventory inv = chest.getInventory();
+		inv.setContents(player.getInventory().getContents());
+		player.getInventory().clear();
+		return true;
+	}
+
+	@CowCommand
+	protected boolean doJailbreak(Player player) {
 		if (economy.getPlayerMoneyDouble(player.getName()) > escapeFee) {
 			economy.addPlayerMoney(player.getName(), (double) -escapeFee, true);
 			player.teleport(player.getWorld().getSpawnLocation());
 			player.sendMessage("You've been charged " + escapeFee + " to escape.");
-		} else {
-			Location oldItemsLocation = player.getLocation();
-			player.sendMessage("Your inventory has been placed in a chest at your last location.");
-			player.sendMessage("You need " + escapeFee + " before you can escape.");
-			player.sendMessage("When you think you have enough money, type /jailbreak.");
-			Location spawn = player.getWorld().getSpawnLocation();
-			String worldName = player.getWorld().getName();
-			String baseNode = "worlds." + worldName;
-			int x = getConfigValue(baseNode + ".X", spawn.getBlockX());
-			int y = getConfigValue(baseNode + ".Y", spawn.getBlockY());
-			int z = getConfigValue(baseNode + ".Z", spawn.getBlockZ());
-			Location jailLocation = new Location(player.getWorld(), x, y, z);
-			player.teleport(jailLocation);
-			//save the player's inventory in a chest and clear it.
-			Block c = oldItemsLocation.getBlock();
-			c.setType(Material.CHEST);
-			Chest chest = (Chest) c.getState();
-			Inventory inv = chest.getInventory();
-			inv.setContents(player.getInventory().getContents());
-			player.getInventory().clear();
 		}
 		return true;
 	}
@@ -77,7 +81,7 @@ public class Jail extends CowNetThingy {
 	}
 
 	@CowCommand(opOnly = true)
-	protected boolean doSet(Player player) {
+	protected boolean doJailSet(Player player) {
 		Location jailLocation = player.getLocation();
 		String worldName = player.getWorld().getName();
 		String baseNode = "worlds." + worldName;
@@ -90,7 +94,7 @@ public class Jail extends CowNetThingy {
 	}
 
 	@CowCommand(opOnly = true)
-	protected boolean doList(CommandSender player) {
+	protected boolean doJailList(CommandSender player) {
 		for (World w : getPlugin().getServer().getWorlds()) {
 			String node = "worlds." + w.getName() + ".X";
 			if (getConfigValue(node, Integer.MAX_VALUE) != Integer.MAX_VALUE) {
