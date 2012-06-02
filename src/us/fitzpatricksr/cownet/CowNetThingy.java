@@ -512,168 +512,6 @@ public class CowNetThingy implements CommandExecutor {
 		return true;
 	}
 
-	private static final Class[] args0 = new Class[] {CommandSender.class};
-	private static final Class[] args0p = new Class[] {Player.class};
-	private static final Class[] args1 = new Class[] {
-			CommandSender.class,
-			String.class
-	};
-	private static final Class[] args1p = new Class[] {
-			Player.class,
-			String.class
-	};
-	private static final Class[] args2 = new Class[] {
-			CommandSender.class,
-			String.class,
-			String.class
-	};
-	private static final Class[] args2p = new Class[] {
-			Player.class,
-			String.class,
-			String.class
-	};
-	private static final Class[] args3 = new Class[] {
-			CommandSender.class,
-			String.class,
-			String.class,
-			String.class
-	};
-	private static final Class[] args3p = new Class[] {
-			Player.class,
-			String.class,
-			String.class,
-			String.class
-	};
-	private static final Class[] args4 = new Class[] {
-			CommandSender.class,
-			String.class,
-			String.class,
-			String.class,
-			String.class
-	};
-	private static final Class[] args4p = new Class[] {
-			Player.class,
-			String.class,
-			String.class,
-			String.class,
-			String.class
-	};
-	private static final Class[][] argsX = {
-			args0,
-			args1,
-			args2,
-			args3,
-			args4
-	};
-	private static final Class[][] argsXp = {
-			args0p,
-			args1p,
-			args2p,
-			args3p,
-			args4p
-	};
-	private static final String COMMAND_METHOD_PREFIX = "do";
-
-	private boolean dispatchMethod(CommandSender sender, Command cmd, String label, String[] args) {
-		if (args.length > 0) {
-			// check to see if it's a subcommand
-			Method method = findHandlerMethod(sender, generateMethodName(args[0]), args.length - 1);
-			if (method != null) {
-				if (method.getAnnotation(CowCommand.class) != null) {
-					//looks like we have a subcommand method.  If it's marked a subcommand execute it.
-					CowCommand annotation = method.getAnnotation(CowCommand.class);
-					if (!hasMethodPermissions(sender, annotation)) {
-						sender.sendMessage("You don't have permissions.");
-						return true;
-					}
-
-					try {
-						method.setAccessible(true);
-						LinkedList<Object> paramList = new LinkedList<Object>();
-						paramList.addFirst(sender);
-						for (int i = 1; i < args.length; i++) {
-							paramList.addLast(args[i]);
-						}
-						Object[] params = paramList.toArray();
-						Object result = method.invoke(this, params);
-						return (Boolean) result;
-					} catch (InvocationTargetException e) {
-						e.printStackTrace();
-						return false;
-					} catch (IllegalAccessException e) {
-						e.printStackTrace();
-						return false;
-					} finally {
-						method.setAccessible(false);
-					}
-				}
-			}
-		}
-		Method method = findHandlerMethod(sender, generateMethodName(getTrigger()), args.length);
-		if (method != null) {
-			try {
-				if (method.getAnnotation(CowCommand.class) != null) {
-					//looks like we have a CowCommand method.  If it's marked a CowCommand execute it.
-					CowCommand annotation = method.getAnnotation(CowCommand.class);
-					if (!hasMethodPermissions(sender, annotation)) {
-						sender.sendMessage("You don't have permissions.");
-						return true;
-					}
-
-					method.setAccessible(true);
-					LinkedList<Object> paramList = new LinkedList<Object>();
-					paramList.addFirst(sender);
-					for (String arg : args) {
-						paramList.addLast(arg);
-					}
-					Object[] params = paramList.toArray();
-					Object result = method.invoke(this, params);
-					return (Boolean) result;
-				}
-			} catch (InvocationTargetException e) {
-				e.printStackTrace();
-				return false;
-			} catch (IllegalAccessException e) {
-				e.printStackTrace();
-				return false;
-			} finally {
-				method.setAccessible(false);
-			}
-		}
-
-		return false;
-	}
-
-	protected Method findHandlerMethod(CommandSender sender, String methodName, int stringParamCount) {
-		// hey jf - if we iterate the methods we could have it be case insensitive, but we'd have to
-		// deal with walking the class hierarchy and matching parameters
-		logInfo("findMethod(" + ((sender instanceof Player) ? "player" : "sender") + "," + methodName + "," + stringParamCount + ")");
-		Method method = null;
-		if (sender instanceof Player) {
-			method = getMethod(methodName, stringParamCount, argsXp);
-		}
-		if (method == null) {
-			method = getMethod(methodName, stringParamCount, argsX);
-		}
-		return method;
-	}
-
-	private Method getMethod(String methodName, int stringParamCount, Class[][] signature) {
-		Class clazz = getClass();
-		while (clazz != Object.class) {
-			try {
-				Method method = clazz.getDeclaredMethod(methodName, signature[stringParamCount]);
-				if (method.getReturnType().equals(boolean.class)) {
-					return method;
-				}
-			} catch (NoSuchMethodException e) {
-				// didn't find one here...
-			}
-			clazz = clazz.getSuperclass();
-		}
-		return null;
-	}
-
 	private List<String> getHandlerMethods() {
 		return getHandlerMethods(null);
 	}
@@ -687,7 +525,7 @@ public class CowNetThingy implements CommandExecutor {
 					//OK, we found a command, only add it if the sender has access to it.
 					if (hasMethodPermissions(sender, method.getAnnotation(CowCommand.class))) {
 						// strip off COMMAND_METHOD_PREFIX at the beginning.
-						String name = method.getName().substring(COMMAND_METHOD_PREFIX.length()).toLowerCase();
+						String name = method.getName().substring("do".length()).toLowerCase();
 						methods.add(name);
 					}
 				}
@@ -701,8 +539,49 @@ public class CowNetThingy implements CommandExecutor {
 		return result;
 	}
 
-	private String generateMethodName(String cmdName) {
-		return COMMAND_METHOD_PREFIX + cmdName.toUpperCase().substring(0, 1) + cmdName.toLowerCase().substring(1);
+	// dispatch alias methods, thingy methods, and last global methods
+	/*
+
+
+	 */
+	private boolean dispatchMethod(CommandSender sender, Command cmd, String label, String[] args) {
+		String[] bases = (label.equalsIgnoreCase(getTrigger()) ? new String[] {
+				getTrigger(),
+				""
+		} : new String[] {
+				label,
+				getTrigger(),
+				""
+		});
+		for (String command : bases) {
+			for (int i = args.length; i >= 0; i--) {
+				MethodSignature signature = new MethodSignature(sender, command, args, i);
+				Method method = signature.getMethod(this.getClass());
+				debugInfo(signature.toString() + ((method == null) ? " not found" : "found"));
+				if (method != null) {
+					if (!hasMethodPermissions(sender, method.getAnnotation(CowCommand.class))) {
+						sender.sendMessage("You don't have permissions.");
+						return true;
+					}
+
+					try {
+						method.setAccessible(true);
+						Object result = method.invoke(this, signature.args);
+						return (Boolean) result;
+					} catch (InvocationTargetException e) {
+						e.printStackTrace();
+						return false;
+					} catch (IllegalAccessException e) {
+						e.printStackTrace();
+						return false;
+					} finally {
+						method.setAccessible(false);
+					}
+				}
+			}
+		}
+
+		return false;
 	}
 
 	private boolean hasMethodPermissions(CommandSender sender, CowCommand annotation) {
@@ -720,6 +599,72 @@ public class CowNetThingy implements CommandExecutor {
 				}
 			}
 			return true;
+		}
+	}
+
+	public class MethodSignature {
+		public final String methodName;
+		public final Object[] args;
+		public final Class[] signature;
+
+		public MethodSignature(CommandSender player, String base, String[] argsIn, int split) {
+			methodName = generateMethodName(base, argsIn, split);
+			int argCount = argsIn.length - split;
+			signature = new Class[argCount + 1];
+			args = new Object[argCount + 1];
+			signature[0] = (player instanceof Player) ? Player.class : CommandSender.class;
+			args[0] = player;
+			for (int i = split; i < argsIn.length; i++) {
+				args[i - split + 1] = argsIn[i];
+				signature[i - split + 1] = String.class;
+			}
+		}
+
+		public Method getMethod(Class clazz) {
+			while (clazz != Object.class) {
+				try {
+					Method method = clazz.getDeclaredMethod(methodName, signature);
+					if (method.getReturnType().equals(boolean.class) && method.isAnnotationPresent(CowCommand.class)) {
+						return method;
+					}
+				} catch (NoSuchMethodException e) {
+					// didn't find one, so check super class
+				}
+				clazz = clazz.getSuperclass();
+			}
+			return null;
+		}
+
+		private String generateMethodName(String base, String[] args, int split) {
+			StringBuilder result = new StringBuilder("do");
+			result.append(bumpCase(base));
+			for (int i = 0; i < split; i++) {
+				result.append(bumpCase(args[i]));
+			}
+			return result.toString();
+		}
+
+		private String bumpCase(String s) {
+			StringBuilder result = new StringBuilder();
+			if (s.length() >= 1) {
+				result.append(s.toUpperCase().substring(0, 1));
+				if (s.length() >= 2) {
+					result.append(s.toLowerCase().substring(1));
+				}
+			}
+			return result.toString();
+		}
+
+		public String toString() {
+			StringBuilder result = new StringBuilder(methodName);
+			result.append("(");
+			result.append((args[0] instanceof Player) ? ((Player) args[0]).getName() : "console");
+			for (int i = 1; i < args.length; i++) {
+				result.append(",");
+				result.append(args[i]);
+			}
+			result.append(")");
+			return result.toString();
 		}
 	}
 }
