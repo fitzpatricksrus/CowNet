@@ -2,9 +2,13 @@ package us.fitzpatricksr.cownet.commands;
 
 import cosine.boseconomy.BOSEconomy;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.Chest;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.Plugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
@@ -37,7 +41,10 @@ public class Jail extends CowNetThingy {
 			player.teleport(player.getWorld().getSpawnLocation());
 			player.sendMessage("You've been charged " + escapeFee + " to escape.");
 		} else {
+			Location oldItemsLocation = player.getLocation();
+			player.sendMessage("Your inventory has been placed in a chest at your last location.");
 			player.sendMessage("You need " + escapeFee + " before you can escape.");
+			player.sendMessage("When you think you have enough money, type /jailbreak.");
 			Location spawn = player.getWorld().getSpawnLocation();
 			String worldName = player.getWorld().getName();
 			String baseNode = "worlds." + worldName;
@@ -46,6 +53,13 @@ public class Jail extends CowNetThingy {
 			int z = getConfigValue(baseNode + ".Z", spawn.getBlockZ());
 			Location jailLocation = new Location(player.getWorld(), x, y, z);
 			player.teleport(jailLocation);
+			//save the player's inventory in a chest and clear it.
+			Block c = oldItemsLocation.getBlock();
+			c.setType(Material.CHEST);
+			Chest chest = (Chest) c.getState();
+			Inventory inv = chest.getInventory();
+			inv.setContents(player.getInventory().getContents());
+			player.getInventory().clear();
 		}
 		return true;
 	}
