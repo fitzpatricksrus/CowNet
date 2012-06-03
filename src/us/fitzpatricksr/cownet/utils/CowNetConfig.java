@@ -13,14 +13,22 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class CowNetConfig extends YamlConfiguration {
+public class CowNetConfig extends YamlConfiguration {
 	private JavaPlugin plugin;
+	private String fileName;
 
 	public CowNetConfig(JavaPlugin plugin) {
 		this.plugin = plugin;
 	}
 
-	protected abstract String getFileName();
+	public CowNetConfig(JavaPlugin plugin, String fileName) {
+		this.plugin = plugin;
+		this.fileName = fileName;
+	}
+
+	protected String getFileName() {
+		return fileName;
+	}
 
 	public void loadConfig() throws IOException, InvalidConfigurationException {
 		load(getConfigFile());
