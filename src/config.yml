@@ -92,4 +92,13 @@ jail:
   enable: true
   debug: false
 
+cowperms:
+  enable: true
+  debug: false
+
+cowrank:
+  enable: true
+  debug: false
+  groupNames: Convict,BadBoy,Default,Builder,Trusted,Engineer,BossBuilder,Architect,EarthMover,Terraformer,BlockGod
+
 

@@ -38,6 +38,10 @@ public class CowNetConfig extends YamlConfiguration {
 		save(getConfigFile());
 	}
 
+	public void setPathSeparator(char separator) {
+		options().pathSeparator('/');
+	}
+
 	protected ConfigurationSection getNode(String node) {
 		for (String entry : getKeys(true)) {
 			if (node.equalsIgnoreCase(entry) && isConfigurationSection(entry)) {

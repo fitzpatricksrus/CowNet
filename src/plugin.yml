@@ -54,6 +54,14 @@ commands:
       aliases: [ jailbreak ]
       description: Go to or escape from jail
       usage: Use /jail help
+  cowperms:
+      aliases: [ cperms ]
+      descritpion: It's the permissions mod.
+      usage: User /perms help
+  cowrank:
+      aliases: [ crank ]
+      description: promote/demote a player
+      usage: Use "/crank help"
 
 permissions:
     cownet.starve:
@@ -142,6 +150,12 @@ permissions:
         default: op
     cownet.jail.set:
         description: set a new jail
+        default: op
+    cownet.cowperms:
+        description: can you use the perms mod at all
+        default: op
+    cownet.cowrank:
+        description: If true, allows access to the rankup command
         default: op
 
 

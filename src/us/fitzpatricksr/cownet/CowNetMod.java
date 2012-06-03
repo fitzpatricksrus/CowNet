@@ -4,6 +4,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.commands.Bounce;
+import us.fitzpatricksr.cownet.commands.CowPerms;
+import us.fitzpatricksr.cownet.commands.CowRank;
 import us.fitzpatricksr.cownet.commands.HardCore;
 import us.fitzpatricksr.cownet.commands.Hide;
 import us.fitzpatricksr.cownet.commands.HungerGames;
@@ -12,7 +14,6 @@ import us.fitzpatricksr.cownet.commands.Logins;
 import us.fitzpatricksr.cownet.commands.Nickname;
 import us.fitzpatricksr.cownet.commands.NoSwearing;
 import us.fitzpatricksr.cownet.commands.Plot;
-import us.fitzpatricksr.cownet.commands.Rank;
 import us.fitzpatricksr.cownet.commands.Snapshot;
 import us.fitzpatricksr.cownet.commands.Starve;
 import us.fitzpatricksr.cownet.commands.Timber;
@@ -28,6 +29,7 @@ public class CowNetMod extends JavaPlugin {
 
 	public CowNetMod() {
 		NoSwearing noSwearingMod = new NoSwearing();
+		CowPerms cowPerms = new CowPerms();
 		plot = new Plot(noSwearingMod);
 		commands = new CowNetThingy[] {
 				new Starve(),
@@ -36,7 +38,7 @@ public class CowNetMod extends JavaPlugin {
 				new Logins(),
 				noSwearingMod,
 				plot,
-				new Rank(),
+				//				new Rank(),
 				new Timber(),
 				new HardCore(),
 				new HungerGames(),
@@ -45,6 +47,8 @@ public class CowNetMod extends JavaPlugin {
 				new Hide(),
 				new Snapshot(),
 				new Jail(),
+				cowPerms,
+				new CowRank(cowPerms),
 		};
 	}
 
