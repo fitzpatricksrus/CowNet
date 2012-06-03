@@ -7,16 +7,20 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.Plugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
+
+import java.util.Random;
 
 public class Jail extends CowNetThingy {
 	@Setting
 	private int escapeFee = 500;
 
 	private BOSEconomy economy;
+	private Random rand = new Random();
 
 	@Override
 	protected void onEnable() throws Exception {
@@ -48,6 +52,8 @@ public class Jail extends CowNetThingy {
 		int z = getConfigValue(baseNode + ".Z", spawn.getBlockZ());
 		Location jailLocation = new Location(player.getWorld(), x, y, z);
 		player.teleport(jailLocation);
+		spawnGift(jailLocation);
+
 		//save the player's inventory in a chest and clear it.
 		Block c = oldItemsLocation.getBlock();
 		c.setType(Material.CHEST);
@@ -56,6 +62,22 @@ public class Jail extends CowNetThingy {
 		inv.setContents(player.getInventory().getContents());
 		player.getInventory().clear();
 		return true;
+	}
+
+	private static EntityType[] types = new EntityType[] {
+			EntityType.CHICKEN,
+			EntityType.COW,
+			EntityType.EGG,
+			EntityType.OCELOT,
+			EntityType.PIG,
+			EntityType.SHEEP,
+			EntityType.WOLF
+	};
+
+	private void spawnGift(Location loc) {
+		int t = rand.nextInt(types.length);
+		loc.add(0, 2, 0);
+		loc.getWorld().spawnCreature(loc, types[t]);
 	}
 
 	@CowCommand
