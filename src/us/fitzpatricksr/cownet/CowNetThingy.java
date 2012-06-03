@@ -292,7 +292,7 @@ public class CowNetThingy implements CommandExecutor {
 	 * command to set the value of a setting, both manual and automatic. Changes will be persistent.
 	 */
 	@CowCommand(opOnly = true)
-	private boolean doSet(CommandSender sender, String settingName, String settingValue) {
+	private boolean doSetting(CommandSender sender, String settingName, String settingValue) {
 		// set <setting> <value>
 		if (!setAutoSettingValue(settingName, settingValue) && !updateManualSetting(settingName, settingValue)) {
 			sender.sendMessage("Setting not found or could not be updated.");
@@ -325,10 +325,6 @@ public class CowNetThingy implements CommandExecutor {
 		reloadAutoSettings();
 		reloadManualSettings();
 		doSettings(sender);
-	}
-
-	private Object getAutoSettingValue(String settingName) {
-		return getAutoSettingValue(this, settingName);
 	}
 
 	/**
