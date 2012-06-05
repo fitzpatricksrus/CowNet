@@ -38,7 +38,6 @@ public class CowNetMod extends JavaPlugin {
 				new Logins(),
 				noSwearingMod,
 				plot,
-				//				new Rank(),
 				new Timber(),
 				new HardCore(),
 				new HungerGames(),
