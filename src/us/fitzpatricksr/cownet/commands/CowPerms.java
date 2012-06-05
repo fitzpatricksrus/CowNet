@@ -106,6 +106,7 @@ public class CowPerms extends CowNetThingy implements Listener {
 				player.sendMessage(key + ": " + rawPerms.get(key));
 			}
 		}
+		player.sendMessage("Group: " + getGroup(playerName));
 		return true;
 	}
 
