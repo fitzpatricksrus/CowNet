@@ -148,16 +148,6 @@ public class Snapshot extends CowNetThingy {
 			}
 			performCountdown(System.currentTimeMillis() + resetIntervalSeconds * 1000);
 		}
-
-		/*		for (Player player : getPlugin().getServer().getOnlinePlayers()) {
-					RegionManager regionManager = getWorldGuard().getRegionManager(player.getWorld());
-					ApplicableRegionSet regions = regionManager.getApplicableRegions(player.getLocation());
-					for (ProtectedRegion region : regions) {
-						if (getRegionSaveFile(region) != null) {
-							// OK, this player is in at least one region that needs a message
-						}
-					}
-				} */
 	}
 
 	private long timeUntilNextWake(long timeLeft) {

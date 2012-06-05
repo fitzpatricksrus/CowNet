@@ -1,7 +1,7 @@
 name: CowNetPlugin
 main: us.fitzpatricksr.cownet.CowNetMod
 author: minecraft@fitzpatricksr.us
-version: $Id:$
+version: 3.1415
 load: startup
 softdepend: [Multiverse-Core, WorldGuard, WorldEdit, BOSEconomy]
 commands:
@@ -57,7 +57,7 @@ commands:
   cowperms:
       aliases: [ cperms ]
       descritpion: It's the permissions mod.
-      usage: User /perms help
+      usage: User /cperms help
   cowrank:
       aliases: [ crank ]
       description: promote/demote a player

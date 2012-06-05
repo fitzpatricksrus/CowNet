@@ -61,17 +61,17 @@ public class Jail extends CowNetThingy {
 		Inventory inv = chest.getInventory();
 		inv.setContents(player.getInventory().getContents());
 		player.getInventory().clear();
+
+		economy.addPlayerMoney(player.getName(), 0 - economy.getPlayerMoneyDouble(player.getName()), true);
+
 		return true;
 	}
 
 	private static EntityType[] types = new EntityType[] {
 			EntityType.CHICKEN,
 			EntityType.COW,
-			EntityType.EGG,
-			EntityType.OCELOT,
 			EntityType.PIG,
 			EntityType.SHEEP,
-			EntityType.WOLF
 	};
 
 	private void spawnGift(Location loc) {
@@ -90,7 +90,7 @@ public class Jail extends CowNetThingy {
 		return true;
 	}
 
-	@CowCommand(permission = "jailor")
+	@CowCommand(opOnly = true)
 	protected boolean doJail(CommandSender sender, String playerName) {
 		Player bad = getPlugin().getServer().getPlayer(playerName);
 		if (bad != null) {

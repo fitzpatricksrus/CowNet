@@ -2,7 +2,6 @@ package us.fitzpatricksr.cownet.commands;
 
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -32,7 +31,6 @@ public class NoSwearing extends CowNetThingy implements Listener {
 	@Override
 	protected void onEnable() throws Exception {
 		String trigger = getTrigger();
-		FileConfiguration config = getPlugin().getConfig();
 		String fileName = getConfigValue("bannedPhrases", "badwords.txt");
 		bannedPhrases = loadBadWords(getPlugin(), fileName, trigger);
 		consequences = new Consequence[] {
@@ -87,7 +85,7 @@ public class NoSwearing extends CowNetThingy implements Listener {
 			return words.toArray(new String[words.size()]);
 		} catch (IOException e) {
 			e.printStackTrace();
-			logInfo(trigger + " could not load bad word list.");
+			debugInfo(trigger + " could not load bad word list.");
 			return new String[0];
 		}
 	}
