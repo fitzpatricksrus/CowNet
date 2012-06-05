@@ -85,24 +85,29 @@ public class CowPerms extends CowNetThingy implements Listener {
 
 	@CowCommand(opOnly = true)
 	protected boolean doList(CommandSender player, String playerName) {
+		return doList(player, playerName, null);
+	}
+
+	@CowCommand(opOnly = true)
+	protected boolean doList(CommandSender player, String playerName, String filter) {
 		playerName = playerName.toLowerCase();
 		OfflinePlayer dumpPlayer = getPlugin().getServer().getOfflinePlayer(playerName);
 		boolean isOp = dumpPlayer != null && dumpPlayer.isOp();
 
 		Map<String, String> rawPerms = getRawPermTree(playerName);
 		if (dumpPlayer != null) {
-			Map<String, Boolean> resovledPerms = resolvePermissions(rawPerms, isOp);
-			LinkedList<String> keys = new LinkedList<String>();
-			keys.addAll(resovledPerms.keySet());
-			Collections.sort(keys);
-			for (String key : keys) {
-				player.sendMessage(key + ": " + resovledPerms.get(key));
+			Map<String, Boolean> resolvedPerms = resolvePermissions(rawPerms, isOp);
+			rawPerms.clear();
+			for (Map.Entry<String, Boolean> entry : resolvedPerms.entrySet()) {
+				rawPerms.put(entry.getKey(), String.valueOf(entry.getValue()));
 			}
-		} else {
-			LinkedList<String> keys = new LinkedList<String>();
-			keys.addAll(rawPerms.keySet());
-			Collections.sort(keys);
-			for (String key : keys) {
+		}
+		LinkedList<String> keys = new LinkedList<String>();
+		keys.addAll(rawPerms.keySet());
+		Collections.sort(keys);
+		for (String key : keys) {
+			String line = key + ": " + rawPerms.get(key);
+			if ((filter == null) || line.contains(filter)) {
 				player.sendMessage(key + ": " + rawPerms.get(key));
 			}
 		}
