@@ -97,7 +97,7 @@ public class CowNetThingy implements CommandExecutor {
 			debugInfo(player.getName() + " has " + permissionNode + "." + perm);
 			return true;
 		} else {
-			logInfo(player.getName() + " does not have explicit " + permissionNode + "." + perm);
+			debugInfo(player.getName() + " does not have explicit " + permissionNode + "." + perm);
 			return false;
 		}
 	}
@@ -556,8 +556,12 @@ public class CowNetThingy implements CommandExecutor {
 		});
 		for (String command : bases) {
 			for (int i = args.length; i >= 0; i--) {
+				boolean senderIsPlayer = sender instanceof Player;
 				MethodSignature signature = new MethodSignature(sender, command, args, i);
-				Method method = signature.getMethod(this.getClass());
+				Method method = signature.getMethod(this.getClass(), senderIsPlayer);
+				if ((method == null) && senderIsPlayer) {
+					method = signature.getMethod(this.getClass(), false);
+				}
 				debugInfo(signature.toString() + ((method == null) ? " not found" : "found"));
 				if (method != null) {
 					if (!hasMethodPermissions(sender, method.getAnnotation(CowCommand.class))) {
@@ -613,7 +617,7 @@ public class CowNetThingy implements CommandExecutor {
 			int argCount = argsIn.length - split;
 			signature = new Class[argCount + 1];
 			args = new Object[argCount + 1];
-			signature[0] = (player instanceof Player) ? Player.class : CommandSender.class;
+			signature[0] = CommandSender.class;
 			args[0] = player;
 			for (int i = split; i < argsIn.length; i++) {
 				args[i - split + 1] = argsIn[i];
@@ -621,7 +625,8 @@ public class CowNetThingy implements CommandExecutor {
 			}
 		}
 
-		public Method getMethod(Class clazz) {
+		public Method getMethod(Class clazz, boolean forPlayer) {
+			signature[0] = (forPlayer) ? Player.class : CommandSender.class;
 			while (clazz != Object.class) {
 				try {
 					Method method = clazz.getDeclaredMethod(methodName, signature);

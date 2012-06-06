@@ -39,7 +39,7 @@ public class CowNetConfig extends YamlConfiguration {
 	}
 
 	public void setPathSeparator(char separator) {
-		options().pathSeparator('/');
+		options().pathSeparator(separator);
 	}
 
 	protected ConfigurationSection getNode(String node) {

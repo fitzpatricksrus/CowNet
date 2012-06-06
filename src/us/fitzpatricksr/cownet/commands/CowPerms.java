@@ -21,6 +21,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.utils.CowNetConfig;
 
@@ -29,6 +30,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Permissions are a flat linked list of permissions groups.  A group may inherit and override perms from another
@@ -58,13 +60,13 @@ public class CowPerms extends CowNetThingy implements Listener {
 
 	@Override
 	protected String getHelpString(CommandSender sender) {
-		return "usage: /cperms commands";
+		return "usage: /" + getTrigger() + " commands";
 	}
 
 	@Override
 	protected void onEnable() throws IOException, InvalidConfigurationException {
 		permsFile = new CowNetConfig(getPlugin(), permsFileName);
-		permsFile.setPathSeparator('/');
+		permsFile.setPathSeparator(SEPARATOR);
 		permsFile.loadConfig();
 		for (Player p : getPlugin().getServer().getOnlinePlayers()) {
 			registerPlayer(p);
@@ -91,12 +93,10 @@ public class CowPerms extends CowNetThingy implements Listener {
 	@CowCommand(opOnly = true)
 	protected boolean doList(CommandSender player, String playerName, String filter) {
 		playerName = playerName.toLowerCase();
-		OfflinePlayer dumpPlayer = getPlugin().getServer().getOfflinePlayer(playerName);
-		boolean isOp = dumpPlayer != null && dumpPlayer.isOp();
-
 		Map<String, String> rawPerms = getRawPermTree(playerName);
+		OfflinePlayer dumpPlayer = getPlugin().getServer().getOfflinePlayer(playerName);
 		if (dumpPlayer != null) {
-			Map<String, Boolean> resolvedPerms = resolvePermissions(rawPerms, isOp);
+			Map<String, Boolean> resolvedPerms = resolvePermissions(rawPerms, dumpPlayer.isOp());
 			rawPerms.clear();
 			for (Map.Entry<String, Boolean> entry : resolvedPerms.entrySet()) {
 				rawPerms.put(entry.getKey(), String.valueOf(entry.getValue()));
@@ -173,6 +173,43 @@ public class CowPerms extends CowNetThingy implements Listener {
 		}
 		return true;
 	}
+
+	@CowCommand(opOnly = true)
+	private boolean doDump(CommandSender sender, String playerName) {
+		playerName = playerName.toLowerCase();
+		PermissionAttachment attachment = permissions.get(playerName);
+		if (attachment != null) {
+			Set<PermissionAttachmentInfo> effectivePerms = attachment.getPermissible().getEffectivePermissions();
+			Map<String, Boolean> declaredPerms = attachment.getPermissions();
+
+			LinkedList<String> result = new LinkedList<String>();
+			for (PermissionAttachmentInfo info : effectivePerms) {
+				if (declaredPerms.get(info.getPermission()) == null) {
+					result.add(info.getPermission() + ": " + info.getValue());
+				}
+			}
+			Collections.sort(result);
+			for (String line : result) {
+				sender.sendMessage(line);
+			}
+		}
+		return true;
+	}
+
+	@CowCommand(opOnly = true)
+	private boolean doDumpOps(CommandSender sender) {
+		for (OfflinePlayer player : getPlugin().getServer().getOfflinePlayers()) {
+			boolean isOp = player.isOp();
+			boolean isBanned = player.isBanned();
+			if (isOp || isBanned) {
+				sender.sendMessage(player.getName() + " " +
+						(player.isOp() ? "isOp" : "") +
+						(player.isBanned() ? "isBanned" : ""));
+			}
+		}
+		return true;
+	}
+
 
 	//----------------------------------------
 	// API
@@ -289,15 +326,8 @@ public class CowPerms extends CowNetThingy implements Listener {
 		}
 	}
 
-	public void refreshPermissionsForAllPlayers() {
-		for (Player p : getPlugin().getServer().getOnlinePlayers()) {
-			refreshPermissions(p);
-		}
-	}
-
 	public void refreshPermissions(Player player) {
 		String playerName = player.getName().toLowerCase();
-		String groupName = getGroup(playerName).toLowerCase();
 		boolean isOp = player.isOp();
 
 		PermissionAttachment attachment = permissions.get(playerName);
@@ -331,6 +361,7 @@ public class CowPerms extends CowNetThingy implements Listener {
 			debugInfo(playerName + SEPARATOR + entry.getKey() + ": " + hasPerm);
 		}
 
+		//hey jf - is this needed?  It seems that setPermission already does this.
 		player.recalculatePermissions();
 	}
 
