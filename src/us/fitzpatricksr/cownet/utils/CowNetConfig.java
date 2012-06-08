@@ -100,4 +100,65 @@ public class CowNetConfig extends YamlConfiguration {
 		}
 		return result;
 	}
+
+
+	public final boolean hasValue(String key) {
+		return contains(key);
+	}
+
+	public final int getValue(String key, int def) {
+		return getInt(key, def);
+	}
+
+	public final long getValue(String key, long def) {
+		return getLong(key, def);
+	}
+
+	public final double getValue(String key, double def) {
+		return getDouble(key, def);
+	}
+
+	public final boolean getValue(String key, boolean def) {
+		return getBoolean(key, def);
+	}
+
+	public final String getValue(String key, String def) {
+		return getString(key, def);
+	}
+
+	public final Map getValue(String key, Map def) {
+		if (isConfigurationSection(key)) {
+			ConfigurationSection config = getConfigurationSection(key);
+			for (String k : config.getKeys(false)) {
+				def.put(k, config.get(k));
+			}
+			return def;
+		} else {
+			return def;
+		}
+	}
+
+	public final void updateValue(String key, int value) {
+		set(key, value);
+	}
+
+	public final void updateValue(String key, long value) {
+		set(key, value);
+	}
+
+	public final void updateValue(String key, double value) {
+		set(key, value);
+	}
+
+	public final void updateValue(String key, boolean value) {
+		set(key, value);
+	}
+
+	public final void updateValue(String key, String value) {
+		set(key, value);
+	}
+
+	public final void updateValue(String key, Map<String, ?> value) {
+		set(key, value);
+	}
 }

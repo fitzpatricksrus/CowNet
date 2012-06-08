@@ -142,6 +142,10 @@ public class CowNetThingy implements CommandExecutor {
 	//------------------------------------
 	// methods related to settings and persistent configuration
 
+	public final boolean hasConfigValue(String key) {
+		return plugin.getConfig().contains(key);
+	}
+
 	public final ConfigurationSection getConfigSection() {
 		return (ConfigurationSection) plugin.getConfig().get(getTrigger());
 	}
