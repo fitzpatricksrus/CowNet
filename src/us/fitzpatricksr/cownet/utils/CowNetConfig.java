@@ -65,7 +65,7 @@ public class CowNetConfig extends YamlConfiguration {
 
 	/*
 			Utility routines for saving state.
-		 */
+	*/
 
 	public static void deserialize(Object dest, Map<String, Object> map) {
 		Class<?> c = dest.getClass();
@@ -74,9 +74,12 @@ public class CowNetConfig extends YamlConfiguration {
 			Object value = map.get(key);
 			if (value != null) {
 				try {
+					f.setAccessible(true);
 					f.set(dest, value);
 				} catch (IllegalAccessException e) {
 					e.printStackTrace();
+				} finally {
+					f.setAccessible(false);
 				}
 			}
 		}
@@ -87,13 +90,16 @@ public class CowNetConfig extends YamlConfiguration {
 		Class<?> c = source.getClass();
 		for (Field f : c.getFields()) {
 			int modifiers = f.getModifiers();
-			if (!Modifier.isVolatile(modifiers) && !Modifier.isTransient(modifiers) && !Modifier.isStatic(modifiers) && Modifier.isPublic(modifiers)) {
+			if (!Modifier.isVolatile(modifiers) && !Modifier.isTransient(modifiers) && !Modifier.isStatic(modifiers)) {
 				String key = f.getName();
 				Object value = null;
 				try {
+					f.setAccessible(true);
 					value = f.get(source);
 				} catch (IllegalAccessException e) {
 					e.printStackTrace();
+				} finally {
+					f.setAccessible(false);
 				}
 				result.put(key, value);
 			}
