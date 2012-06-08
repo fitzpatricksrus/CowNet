@@ -21,7 +21,7 @@ public class Snapshot extends CowNetThingy {
 	@Setting
 	private long resetIntervalSeconds = 60 * 60;  // 1 hour in seconds
 	@Setting
-	private int maxBlocks = 1000000;
+	private int maxBlocks = 10000000;
 	@Setting
 	private boolean resetAir = true;
 
@@ -163,8 +163,11 @@ public class Snapshot extends CowNetThingy {
 		} else if (timeLeft <= 5 * 60 * 1000) {
 			// final 5 minutes
 			return 60 * 1000;
-		} else {
+		} else if (timeLeft <= 10 * 60 * 1000) {
+			// final 5 minutes
 			return 5 * 60 * 1000;
+		} else {
+			return 10 * 60 * 1000;
 		}
 	}
 

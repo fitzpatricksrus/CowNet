@@ -180,6 +180,11 @@ public class CowPerms extends CowNetThingy implements Listener {
 
 	@CowCommand(opOnly = true)
 	private boolean doDump(CommandSender sender, String playerName) {
+		return doDump(sender, playerName, null);
+	}
+
+	@CowCommand(opOnly = true)
+	private boolean doDump(CommandSender sender, String playerName, String filter) {
 		playerName = playerName.toLowerCase();
 		PermissionAttachment attachment = permissions.get(playerName);
 		if (attachment != null) {
@@ -189,7 +194,10 @@ public class CowPerms extends CowNetThingy implements Listener {
 			LinkedList<String> result = new LinkedList<String>();
 			for (PermissionAttachmentInfo info : effectivePerms) {
 				if (declaredPerms.get(info.getPermission()) == null) {
-					result.add(info.getPermission() + ": " + info.getValue());
+					String line = info.getPermission() + ": " + info.getValue();
+					if (filter == null || line.contains(filter)) {
+						result.add(line);
+					}
 				}
 			}
 			Collections.sort(result);
