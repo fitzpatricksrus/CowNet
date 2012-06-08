@@ -4,6 +4,7 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -19,7 +20,9 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import us.fitzpatricksr.cownet.CowNetThingy;
@@ -28,6 +31,7 @@ import us.fitzpatricksr.cownet.utils.CowNetConfig;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
@@ -268,6 +272,26 @@ public class CowPerms extends CowNetThingy implements Listener {
 		refreshPermissions(event.getPlayer());
 	}
 
+	@EventHandler(priority = EventPriority.LOWEST)
+	public void onPlayerTeleport(PlayerTeleportEvent event) {
+		refreshPermissions(event.getPlayer());
+	}
+
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	public void onPlayerMove(PlayerMoveEvent event) {
+		Location from = event.getFrom();
+		Location to = event.getTo();
+
+		Set<ProtectedRegion> fromRegions = findRegionsFor(from);
+		Set<ProtectedRegion> toRegions = findRegionsFor(to);
+
+		if (!toRegions.equals(fromRegions)) {
+			//fix region permissions if they changed
+			debugInfo("Recalculating permission due to region change.");
+			refreshPermissions(event.getPlayer());
+		}
+	}
+
 	// Prevent doing things in the event of permissions.build: false
 
 	@EventHandler(ignoreCancelled = true)
@@ -390,17 +414,11 @@ public class CowPerms extends CowNetThingy implements Listener {
 
 	private Map<String, String> getRegionPerms(Player player) {
 		// override with region constraints if worldGuard is present
-		if (getWorldGuard() != null) {
-			Map<String, String> result = new HashMap<String, String>();
-			RegionManager regionManager = getWorldGuard().getRegionManager(player.getWorld());
-			ApplicableRegionSet regions = regionManager.getApplicableRegions(player.getLocation());
-			for (ProtectedRegion region : regions) {
-				result.putAll(getRawPermTree(regionPrefix + region.getId().toLowerCase()));
-			}
-			return result;
-		} else {
-			return Collections.emptyMap();
+		Map<String, String> result = new HashMap<String, String>();
+		for (ProtectedRegion region : findRegionsFor(player.getLocation())) {
+			result.putAll(getRawPermTree(regionPrefix + region.getId().toLowerCase()));
 		}
+		return result;
 	}
 
 	private Map<String, String> getPlayerPerms(OfflinePlayer player, boolean deep) {
@@ -449,6 +467,21 @@ public class CowPerms extends CowNetThingy implements Listener {
 
 	private boolean isMetaSetting(String key) {
 		return inheritTag.equalsIgnoreCase(key);
+	}
+
+	private Set<ProtectedRegion> findRegionsFor(Location loc) {
+		if (getWorldGuard() != null) {
+			RegionManager regionManager = getWorldGuard().getRegionManager(loc.getWorld());
+			ApplicableRegionSet regions = regionManager.getApplicableRegions(loc);
+			if (regions.size() > 0) {
+				HashSet<ProtectedRegion> result = new HashSet<ProtectedRegion>(regions.size());
+				for (ProtectedRegion r : regions) {
+					result.add(r);
+				}
+				return result;
+			}
+		}
+		return Collections.emptySet();
 	}
 
 	private WorldGuardPlugin getWorldGuard() {
