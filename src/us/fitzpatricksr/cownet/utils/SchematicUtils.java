@@ -18,9 +18,11 @@ public class SchematicUtils {
 		try {
 			World w = location.getWorld();
 			EditSession session = new EditSession(new BukkitWorld(w), maxBlocks);
+			session.enableQueue();
 			CuboidClipboard clipBoard = SchematicFormat.MCEDIT.load(schematic);
 			Vector v = new Vector(location.getX(), location.getY(), location.getZ());
 			clipBoard.place(session, v, placeAir);
+			session.flushQueue();
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -46,7 +48,10 @@ public class SchematicUtils {
 		Vector max = new Vector(l2.getX(), l2.getY(), l2.getZ());
 		Vector size = max.subtract(min);
 		CuboidClipboard clip = new CuboidClipboard(size, min);
-		clip.copy(new EditSession(new BukkitWorld(l1.getWorld()), maxBlocks));
+		EditSession session = new EditSession(new BukkitWorld(l1.getWorld()), maxBlocks);
+		session.enableQueue();
+		clip.copy(session);
+		session.flushQueue();
 		try {
 			SchematicFormat.MCEDIT.save(clip, schematic);
 		} catch (IOException e) {
@@ -54,5 +59,6 @@ public class SchematicUtils {
 		} catch (DataException e) {
 			e.printStackTrace();
 		}
+		session.flushQueue();
 	}
 }

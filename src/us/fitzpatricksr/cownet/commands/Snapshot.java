@@ -34,7 +34,7 @@ public class Snapshot extends CowNetThingy {
 
 	@Override
 	protected String getHelpString(CommandSender sender) {
-		return "usage: snapshot [ 'delete' | 'reset' | 'create > ]";
+		return "usage: snapshot [ 'delete' | 'reset' | 'create' ]";
 	}
 
 	@CowCommand(permission = "release")
@@ -167,7 +167,7 @@ public class Snapshot extends CowNetThingy {
 			// final 5 minutes
 			return 5 * 60 * 1000;
 		} else {
-			return 10 * 60 * 1000;
+			return 50 * 60 * 1000;
 		}
 	}
 
@@ -183,8 +183,8 @@ public class Snapshot extends CowNetThingy {
 
 	protected File getSchematicsFolder() {
 		try {
-			File folder = getPlugin().getDataFolder();
-			if (!folder.exists()) {
+			File folder = new File(getPlugin().getDataFolder(), "jails");
+			if (!folder.exists() && !folder.mkdirs()) {
 				return null;
 			}
 			return folder;
