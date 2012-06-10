@@ -99,12 +99,11 @@ public class Logins extends CowNetThingy implements Listener {
 		saveGameMode(event.getPlayer());
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerChat(PlayerChatEvent event) {
-		if (event.isCancelled()) return;
 		if (log != null) {
 			LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage(event.getMessage());
-			log.println(entry.toString() + (event.isCancelled() ? " (CANCELED)" : ""));
+			log.println(entry.toString());
 			log.flush();
 			queueEntry(entry);
 		}
@@ -112,7 +111,6 @@ public class Logins extends CowNetThingy implements Listener {
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerCommand(PlayerCommandPreprocessEvent event) {
-		if (event.isCancelled()) return;
 		if (log != null) {
 			LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage(event.getMessage());
 			log.println(entry.toString());
@@ -123,7 +121,6 @@ public class Logins extends CowNetThingy implements Listener {
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerCommand(PlayerGameModeChangeEvent event) {
-		if (event.isCancelled()) return;
 		if (log != null) {
 			LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage("set game mode: " + event.getNewGameMode());
 			log.println(entry.toString());
