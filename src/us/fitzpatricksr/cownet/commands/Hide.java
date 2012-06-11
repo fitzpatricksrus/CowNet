@@ -9,12 +9,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerChatEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -125,13 +127,13 @@ public class Hide extends CowNetThingy implements Listener {
 		}
 	}
 
-	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-	public void onPlayerInteract(PlayerInteractEvent event) {
-		if (isHidden(event.getPlayer())) {
-			event.setCancelled(true);
-			debugInfo("Canceled interaction.");
-		}
-	}
+	/*	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+		public void onPlayerInteract(PlayerInteractEvent event) {
+			if (isHidden(event.getPlayer())) {
+				debugInfo("Canceled interaction: ");
+				event.setCancelled(true);
+			}
+		} */
 
 	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onPlayerPickupItem(PlayerPickupItemEvent event) {
@@ -148,6 +150,40 @@ public class Hide extends CowNetThingy implements Listener {
 			debugInfo("Canceled shear.");
 		}
 	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onBlockPlace(BlockPlaceEvent event) {
+		if (isHidden(event.getPlayer())) {
+			event.setCancelled(true);
+			debugInfo("Canceled block place.");
+		}
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onBlockBreak(BlockBreakEvent event) {
+		if (isHidden(event.getPlayer())) {
+			event.setCancelled(true);
+			debugInfo("Canceled block break.");
+		}
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onPickupItem(PlayerPickupItemEvent event) {
+		if (isHidden(event.getPlayer())) {
+			event.setCancelled(true);
+			debugInfo("Canceled pickup item.");
+		}
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerDropItem(PlayerDropItemEvent event) {
+		if (isHidden(event.getPlayer())) {
+			event.setCancelled(true);
+			debugInfo("Canceled drop items.");
+		}
+	}
+
+	// ------------------------------
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerJoin(PlayerJoinEvent event) {
