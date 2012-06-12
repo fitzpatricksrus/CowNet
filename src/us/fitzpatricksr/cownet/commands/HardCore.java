@@ -234,12 +234,12 @@ public class HardCore extends CowNetThingy implements Listener {
 		return true;
 	}
 
-	@CowCommand
+	@CowCommand(permission = "info")
 	protected boolean doList(CommandSender player) {
 		return doInfo(player);
 	}
 
-	@CowCommand
+	@CowCommand(permission = "info")
 	protected boolean doStats(CommandSender player) {
 		return doInfo(player);
 	}

@@ -26,6 +26,10 @@ public class CowNetConfig extends YamlConfiguration {
 		this.fileName = fileName;
 	}
 
+	protected JavaPlugin getPlugin() {
+		return plugin;
+	}
+
 	protected String getFileName() {
 		return fileName;
 	}

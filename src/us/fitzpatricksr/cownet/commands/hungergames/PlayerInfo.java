@@ -3,6 +3,9 @@ package us.fitzpatricksr.cownet.commands.hungergames;
 import org.bukkit.entity.Player;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
+/**
+ * Transient player state when a game is in progress.
+ */
 public class PlayerInfo {
 	private static enum PlayerState {
 		TRIBUTE("a tribute in the games"),

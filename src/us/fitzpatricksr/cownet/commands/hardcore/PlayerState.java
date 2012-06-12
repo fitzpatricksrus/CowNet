@@ -12,6 +12,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
+/**
+ * This class holds the state of the individual players.  This is mostly just stats used to
+ * determine when to do a world-wipe and to reports simple stats rankings.
+ */
 @SerializableAs("PlayerState")
 public class PlayerState implements ConfigurationSerializable, Comparable<PlayerState> {
 	static {
