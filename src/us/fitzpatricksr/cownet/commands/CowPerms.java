@@ -125,9 +125,9 @@ public class CowPerms extends CowNetThingy implements Listener {
 		debugInfo("Setting " + playerName + SEPARATOR + permName + " to " + value);
 
 		if ("op".equalsIgnoreCase(value) || isMetaSetting(permName)) {
-			permsFile.set(playerName + SEPARATOR + permName, value);
+			permsFile.updateConfigValue(playerName + SEPARATOR + permName, value);
 		} else {
-			permsFile.set(playerName + SEPARATOR + permName, Boolean.valueOf(value));
+			permsFile.updateConfigValue(playerName + SEPARATOR + permName, Boolean.valueOf(value));
 		}
 		try {
 			permsFile.saveConfig();
@@ -229,13 +229,13 @@ public class CowPerms extends CowNetThingy implements Listener {
 
 	public String getGroup(String playerName) {
 		playerName = playerName.toLowerCase();
-		return permsFile.getString(playerName + SEPARATOR + inheritTag);
+		return permsFile.getConfigValue(playerName + SEPARATOR + inheritTag, (String) null);
 	}
 
 	public void setGroup(String playerName, String groupName) throws IOException {
 		playerName = playerName.toLowerCase();
 		groupName = groupName.toLowerCase();
-		permsFile.set(playerName + SEPARATOR + inheritTag, groupName);
+		permsFile.updateConfigValue(playerName + SEPARATOR + inheritTag, groupName);
 		permsFile.saveConfig();
 		Player p = getPlugin().getServer().getPlayer(playerName);
 		if (p != null) {

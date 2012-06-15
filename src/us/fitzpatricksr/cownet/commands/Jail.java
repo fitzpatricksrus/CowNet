@@ -45,7 +45,7 @@ public class Jail extends CowNetThingy {
 		Location oldItemsLocation = player.getLocation();
 		String playerNode = playerNodeName(player.getName());
 		String worldNode = worldNodeName(player.getWorld().getName());
-		if (config.getValue(playerNode, false)) {
+		if (config.getConfigValue(playerNode, false)) {
 			// player is already in jail
 			player.sendMessage("You're already in jail!");
 			player.sendMessage("Try /jailbreak");
@@ -59,7 +59,7 @@ public class Jail extends CowNetThingy {
 			spawnGift(jailLocation);
 
 			//save the player's inventory in a chest and clear it.
-			config.updateValue(playerNode, true);
+			config.updateConfigValue(playerNode, true);
 			setLocation(playerNode, oldItemsLocation);
 			/*			Block c = oldItemsLocation.getBlock();
 						c.setType(Material.CHEST);
@@ -93,7 +93,7 @@ public class Jail extends CowNetThingy {
 	@CowCommand
 	protected boolean doJailbreak(Player player) {
 		String playerNode = playerNodeName(player.getName());
-		if (!config.getValue(playerNode, false)) {
+		if (!config.getConfigValue(playerNode, false)) {
 			player.sendMessage("You aren't in jail.");
 		} else {
 			Location loc = getLocation(playerNode, player.getWorld().getSpawnLocation());
@@ -103,7 +103,7 @@ public class Jail extends CowNetThingy {
 					economy.addPlayerMoney(player.getName(), (double) -escapeFee, true);
 					player.teleport(loc);
 					player.sendMessage("You've been charged " + escapeFee + " " + currency() + " to escape.");
-					config.updateValue(playerNode, false);
+					config.updateConfigValue(playerNode, false);
 					saveState();
 				} else {
 					double needed = escapeFee - economy.getPlayerMoneyDouble(player.getName());
@@ -112,7 +112,7 @@ public class Jail extends CowNetThingy {
 			} else {
 				// no economy so it's a free for all!
 				player.teleport(loc);
-				config.updateValue(playerNode, false);
+				config.updateConfigValue(playerNode, false);
 				saveState();
 			}
 		}
@@ -134,7 +134,7 @@ public class Jail extends CowNetThingy {
 	@CowCommand
 	protected boolean doJailInfo(Player player) {
 		String playerNode = playerNodeName(player.getName());
-		if (!config.getValue(playerNode, false)) {
+		if (!config.getConfigValue(playerNode, false)) {
 			player.sendMessage("You aren't in jail.");
 		} else {
 			player.sendMessage("You are in jail.");
@@ -166,7 +166,7 @@ public class Jail extends CowNetThingy {
 	protected boolean doJailList(CommandSender player) {
 		for (World w : getPlugin().getServer().getWorlds()) {
 			String node = worldNodeName(w.getName()) + ".X";
-			if (config.getValue(node, Integer.MAX_VALUE) != Integer.MAX_VALUE) {
+			if (config.getConfigValue(node, Integer.MAX_VALUE) != Integer.MAX_VALUE) {
 				player.sendMessage("  " + w.getName());
 			}
 		}
@@ -195,21 +195,21 @@ public class Jail extends CowNetThingy {
 	}
 
 	private boolean hasLocation(String name) {
-		return config.hasValue(name + ".X");
+		return config.hasConfigValue(name + ".X");
 
 	}
 
 	private Location getLocation(String name, Location defaultValue) {
-		int x = config.getValue(name + ".X", defaultValue.getBlockX());
-		int y = config.getValue(name + ".Y", defaultValue.getBlockY());
-		int z = config.getValue(name + ".Z", defaultValue.getBlockZ());
+		int x = config.getConfigValue(name + ".X", defaultValue.getBlockX());
+		int y = config.getConfigValue(name + ".Y", defaultValue.getBlockY());
+		int z = config.getConfigValue(name + ".Z", defaultValue.getBlockZ());
 		return new Location(defaultValue.getWorld(), x, y, z);
 	}
 
 	public void setLocation(String name, Location value) {
-		config.updateValue(name + ".X", value.getBlockX());
-		config.updateValue(name + ".Y", value.getBlockY());
-		config.updateValue(name + ".Z", value.getBlockZ());
+		config.updateConfigValue(name + ".X", value.getBlockX());
+		config.updateConfigValue(name + ".Y", value.getBlockY());
+		config.updateConfigValue(name + ".Z", value.getBlockZ());
 	}
 
 	private void saveState() {

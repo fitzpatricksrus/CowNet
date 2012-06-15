@@ -19,8 +19,8 @@ import java.util.Map;
 public class GameHistory extends CowNetConfig {
 	private static final int MAX_RECENT_WINNERS = 5;
 	private LinkedList<String> recentWinners = new LinkedList<String>();
-	private HashMap<String, Integer> playerWins = new HashMap<String, Integer>();
-	private HashMap<String, Integer> playerLosses = new HashMap<String, Integer>();
+	private HashMap<String, Integer> playerWins = new HashMap<String, Integer>(); //player name, win count
+	private HashMap<String, Integer> playerLosses = new HashMap<String, Integer>(); // player name, loss count
 
 	private transient String fileName;
 
@@ -137,17 +137,17 @@ public class GameHistory extends CowNetConfig {
 	public void loadConfig() throws IOException, InvalidConfigurationException {
 		super.loadConfig();
 		recentWinners = new LinkedList<String>();
-		recentWinners.addAll(getStringList("recentWinners"));
+		recentWinners.addAll(getStringList("recentWinners", Collections.EMPTY_LIST));
 		playerWins = new HashMap<String, Integer>();
 		playerLosses = new HashMap<String, Integer>();
-		if (get("playerWins") != null) {
-			Map<String, Object> winsTemp = ((ConfigurationSection) get("playerWins")).getValues(false);
+		if (hasConfigValue("playerWins")) {
+			Map<String, Object> winsTemp = ((ConfigurationSection) getConfigValue("playerWins", (Object) null)).getValues(false);
 			for (String key : winsTemp.keySet()) {
 				playerWins.put(key, (Integer) winsTemp.get(key));
 			}
 		}
-		if (get("playerLosses") != null) {
-			Map<String, Object> lossTemp = ((ConfigurationSection) get("playerLosses")).getValues(false);
+		if (hasConfigValue("playerLosses")) {
+			Map<String, Object> lossTemp = ((ConfigurationSection) getConfigValue("playerLosses", (Object) null)).getValues(false);
 			for (String key : lossTemp.keySet()) {
 				playerLosses.put(key, (Integer) lossTemp.get(key));
 			}
@@ -155,9 +155,9 @@ public class GameHistory extends CowNetConfig {
 	}
 
 	public void saveConfig() {
-		set("recentWinners", recentWinners);
-		set("playerWins", playerWins);
-		set("playerLosses", playerLosses);
+		updateConfigValue("recentWinners", recentWinners);
+		updateConfigValue("playerWins", playerWins);
+		updateConfigValue("playerLosses", playerLosses);
 		try {
 			super.saveConfig();
 		} catch (IOException e) {

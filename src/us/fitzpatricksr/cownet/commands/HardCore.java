@@ -579,12 +579,12 @@ public class HardCore extends CowNetThingy implements Listener {
 
 		public void loadConfig() throws IOException, InvalidConfigurationException {
 			super.loadConfig();
-			creationDate = getString("creationdate", creationDate);
+			creationDate = getConfigValue("creationdate", creationDate);
 
 			allPlayers.clear();
 
-			if (get("players") instanceof MemorySection) {
-				MemorySection section = (MemorySection) get("players");
+			MemorySection section = (MemorySection) getConfigurationSection("players");
+			if (section != null && section instanceof MemorySection) {
 				for (String key : section.getKeys(false)) {
 					PlayerState ps = (PlayerState) section.get(key);
 					allPlayers.put(key.toLowerCase(), ps);
@@ -594,8 +594,8 @@ public class HardCore extends CowNetThingy implements Listener {
 
 		public void saveConfig() {
 			debugInfo("saveConfig()");
-			set("creationdate", creationDate);
-			set("players", allPlayers);
+			updateConfigValue("creationdate", creationDate);
+			updateConfigValue("players", allPlayers);
 			try {
 				super.saveConfig();
 			} catch (IOException e) {

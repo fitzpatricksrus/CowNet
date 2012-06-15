@@ -6,6 +6,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import us.fitzpatricksr.cownet.utils.PersistentState;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
 import java.lang.annotation.Retention;
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public class CowNetThingy implements CommandExecutor {
+public class CowNetThingy implements CommandExecutor, PersistentState {
 
 	@Retention(RetentionPolicy.RUNTIME)
 	public @interface Setting {
@@ -142,34 +143,37 @@ public class CowNetThingy implements CommandExecutor {
 	//------------------------------------
 	// methods related to settings and persistent configuration
 
+	@Override
 	public final boolean hasConfigValue(String key) {
 		return plugin.getConfig().contains(key);
 	}
 
-	public final ConfigurationSection getConfigSection() {
-		return (ConfigurationSection) plugin.getConfig().get(getTrigger());
-	}
-
+	@Override
 	public final int getConfigValue(String key, int def) {
 		return plugin.getConfig().getInt(getTrigger() + "." + key, def);
 	}
 
+	@Override
 	public final long getConfigValue(String key, long def) {
 		return plugin.getConfig().getLong(getTrigger() + "." + key, def);
 	}
 
+	@Override
 	public final double getConfigValue(String key, double def) {
 		return plugin.getConfig().getDouble(getTrigger() + "." + key, def);
 	}
 
+	@Override
 	public final boolean getConfigValue(String key, boolean def) {
 		return plugin.getConfig().getBoolean(getTrigger() + "." + key, def);
 	}
 
+	@Override
 	public final String getConfigValue(String key, String def) {
 		return plugin.getConfig().getString(getTrigger() + "." + key, def);
 	}
 
+	@Override
 	public final Map getConfigValue(String key, Map def) {
 		if (plugin.getConfig().isConfigurationSection(key)) {
 			ConfigurationSection config = plugin.getConfig().getConfigurationSection(key);
@@ -182,27 +186,64 @@ public class CowNetThingy implements CommandExecutor {
 		}
 	}
 
+	@Override
+	public final List<?> getConfigValue(String key, List<?> def) {
+		return plugin.getConfig().getList(key, def);
+	}
+
+	@Override
+	public Object getConfigValue(String key, Object def) {
+		return plugin.getConfig().get(key, def);
+	}
+
+	@Override
+	public List<String> getStringList(String key, List<String> def) {
+		List<String> result = plugin.getConfig().getStringList(key);
+		return (result != null) ? result : def;
+	}
+
+	@Override
+	public ConfigurationSection getConfigurationSection(String key) {
+		return plugin.getConfig().getConfigurationSection(key);
+	}
+
+	@Override
 	public final void updateConfigValue(String key, int value) {
 		plugin.getConfig().set(getTrigger() + "." + key, value);
 	}
 
+	@Override
 	public final void updateConfigValue(String key, long value) {
 		plugin.getConfig().set(getTrigger() + "." + key, value);
 	}
 
+	@Override
 	public final void updateConfigValue(String key, double value) {
 		plugin.getConfig().set(getTrigger() + "." + key, value);
 	}
 
+	@Override
 	public final void updateConfigValue(String key, boolean value) {
 		plugin.getConfig().set(getTrigger() + "." + key, value);
 	}
 
+	@Override
 	public final void updateConfigValue(String key, String value) {
 		plugin.getConfig().set(getTrigger() + "." + key, value);
 	}
 
+	@Override
 	public final void updateConfigValue(String key, Map<String, ?> value) {
+		plugin.getConfig().set(getTrigger() + "." + key, value);
+	}
+
+	@Override
+	public final void updateConfigValue(String key, List<?> value) {
+		plugin.getConfig().set(getTrigger() + "." + key, value);
+	}
+
+	@Override
+	public void updateConfigValue(String key, Object value) {
 		plugin.getConfig().set(getTrigger() + "." + key, value);
 	}
 
