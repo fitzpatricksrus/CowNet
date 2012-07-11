@@ -101,7 +101,7 @@ public abstract class BasePersistentState implements PersistentState {
 	@Override
 	public final Map getConfigValue(String key, Map def) {
 		if (getConfig().isConfigurationSection(key)) {
-			ConfigurationSection section = getConfig().getConfigurationSection(key);
+			ConfigurationSection section = getConfigurationSection(key);
 			for (String k : section.getKeys(false)) {
 				def.put(k, section.get(k));
 			}
@@ -172,5 +172,8 @@ public abstract class BasePersistentState implements PersistentState {
 		getConfig().set(key, o);
 	}
 
-
+	@Override
+	public void removeConfigValue(String key) {
+		getConfig().set(key, null);
+	}
 }

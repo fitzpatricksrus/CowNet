@@ -101,4 +101,7 @@ cowrank:
   debug: false
   groupNames: Convict,BadBoy,Default,Builder,Trusted,Engineer,BossBuilder,Architect,EarthMover,Terraformer,BlockGod
 
+cowwarp:
+  enable: true
+  debug: false
 

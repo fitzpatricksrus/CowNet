@@ -55,13 +55,17 @@ commands:
       description: Go to or escape from jail
       usage: Use /jail help
   cowperms:
-      aliases: [ cperms ]
+      aliases: [ cperms, perms ]
       descritpion: It's the permissions mod.
       usage: User /cperms help
   cowrank:
-      aliases: [ crank ]
+      aliases: [ crank, rank ]
       description: promote/demote a player
       usage: Use "/crank help"
+  cowwarp:
+      aliases: [ cwarp ]
+      description: define and use warp points
+      usage: Use "/cowwarp help"
 
 permissions:
     cownet.starve:
@@ -157,5 +161,8 @@ permissions:
     cownet.cowrank:
         description: If true, allows access to the rankup command
         default: op
+    cownet.cowwarp:
+        description: allowed to use warps
+        default: true
 
 

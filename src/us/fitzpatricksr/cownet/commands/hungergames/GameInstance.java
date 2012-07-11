@@ -34,7 +34,7 @@ public class GameInstance {
 
 	private long firstPlayerJoinTime = 0;
 	private int gameSize = 0; //the most people who have ever been in the games
-	private HashMap<Player, PlayerInfo> gameInfo = new HashMap<Player, PlayerInfo>();
+	private HashMap<String, PlayerInfo> gameInfo = new HashMap<String, PlayerInfo>();  //player name -> PlayerInfo
 
 	public String getGameStatusMessage() {
 		if (isEnded()) {
@@ -108,10 +108,10 @@ public class GameInstance {
 	}
 
 	public PlayerInfo getPlayerInfo(Player p) {
-		PlayerInfo info = gameInfo.get(p);
+		PlayerInfo info = gameInfo.get(p.getName());
 		if (info == null) {
 			info = new PlayerInfo(p);
-			gameInfo.put(p, info);
+			gameInfo.put(p.getName(), info);
 		}
 		return info;
 	}

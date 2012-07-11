@@ -6,15 +6,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.commands.Bounce;
 import us.fitzpatricksr.cownet.commands.CowPerms;
 import us.fitzpatricksr.cownet.commands.CowRank;
+import us.fitzpatricksr.cownet.commands.CowWarp;
 import us.fitzpatricksr.cownet.commands.HardCore;
 import us.fitzpatricksr.cownet.commands.Hide;
 import us.fitzpatricksr.cownet.commands.HungerGames;
-import us.fitzpatricksr.cownet.commands.Jail;
 import us.fitzpatricksr.cownet.commands.Logins;
-import us.fitzpatricksr.cownet.commands.Nickname;
 import us.fitzpatricksr.cownet.commands.NoSwearing;
 import us.fitzpatricksr.cownet.commands.Plot;
-import us.fitzpatricksr.cownet.commands.Snapshot;
 import us.fitzpatricksr.cownet.commands.Starve;
 import us.fitzpatricksr.cownet.commands.Timber;
 import us.fitzpatricksr.cownet.commands.TntSheep;
@@ -41,13 +39,14 @@ public class CowNetMod extends JavaPlugin {
 				new Timber(),
 				new HardCore(),
 				new HungerGames(),
-				new Nickname(),
+				// new Nickname(),
 				// new FlingPortal(, "flingportal");
 				new Hide(),
-				new Snapshot(),
-				new Jail(),
+				// new Snapshot(),
+				// new Jail(),
 				cowPerms,
 				new CowRank(cowPerms),
+				new CowWarp()
 		};
 	}
 

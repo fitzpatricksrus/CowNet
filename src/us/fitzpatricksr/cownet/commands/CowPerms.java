@@ -209,7 +209,7 @@ public class CowPerms extends CowNetThingy implements Listener {
 	}
 
 	@CowCommand(opOnly = true)
-	private boolean doDumpOps(CommandSender sender) {
+	private boolean doDumpops(CommandSender sender) {
 		for (OfflinePlayer player : getPlugin().getServer().getOfflinePlayers()) {
 			boolean isOp = player.isOp();
 			boolean isBanned = player.isBanned();

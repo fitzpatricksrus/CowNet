@@ -43,4 +43,6 @@ public interface PersistentState {
 	void updateConfigValue(String key, List<?> value);
 
 	void updateConfigValue(String key, Object o);
+
+	void removeConfigValue(String key);
 }

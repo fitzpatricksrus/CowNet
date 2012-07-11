@@ -247,6 +247,11 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
 		plugin.getConfig().set(getTrigger() + "." + key, value);
 	}
 
+	@Override
+	public void removeConfigValue(String key) {
+		plugin.getConfig().set(getTrigger() + "." + key, null);
+	}
+
 	public final void saveConfiguration() {
 		plugin.saveConfig();
 	}
@@ -581,10 +586,6 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
 	}
 
 	// dispatch alias methods, thingy methods, and last global methods
-	/*
-
-
-	 */
 	private boolean dispatchMethod(CommandSender sender, Command cmd, String label, String[] args) {
 		String[] bases = (label.equalsIgnoreCase(getTrigger()) ? new String[] {
 				"",

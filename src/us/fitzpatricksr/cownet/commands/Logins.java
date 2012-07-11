@@ -99,7 +99,7 @@ public class Logins extends CowNetThingy implements Listener {
 		saveGameMode(event.getPlayer());
 	}
 
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void onPlayerChat(PlayerChatEvent event) {
 		if (log != null) {
 			LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage(event.getMessage());
