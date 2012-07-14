@@ -66,6 +66,7 @@ public class CowWarp extends CowNetThingy {
 		try {
 			WarpData warps = getWarpsFor(player.getName());
 			warps.setWarp(warpName, player.getLocation());
+			player.sendMessage("Warp set.");
 		} catch (IOException e) {
 			player.sendMessage("There was a problem and the warp could not be set.");
 			e.printStackTrace();
@@ -76,10 +77,20 @@ public class CowWarp extends CowNetThingy {
 	}
 
 	@CowCommand
+	protected boolean doDelete(Player player, String warpName) {
+		return doRemove(player, warpName);
+	}
+
+	@CowCommand
 	protected boolean doRemove(Player player, String warpName) {
 		WarpData warps = getWarpsFor(player.getName());
 		try {
-			warps.removeWarp(warpName);
+			if (warps.warpExists(warpName)) {
+				warps.removeWarp(warpName);
+				player.sendMessage("Warp removed.");
+			} else {
+				player.sendMessage("Warp not found, public, or not owned by you.");
+			}
 		} catch (IOException e) {
 			player.sendMessage("There was a problem and the warp could not be removed.");
 			e.printStackTrace();
@@ -133,6 +144,7 @@ public class CowWarp extends CowNetThingy {
 				WarpData publicWarps = getWarpsFor(publicWarpKey);
 				warps.removeWarp(warpName);
 				publicWarps.setWarp(player.getName(), warpName, loc);
+				player.sendMessage("Warp shared.");
 			}
 		} catch (IOException e) {
 			player.sendMessage("There was a problem and the warp could not be set.");
@@ -154,6 +166,7 @@ public class CowWarp extends CowNetThingy {
 				WarpData privateWarps = getWarpsFor(player.getName());
 				publicWarps.removeWarp(player.getName(), warpName);
 				privateWarps.setWarp(warpName, loc);
+				player.sendMessage("Warp unshared.");
 			}
 		} catch (IOException e) {
 			player.sendMessage("There was a problem and the warp could not be set.");
@@ -168,10 +181,12 @@ public class CowWarp extends CowNetThingy {
 	// a public warp if the player doesn't have one
 	private Location getWarp(String playerName, String warpName) {
 		WarpData warps = getWarpsFor(playerName);
-		if (warps == null) {
+		Location result = warps.getWarpLocation(warpName);
+		if (result == null) {
 			warps = getWarpsFor(publicWarpKey);
+			result = warps.getWarpLocation(warpName);
 		}
-		return warps.getWarpLocation(warpName);
+		return result;
 	}
 
 	// return a map of warp points for a particular player
@@ -266,6 +281,7 @@ public class CowWarp extends CowNetThingy {
 					removeConfigValue("warps." + warpName + ".x");
 					removeConfigValue("warps." + warpName + ".y");
 					removeConfigValue("warps." + warpName + ".z");
+					removeConfigValue("warps." + warpName);
 					saveConfig();
 				} else {
 					throw new IllegalAccessException("You can't delete a warp owned by " + owner);
