@@ -63,9 +63,9 @@ commands:
       description: promote/demote a player
       usage: Use "/crank help"
   cowwarp:
-      aliases: [ cwarp ]
+      aliases: [ cwarp, warp ]
       description: define and use warp points
-      usage: Use "/cowwarp help"
+      usage: Use "/warp help"
 
 permissions:
     cownet.starve:

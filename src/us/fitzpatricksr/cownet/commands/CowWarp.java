@@ -50,6 +50,18 @@ public class CowWarp extends CowNetThingy {
 		warps = new HashMap<String, WarpData>();
 	}
 
+	@Override
+	protected String[] getHelpText(CommandSender player) {
+		return new String[] {
+				"usage: /warp <warpName> to go to a warp location  ",
+				"  /warp list - list warps  ",
+				"  /warp set <name> - sets or replaces a warp",
+				"  /warp delete <name> - remove a warp",
+				"  /warp share <name> - share a warp with other.",
+				"  /warp unshare <name> - unshare a warp"
+		};
+	}
+
 	@CowCommand
 	protected boolean doCowwarp(Player player, String warpName) {
 		Location loc = getWarp(player.getName(), warpName);
