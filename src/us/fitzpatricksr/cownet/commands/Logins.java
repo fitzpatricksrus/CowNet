@@ -120,7 +120,7 @@ public class Logins extends CowNetThingy implements Listener {
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-	public void onPlayerCommand(PlayerGameModeChangeEvent event) {
+	public void onPlayerGameModeChanged(PlayerGameModeChangeEvent event) {
 		if (log != null) {
 			LogEntry entry = new LogEntry().forUser(event.getPlayer()).forMessage("set game mode: " + event.getNewGameMode());
 			log.println(entry.toString());
