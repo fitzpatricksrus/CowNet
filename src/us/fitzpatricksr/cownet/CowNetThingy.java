@@ -501,10 +501,15 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
 		HashMap<String, Field> settings = new HashMap<String, Field>();
 		while (clazz != null && !clazz.equals(Object.class)) {
 			for (Field f : clazz.getDeclaredFields()) {
-				if (f.isAnnotationPresent(Setting.class)) {
-					Setting settingAnnotation = f.getAnnotation(Setting.class);
-					String name = (settingAnnotation.name().isEmpty()) ? f.getName() : settingAnnotation.name();
-					settings.put(name, f);
+				f.setAccessible(true);
+				try {
+					if (f.isAnnotationPresent(Setting.class)) {
+						Setting settingAnnotation = f.getAnnotation(Setting.class);
+						String name = (settingAnnotation.name().isEmpty()) ? f.getName() : settingAnnotation.name();
+						settings.put(name, f);
+					}
+				} finally {
+					f.setAccessible(false);
 				}
 			}
 			clazz = clazz.getSuperclass();
@@ -524,8 +529,9 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
 		HashMap<String, Field> auto = getAutomaticSettings(source);
 		HashMap<String, String> result = new HashMap<String, String>(auto.size());
 		for (String key : auto.keySet()) {
+			Field field = auto.get(key);
 			try {
-				Field field = auto.get(key);
+				field.setAccessible(true);
 				boolean isClass = source instanceof Class;
 				boolean isStatic = Modifier.isStatic(field.getModifiers());
 				if (isClass == isStatic) {
@@ -534,6 +540,8 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
 				}
 			} catch (IllegalAccessException e) {
 				e.printStackTrace();
+			} finally {
+				field.setAccessible(false);
 			}
 		}
 		return result;
