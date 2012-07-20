@@ -99,9 +99,12 @@ cowperms:
 cowrank:
   enable: true
   debug: false
-  groupNames: Convict,BadBoy,Default,Builder,Trusted,Engineer,BossBuilder,Architect,EarthMover,Terraformer,BlockGod
+  groupNames: Convict,BadBoy,Default,Builder,Trusted,Engineer,BossBuilder,Architect,EarthMover,Terraformer,BlockGod,Admin
 
 cowwarp:
   enable: true
   debug: false
 
+gatheredgame:
+  enable: true
+  debug: true

@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 
 /*
 This class keeps track of who is part of a game and who is not.
@@ -87,9 +88,12 @@ public class GamePlayerState extends CowNetConfig {
 
 	/* add a player to the game if the game hasn't started yet.  */
 	public void addPlayer(String player) {
-		if (!isStarted) {
-			participating.add(player);
-			dead.remove(player);
+		if (!participating.contains(player)) {
+			if (!isStarted) {
+				participating.add(player);
+				dead.remove(player);
+			}
+			listener.playerJoined(player);
 		}
 	}
 
@@ -97,16 +101,16 @@ public class GamePlayerState extends CowNetConfig {
 	* this player accumulates a loss.  listener.playerLeft() is called
 	* if the game has stared. */
 	public void removePlayer(String player) {
-		if (!isStarted) {
-			participating.remove(player);
-			dead.remove(player);
-		} else {
-			if (participating.contains(player)) {
+		if (participating.contains(player)) {
+			if (!isStarted) {
+				participating.remove(player);
+				dead.remove(player);
+			} else {
 				participating.remove(player);
 				dead.add(player);
 				playerLosses.put(player, 1 + playerLosses.get(player));
-				listener.playerLeft(player);
 			}
+			listener.playerLeft(player);
 		}
 	}
 
@@ -123,6 +127,10 @@ public class GamePlayerState extends CowNetConfig {
 		return participating.size();
 	}
 
+	public Set<String> getPlayers() {
+		return participating;
+	}
+
 	/* call this when the game starts so all players are marked as participating in stats */
 	public void startGame() {
 		if (!isStarted) {
@@ -137,25 +145,32 @@ public class GamePlayerState extends CowNetConfig {
 					// just populate a row here to make things easier later.
 					playerLosses.put(name, 0);
 				}
-				listener.playerJoined(name);
 			}
 		}
+	}
+
+	/* abort the game. */
+	public void abortGame() {
+		isStarted = false;
+		participating.clear();
+		dead.clear();
 	}
 
 	/* end the game, set the recent winners. */
 	public void endGame() {
 		if (isStarted) {
+			// add current players to the recent winners list
 			for (String name : participating) {
 				if (recentWinners.size() >= maxRecentWinners) {
 					recentWinners.removeLast();
 					recentWinners.addFirst(name);
 				}
-				listener.playerLeft(name);
 			}
 			isStarted = false;
 		}
 		participating.clear();
 		dead.clear();
+
 	}
 
 	public PlayerState getPlayerState(String player) {

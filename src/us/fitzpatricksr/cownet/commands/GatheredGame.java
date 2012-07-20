@@ -5,13 +5,16 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import us.fitzpatricksr.cownet.CowNetThingy;
-import us.fitzpatricksr.cownet.commands.gatheredgame.GamePhaseState;
+import us.fitzpatricksr.cownet.commands.gatheredgame.GameGatheringTimer;
 import us.fitzpatricksr.cownet.commands.gatheredgame.GamePlayerState;
 import us.fitzpatricksr.cownet.commands.gatheredgame.GamePlayerState.PlayerState;
+import us.fitzpatricksr.cownet.utils.DebugProxy;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.Set;
 
 /*
     the game world is off limits until a game starts
@@ -29,41 +32,41 @@ import java.util.Random;
        enum { player, deadPlayer, sponsor } gameState
        boolean lastTribute
  */
-public class GatheredGame extends CowNetThingy implements Listener, GamePhaseState.GameStateListener, GamePlayerState.GamePlayerListener {
+public class GatheredGame extends CowNetThingy implements Listener {
 	private static final int GAME_WATCHER_FREQUENCY = 20 * 1; // 1 second
 	private final Random rand = new Random();
 
+	@Setting
+	private int minPlayers = 2;
+
 	//game state
 	private GamePlayerState playerState;                        //stats and stuff
-	private GamePhaseState gameState;                             //the state of the game
+	private GameGatheringTimer gameState;                       //the state of the game
+	private int gatherTaskId = 0;
 
 	@Override
 	protected void onEnable() throws Exception {
-		playerState = new GamePlayerState(getPlugin(), getTrigger() + "-stats.yml", this);
+		playerState = new GamePlayerState(getPlugin(), getTrigger() + "-stats.yml", (GamePlayerState.GamePlayerListener) DebugProxy.newInstance(new CallbackStub()));
+		//				new CallbackStub());
 		playerState.loadConfig();
-		getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
-			public void run() {
-				gameWatcher();
-			}
-		}, GAME_WATCHER_FREQUENCY, GAME_WATCHER_FREQUENCY);
 	}
 
 	@Override
 	protected void reloadManualSettings() throws Exception {
-		reloadAutoSettings(GamePhaseState.class);
+		reloadAutoSettings(GameGatheringTimer.class);
 		reloadAutoSettings(GamePlayerState.class);
 	}
 
 	@Override
 	protected HashMap<String, String> getManualSettings() {
-		HashMap<String, String> result = getSettingValueMapFor(GamePhaseState.class);
+		HashMap<String, String> result = getSettingValueMapFor(GameGatheringTimer.class);
 		result.putAll(getSettingValueMapFor(GamePlayerState.class));
 		return result;
 	}
 
 	@Override
 	protected boolean updateManualSetting(String settingName, String settingValue) {
-		return setAutoSettingValue(GamePhaseState.class, settingName, settingValue) || setAutoSettingValue(GamePlayerState.class, settingName, settingValue);
+		return setAutoSettingValue(GameGatheringTimer.class, settingName, settingValue) || setAutoSettingValue(GamePlayerState.class, settingName, settingValue);
 	}
 
 	@Override
@@ -128,9 +131,11 @@ public class GatheredGame extends CowNetThingy implements Listener, GamePhaseSta
 
 	@CowCommand
 	private boolean doInfo(CommandSender sender) {
-		sender.sendMessage(gameState.getGameStatusMessage());
+		if (gameState != null) {
+			sender.sendMessage(gameState.getGameStatusMessage());
+		}
 		for (Player player : getPlugin().getServer().getOnlinePlayers()) {
-			sender.sendMessage("  " + player.getDisplayName() + playerState.getPlayerState(player.getName()));
+			sender.sendMessage("  " + player.getDisplayName() + " - " + playerState.getPlayerState(player.getName()));
 		}
 		return true;
 	}
@@ -165,58 +170,154 @@ public class GatheredGame extends CowNetThingy implements Listener, GamePhaseSta
 		return false;
 	}
 
-	// --------------------------------------------------------------
-	// ---- Game watcher moves the game forward through different stages
-
-	private void gameWatcher() {
-		debugInfo(gameState.getGameStatusMessage());
-		if (gameState.isGathering()) {
-			long timeToWait = gameState.getTimeToGather() / 1000;
-			if (timeToWait % 10 == 0 || timeToWait < 10) {
-				broadcast("Gathering for the games ends in " + timeToWait + " seconds");
-			}
-		} else {
-			if (gameState.isAcclimating()) {
-				long timeToWait = gameState.getTimeToAcclimate() / 1000;
-				broadcast("The games start in " + timeToWait + " seconds");
-			}
-		}
-	}
-
 	private void broadcast(String msg) {
 		for (Player player : getPlugin().getServer().getOnlinePlayers()) {
 			player.sendMessage(msg);
 		}
 	}
 
-	@Override
-	public void gameGathering() {
+	// --------------------------------------------------------------
+	// ---- callbacks
+
+	// I put these in this small wrapper class so the callback methods would not be part
+	// of this class' interface.
+	private class CallbackStub implements GameGatheringTimer.GameStateListener, GamePlayerState.GamePlayerListener {
+		@Override
+		public void gameGathering() {
+			debugInfo("gameGathered()");
+			handleGathering();
+		}
+
+		@Override
+		public void gameAcclimating() {
+			if (playerState.livePlayerCount() < minPlayers) {
+				// game failed to gather enough players
+				stopGatheringTimer();
+				playerState.abortGame();
+				handleFailed();
+				debugInfo("gameAcclimating() - game failed.");
+			} else {
+				// everyone in the game will now register a win or loss.
+				// no new players.
+				playerState.startGame();
+				handleAcclimating();
+				debugInfo("gameAcclimating() - game starting.");
+			}
+		}
+
+		@Override
+		public void gameInProgress() {
+			// at this point, we don't need the game state anymore.
+			debugInfo("gameInProgress()");
+			handleInProgress();
+		}
+
+		@Override
+		public void playerJoined(String playerName) {
+			handlePlayerAdded(playerName);
+			if (gameState == null) {
+				// start the timer for the game to begin.  i.e. put it in gathering mode.
+				startGatheringTimer();
+				debugInfo("playerJoined - startGatheringTimer");
+			}
+		}
+
+		@Override
+		public void playerLeft(String playerName) {
+			handlePlayerLeft(playerName);
+			if (gameState != null && gameState.isInProgress()) {
+				if (playerState.livePlayerCount() < minPlayers) {
+					stopGatheringTimer();
+					playerState.endGame();
+					handleEnded();
+					try {
+						playerState.saveConfig();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					debugInfo("playerLeft - endingGame");
+				}
+			}
+		}
 	}
 
-	@Override
-	public void gameAcclimating() {
+	// --------------------------------------------------------------
+	// ---- Game watcher moves the game forward through different stages
+
+	private void gameWatcher() {
+		if (gameState != null) {
+			gameState.tick();
+			if (gameState != null) {
+				debugInfo("gameWatcher: " + gameState.getGameStatusMessage());
+				if (gameState.isGathering()) {
+					long timeToWait = gameState.getTimeToGather() / 1000;
+					if (timeToWait % 10 == 0 || timeToWait < 10) {
+						broadcast("Gathering for the games ends in " + timeToWait + " seconds");
+					}
+				} else {
+					if (gameState.isAcclimating()) {
+						long timeToWait = gameState.getTimeToAcclimate() / 1000;
+						broadcast("The games start in " + timeToWait + " seconds");
+					}
+				}
+			}
+		}
 	}
 
-	@Override
-	public void gameInProgress() {
-		// at this point, we don't need the game state anymore.
-		gameState = null;
-	}
-
-	@Override
-	public void playerJoined(String playerName) {
+	private void startGatheringTimer() {
+		debugInfo("startGatheringTimer()");
 		if (gameState == null) {
 			// start the timer for the game to begin.  i.e. put it in gathering mode.
-			gameState = new GamePhaseState(this);
+			gameState = new GameGatheringTimer((GameGatheringTimer.GameStateListener) DebugProxy.newInstance(new CallbackStub()));
+			gatherTaskId = getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
+				public void run() {
+					gameWatcher();
+				}
+			}, GAME_WATCHER_FREQUENCY, GAME_WATCHER_FREQUENCY);
 		}
 	}
 
-	@Override
-	public void playerLeft(String playerName) {
-		// default behavior is to end the game when one player is left.
-		if (playerState.livePlayerCount() == 1) {
-			playerState.endGame();
+	private void stopGatheringTimer() {
+		debugInfo("stopGatheringTimer()");
+		if (gameState != null) {
+			getPlugin().getServer().getScheduler().cancelTask(gatherTaskId);
+			gameState = null;
 		}
+	}
+
+	// --------------------------------------------------------------
+	// ---- subclass interface
+
+	protected void handleGathering() {
+
+	}
+
+	protected void handleAcclimating() {
+
+	}
+
+	protected void handleInProgress() {
+
+	}
+
+	protected void handleEnded() {
+
+	}
+
+	protected void handleFailed() {
+
+	}
+
+	protected void handlePlayerAdded(String playerName) {
+
+	}
+
+	protected void handlePlayerLeft(String playerName) {
+
+	}
+
+	protected Set<String> getActivePlayers() {
+		return playerState.getPlayers();
 	}
 }
 

@@ -4,12 +4,12 @@ import us.fitzpatricksr.cownet.CowNetThingy;
 
 /**
  * This class simply manages the state transition changes in the game.  It doesn't keep track of
- * players, winners, loosers or much else.  There is a simple callback interface that is used
+ * players, winners, losers or much else.  There is a simple callback interface that is used
  * to tell clients when the game progresses from one state to the next.  The whole class is
  * driven by clients calling the getGameState() method.
  * <p/>
  */
-public class GamePhaseState {
+public class GameGatheringTimer {
 	public static enum GamePhase {
 		GATHERING,      //gathering tributes
 		ACCLIMATING,     //players are in the arena but can't do anything yet.
@@ -33,7 +33,7 @@ public class GamePhaseState {
 	private long time = System.currentTimeMillis(); // time when the current phase started
 	private GamePhase gameState = GamePhase.GATHERING;
 
-	public GamePhaseState(GameStateListener listener) {
+	public GameGatheringTimer(GameStateListener listener) {
 		this.listener = listener;
 		this.listener.gameGathering();
 	}
@@ -88,6 +88,10 @@ public class GamePhaseState {
 	}
 
 	private GamePhase getGameState() {
+		return gameState;
+	}
+
+	public void tick() {
 		if (gameState == GamePhase.GATHERING) {
 			if (getTimeToGather() <= 0) {
 				startAcclimating();
@@ -98,8 +102,6 @@ public class GamePhaseState {
 				time = System.currentTimeMillis();
 				listener.gameInProgress();
 			}
-		} else if (gameState == GamePhase.IN_PROGRESS) {
 		}
-		return gameState;
 	}
 }

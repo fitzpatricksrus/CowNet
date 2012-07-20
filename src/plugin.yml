@@ -66,6 +66,10 @@ commands:
       aliases: [ cwarp, warp ]
       description: define and use warp points
       usage: Use "/warp help"
+  gatheredgame:
+      aliases: [ ctest ]
+      description: test game
+      usage: Use "/ctest help"
 
 permissions:
     cownet.starve:
@@ -163,6 +167,9 @@ permissions:
         default: op
     cownet.cowwarp:
         description: allowed to use warps
+        default: true
+    cownet.gatheredgame:
+        description: just a test
         default: true
 
 
