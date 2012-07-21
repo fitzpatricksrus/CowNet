@@ -8,12 +8,10 @@ import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.gatheredgame.GameGatheringTimer;
 import us.fitzpatricksr.cownet.commands.gatheredgame.GamePlayerState;
 import us.fitzpatricksr.cownet.commands.gatheredgame.GamePlayerState.PlayerState;
-import us.fitzpatricksr.cownet.utils.DebugProxy;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Random;
 import java.util.Set;
 
 /*
@@ -34,7 +32,6 @@ import java.util.Set;
  */
 public class GatheredGame extends CowNetThingy implements Listener {
 	private static final int GAME_WATCHER_FREQUENCY = 20 * 1; // 1 second
-	private final Random rand = new Random();
 
 	@Setting
 	private int minPlayers = 2;
@@ -46,8 +43,7 @@ public class GatheredGame extends CowNetThingy implements Listener {
 
 	@Override
 	protected void onEnable() throws Exception {
-		playerState = new GamePlayerState(getPlugin(), getTrigger() + "-stats.yml", (GamePlayerState.GamePlayerListener) DebugProxy.newInstance(new CallbackStub()));
-		//				new CallbackStub());
+		playerState = new GamePlayerState(getPlugin(), getTrigger() + "-stats.yml", new CallbackStub());
 		playerState.loadConfig();
 	}
 
@@ -209,6 +205,7 @@ public class GatheredGame extends CowNetThingy implements Listener {
 		public void gameInProgress() {
 			// at this point, we don't need the game state anymore.
 			debugInfo("gameInProgress()");
+			stopGatheringTimer();
 			handleInProgress();
 		}
 
@@ -217,6 +214,7 @@ public class GatheredGame extends CowNetThingy implements Listener {
 			handlePlayerAdded(playerName);
 			if (gameState == null) {
 				// start the timer for the game to begin.  i.e. put it in gathering mode.
+				gameState = new GameGatheringTimer(new CallbackStub());
 				startGatheringTimer();
 				debugInfo("playerJoined - startGatheringTimer");
 			}
@@ -228,6 +226,7 @@ public class GatheredGame extends CowNetThingy implements Listener {
 			if (gameState != null && gameState.isInProgress()) {
 				if (playerState.livePlayerCount() < minPlayers) {
 					stopGatheringTimer();
+					gameState = null;
 					playerState.endGame();
 					handleEnded();
 					try {
@@ -266,9 +265,8 @@ public class GatheredGame extends CowNetThingy implements Listener {
 
 	private void startGatheringTimer() {
 		debugInfo("startGatheringTimer()");
-		if (gameState == null) {
+		if (gatherTaskId == 0) {
 			// start the timer for the game to begin.  i.e. put it in gathering mode.
-			gameState = new GameGatheringTimer((GameGatheringTimer.GameStateListener) DebugProxy.newInstance(new CallbackStub()));
 			gatherTaskId = getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
 				public void run() {
 					gameWatcher();
@@ -279,9 +277,9 @@ public class GatheredGame extends CowNetThingy implements Listener {
 
 	private void stopGatheringTimer() {
 		debugInfo("stopGatheringTimer()");
-		if (gameState != null) {
+		if (gatherTaskId != 0) {
 			getPlugin().getServer().getScheduler().cancelTask(gatherTaskId);
-			gameState = null;
+			gatherTaskId = 0;
 		}
 	}
 
@@ -316,8 +314,16 @@ public class GatheredGame extends CowNetThingy implements Listener {
 
 	}
 
-	protected Set<String> getActivePlayers() {
+	protected final Set<String> getActivePlayers() {
 		return playerState.getPlayers();
+	}
+
+	protected final void accumulateWin(String playerName) {
+
+	}
+
+	protected final void accumulateLoss(String playerName) {
+
 	}
 }
 

@@ -70,6 +70,7 @@ public class GamePlayerState extends CowNetConfig {
 	private HashSet<String> participating = new HashSet<String>();
 	private HashSet<String> dead = new HashSet<String>();
 	private HashMap<String, Integer> playerPlays = new HashMap<String, Integer>();
+	private HashMap<String, Integer> playerWins = new HashMap<String, Integer>();
 	private HashMap<String, Integer> playerLosses = new HashMap<String, Integer>();
 	private LinkedList<String> recentWinners = new LinkedList<String>();
 	private boolean isStarted = false;
@@ -108,7 +109,6 @@ public class GamePlayerState extends CowNetConfig {
 			} else {
 				participating.remove(player);
 				dead.add(player);
-				playerLosses.put(player, 1 + playerLosses.get(player));
 			}
 			listener.playerLeft(player);
 		}
@@ -141,10 +141,6 @@ public class GamePlayerState extends CowNetConfig {
 				} else {
 					playerPlays.put(name, 1);
 				}
-				if (!playerLosses.containsKey(name)) {
-					// just populate a row here to make things easier later.
-					playerLosses.put(name, 0);
-				}
 			}
 		}
 	}
@@ -173,6 +169,22 @@ public class GamePlayerState extends CowNetConfig {
 
 	}
 
+	public void accumulateWin(String player) {
+		if (!playerWins.containsKey(player)) {
+			// just populate a row here to make things easier later.
+			playerWins.put(player, 0);
+		}
+		playerWins.put(player, playerWins.get(player) + 1);
+	}
+
+	public void accumulateLoss(String player) {
+		if (!playerLosses.containsKey(player)) {
+			// just populate a row here to make things easier later.
+			playerWins.put(player, 0);
+		}
+		playerLosses.put(player, playerLosses.get(player) + 1);
+	}
+
 	public PlayerState getPlayerState(String player) {
 		if (participating.contains(player)) {
 			return PlayerState.ALIVE;
@@ -184,15 +196,15 @@ public class GamePlayerState extends CowNetConfig {
 	}
 
 	public int getPlayerWins(String player) {
-		if (playerPlays.containsKey(player)) {
-			return playerPlays.get(player) - playerLosses.get(player);
+		if (playerWins.containsKey(player)) {
+			return playerWins.get(player);
 		} else {
 			return 0;
 		}
 	}
 
 	public int getPlayerLosses(String player) {
-		if (playerPlays.containsKey(player)) {
+		if (playerLosses.containsKey(player)) {
 			return playerLosses.get(player);
 		} else {
 			return 0;
@@ -208,7 +220,7 @@ public class GamePlayerState extends CowNetConfig {
 	}
 
 	public double getPlayerAverage(String player) {
-		return getPlayerWins(player) - getPlayerPlays(player);
+		return getPlayerWins(player) / (getPlayerWins(player) + getPlayerLosses(player));
 	}
 
 	@Override
@@ -234,7 +246,8 @@ public class GamePlayerState extends CowNetConfig {
 
 	@Override
 	public void saveConfig() throws IOException {
-		updateConfigValue("wins", playerPlays);
+		updateConfigValue("plays", playerPlays);
+		updateConfigValue("wins", playerWins);
 		updateConfigValue("losses", playerLosses);
 		updateConfigValue("recentWinners", recentWinners);
 		super.saveConfig();
@@ -261,8 +274,8 @@ public class GamePlayerState extends CowNetConfig {
 					return -1;
 				} else {
 					// same average, so favor person with most plays
-					int sTotal = getPlayerWins(s) + getPlayerLosses(s);
-					int s1Total = getPlayerWins(s1) + getPlayerLosses(s1);
+					int sTotal = getPlayerPlays(s);
+					int s1Total = getPlayerPlays(s1);
 					if (sTotal < s1Total) {
 						return 1;
 					}

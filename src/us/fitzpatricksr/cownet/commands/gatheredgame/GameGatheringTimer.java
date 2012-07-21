@@ -12,7 +12,7 @@ import us.fitzpatricksr.cownet.CowNetThingy;
 public class GameGatheringTimer {
 	public static enum GamePhase {
 		GATHERING,      //gathering tributes
-		ACCLIMATING,     //players are in the arena but can't do anything yet.
+		ACCLIMATING,    //players are in the arena but can't do anything yet.
 		IN_PROGRESS,    //started but not over yet
 	}
 
