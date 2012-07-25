@@ -20,8 +20,6 @@ public class CowWarp extends CowNetThingy {
 	@Setting
 	private String publicWarpKey = "public";
 	@Setting
-	private String defaultOwner = "public";
-	@Setting
 	private String defaultWorld = "guestWorld";
 	@Setting
 	private double defaultPitch = 0.0;
@@ -35,6 +33,22 @@ public class CowWarp extends CowNetThingy {
 	private double defaultZ = 0.0;
 
 	private Map<String, WarpData> warps; // playerName -> warpData
+
+	// --------------------------------------------------------------
+	// ---- API
+
+	/* get public warp */
+	protected Location getWarpLocation(String warpName) {
+		return getWarp(publicWarpKey, warpName);
+	}
+
+	/* get warp accessible by given player */
+	protected Location getWarpLocation(Player player, String warpName) {
+		return getWarp(player.getName(), warpName);
+	}
+
+	// --------------------------------------------------------------
+	// ---- Module settings and setup
 
 	@Override
 	protected void onEnable() throws Exception {
@@ -61,6 +75,9 @@ public class CowWarp extends CowNetThingy {
 				"  /warp unshare <name> - unshare a warp"
 		};
 	}
+
+	// --------------------------------------------------------------
+	// ---- Command handlers
 
 	@CowCommand
 	protected boolean doCowwarp(Player player, String warpName) {
