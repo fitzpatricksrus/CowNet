@@ -70,6 +70,10 @@ commands:
       aliases: [ ctest ]
       description: test game
       usage: Use "/ctest help"
+  tntwars:
+      alias: [ tnt ]
+      description: He been blowed up!
+      usage: Use "/tnt help"
 
 permissions:
     cownet.starve:
@@ -171,5 +175,9 @@ permissions:
     cownet.gatheredgame:
         description: just a test
         default: true
+    cownet.tntwars:
+        description: Permission to participate in the war.
+        default: true
+
 
 

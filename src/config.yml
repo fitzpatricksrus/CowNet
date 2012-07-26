@@ -108,3 +108,11 @@ cowwarp:
 gatheredgame:
   enable: true
   debug: true
+
+tntwars:
+  enable: true
+  debug: true
+  maxRecentWinners: 5
+  minPlayers: 2
+  timeToGather: 60000
+  timeToAcclimate: 10000

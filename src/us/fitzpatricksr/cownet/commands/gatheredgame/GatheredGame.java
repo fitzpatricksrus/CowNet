@@ -1,16 +1,11 @@
-package us.fitzpatricksr.cownet.commands;
+package us.fitzpatricksr.cownet.commands.gatheredgame;
 
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
 import us.fitzpatricksr.cownet.CowNetThingy;
-import us.fitzpatricksr.cownet.commands.gatheredgame.GameGatheringTimer;
-import us.fitzpatricksr.cownet.commands.gatheredgame.GamePlayerState;
-import us.fitzpatricksr.cownet.commands.gatheredgame.GamePlayerState.PlayerState;
-import us.fitzpatricksr.cownet.utils.StringUtils;
+import us.fitzpatricksr.cownet.commands.gatheredgame.PlayerGameState.PlayerState;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -30,39 +25,46 @@ import java.util.Set;
        enum { player, deadPlayer, sponsor } gameState
        boolean lastTribute
  */
-public class GatheredGame extends CowNetThingy implements Listener {
-	private static final int GAME_WATCHER_FREQUENCY = 20 * 1; // 1 second
+public class GatheredGame extends CowNetThingy implements org.bukkit.event.Listener {
+	private static final String STATS_KILLS = "kills";
+	private static final String STATS_DEATHS = "deaths";
+	private static final String STATS_BOMBS = "bombs";
 
 	@Setting
-	private int minPlayers = 2;
+	private int minPlayers = 2;  //hey jf - this should go up to a higher level.
 
 	//game state
-	private GamePlayerState playerState;                        //stats and stuff
 	private GameGatheringTimer gameState;                       //the state of the game
-	private int gatherTaskId = 0;
+	private PlayerGameState playerState;                        //state of players in the game
+
+	protected String getGameName() {
+		return "GatheredGame";
+	}
 
 	@Override
 	protected void onEnable() throws Exception {
-		playerState = new GamePlayerState(getPlugin(), getTrigger() + "-stats.yml", new CallbackStub());
-		playerState.loadConfig();
+		playerState = new PlayerGameState(getGameName());
+		playerState.addListener(new CallbackStub());
 	}
 
 	@Override
 	protected void reloadManualSettings() throws Exception {
+		reloadAutoSettings(GameStats.class);
 		reloadAutoSettings(GameGatheringTimer.class);
-		reloadAutoSettings(GamePlayerState.class);
+		reloadAutoSettings(PlayerGameState.class);
 	}
 
 	@Override
 	protected HashMap<String, String> getManualSettings() {
 		HashMap<String, String> result = getSettingValueMapFor(GameGatheringTimer.class);
-		result.putAll(getSettingValueMapFor(GamePlayerState.class));
+		result.putAll(getSettingValueMapFor(PlayerGameState.class));
+		result.putAll(getSettingValueMapFor(GameStats.class));
 		return result;
 	}
 
 	@Override
 	protected boolean updateManualSetting(String settingName, String settingValue) {
-		return setAutoSettingValue(GameGatheringTimer.class, settingName, settingValue) || setAutoSettingValue(GamePlayerState.class, settingName, settingValue);
+		return setAutoSettingValue(GameGatheringTimer.class, settingName, settingValue) || setAutoSettingValue(PlayerGameState.class, settingName, settingValue) || setAutoSettingValue(GameStats.class, settingName, settingValue);
 	}
 
 	@Override
@@ -87,10 +89,10 @@ public class GatheredGame extends CowNetThingy implements Listener {
 		if (sender instanceof Player) {
 			Player player = (Player) sender;
 			String name = player.getName();
-			player.sendMessage("Your wins: " + playerState.getPlayerWins(name) + "   " + StringUtils.fitToColumnSize(Double.toString(playerState.getPlayerAverage(name) * 100), 5) + "%");
+			//			player.sendMessage("Your wins: " + playerGameState.getPlayerWins(name) + "   " + StringUtils.fitToColumnSize(Double.toString(playerGameState.getPlayerAverage(name) * 100), 5) + "%");
 		}
-		playerState.dumpRecentHistory(sender);
-		playerState.dumpLeaderBoard(sender);
+		//		playerGameState.dumpRecentHistory(sender);
+		//		playerGameState.dumpLeaderBoard(sender);
 		return true;
 	}
 
@@ -101,12 +103,11 @@ public class GatheredGame extends CowNetThingy implements Listener {
 
 	@CowCommand
 	private boolean doJoin(Player player) {
-		if (playerState.isStarted()) {
-			player.sendMessage("You can't join a game in progress.  You can only watch.");
+		if (playerState.addPlayer(player.getName())) {
+			player.sendMessage("You've joined the game.");
+			//hey jf - broadcast this message?
 		} else {
-			playerState.addPlayer(player.getName());
-			broadcast(player.getDisplayName() + " is " + playerState.getPlayerState(player.getName()));
-			doInfo(player);
+			player.sendMessage("You aren't allowed to join right now.  You can only watch.");
 		}
 		return true;
 	}
@@ -115,12 +116,14 @@ public class GatheredGame extends CowNetThingy implements Listener {
 	private boolean doStart(Player player) {
 		if (gameState != null) {
 			if (gameState.isGathering()) {
-				gameState.endGathering();
+				gameState.startAcclimating();
+			} else if (gameState.isAcclimating()) {
+				gameState.startGame();
 			} else if (gameState.isGameOn()) {
 				player.sendMessage("The game has already begun.");
 			}
 		} else {
-			player.sendMessage("No players have joined the game.");
+			player.sendMessage("No players have joined the game.  Not much fun without players...");
 		}
 		return true;
 	}
@@ -141,6 +144,7 @@ public class GatheredGame extends CowNetThingy implements Listener {
 		String name = player.getName();
 		if (playerState.getPlayerState(name).equals(PlayerState.ALIVE)) {
 			playerState.removePlayer(name);
+			//hey jf - do we want to broadcast this?
 		} else {
 			player.sendMessage("You are not currently in the game.");
 		}
@@ -177,7 +181,7 @@ public class GatheredGame extends CowNetThingy implements Listener {
 
 	// I put these in this small wrapper class so the callback methods would not be part
 	// of this class' interface.
-	private class CallbackStub implements GameGatheringTimer.GameStateListener, GamePlayerState.GamePlayerListener {
+	private class CallbackStub implements GameGatheringTimer.Listener, PlayerGameState.Listener {
 		@Override
 		public void gameGathering() {
 			debugInfo("gameGathered()");
@@ -186,16 +190,14 @@ public class GatheredGame extends CowNetThingy implements Listener {
 
 		@Override
 		public void gameAcclimating() {
-			if (playerState.livePlayerCount() < minPlayers) {
+			if (playerState.getPlayers().size() < minPlayers) {
 				// game failed to gather enough players
-				stopGatheringTimer();
-				playerState.abortGame();
+				gameState.cancelGame();
+				playerState.resetGame();
 				handleFailed();
 				debugInfo("gameAcclimating() - game failed.");
 			} else {
-				// everyone in the game will now register a win or loss.
-				// no new players.
-				playerState.startGame();
+				// just forward the callback
 				handleAcclimating();
 				debugInfo("gameAcclimating() - game starting.");
 			}
@@ -205,18 +207,32 @@ public class GatheredGame extends CowNetThingy implements Listener {
 		public void gameInProgress() {
 			// at this point, we don't need the game state anymore.
 			debugInfo("gameInProgress()");
-			stopGatheringTimer();
 			handleInProgress();
 		}
 
 		@Override
-		public void playerJoined(String playerName) {
-			handlePlayerAdded(playerName);
-			if (gameState == null) {
-				// start the timer for the game to begin.  i.e. put it in gathering mode.
-				gameState = new GameGatheringTimer(new CallbackStub());
-				startGatheringTimer();
-				debugInfo("playerJoined - startGatheringTimer");
+		public void gameCanceled() {
+			debugInfo("gameCanceled()");
+			handleFailed();
+		}
+
+		@Override
+		public void gameEnded() {
+			debugInfo("gameEnded()");
+			handleEnded();
+		}
+
+		@Override
+		public boolean playerJoined(String playerName) {
+			if (handlePlayerAdded(playerName)) {
+				if (gameState == null) {
+					// start the timer for the game to begin.  i.e. put it in gathering mode.
+					gameState = new GameGatheringTimer(getPlugin(), new CallbackStub());
+					debugInfo("playerJoined - startGatheringTimer");
+				}
+				return true;
+			} else {
+				return false;
 			}
 		}
 
@@ -224,62 +240,38 @@ public class GatheredGame extends CowNetThingy implements Listener {
 		public void playerLeft(String playerName) {
 			handlePlayerLeft(playerName);
 			if (gameState != null && gameState.isInProgress()) {
-				if (playerState.livePlayerCount() < minPlayers) {
-					stopGatheringTimer();
-					gameState = null;
-					playerState.endGame();
+				if (playerState.getPlayers().size() < minPlayers) {
+					gameState.endGame();
+					playerState.resetGame();
 					handleEnded();
-					try {
-						playerState.saveConfig();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
 					debugInfo("playerLeft - endingGame");
 				}
 			}
 		}
-	}
 
-	// --------------------------------------------------------------
-	// ---- Game watcher moves the game forward through different stages
-
-	private void gameWatcher() {
-		if (gameState != null) {
-			gameState.tick();
-			if (gameState != null) {
-				debugInfo("gameWatcher: " + gameState.getGameStatusMessage());
-				if (gameState.isGathering()) {
-					long timeToWait = gameState.getTimeToGather() / 1000;
-					if (timeToWait % 10 == 0 || timeToWait < 10) {
-						broadcast("Gathering for the games ends in " + timeToWait + " seconds");
-					}
-				} else {
-					if (gameState.isAcclimating()) {
-						long timeToWait = gameState.getTimeToAcclimate() / 1000;
-						broadcast("The games start in " + timeToWait + " seconds");
-					}
-				}
-			}
+		@Override
+		public void playerBanned(String playerName) {
+			handlePlayerBanned(playerName);
 		}
-	}
 
-	private void startGatheringTimer() {
-		debugInfo("startGatheringTimer()");
-		if (gatherTaskId == 0) {
-			// start the timer for the game to begin.  i.e. put it in gathering mode.
-			gatherTaskId = getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
-				public void run() {
-					gameWatcher();
-				}
-			}, GAME_WATCHER_FREQUENCY, GAME_WATCHER_FREQUENCY);
+		@Override
+		public void playerUnbanned(String playerName) {
+			handlePlayerUnbanned(playerName);
 		}
-	}
 
-	private void stopGatheringTimer() {
-		debugInfo("stopGatheringTimer()");
-		if (gatherTaskId != 0) {
-			getPlugin().getServer().getScheduler().cancelTask(gatherTaskId);
-			gatherTaskId = 0;
+		@Override
+		public void announceGather(long time) {
+			handleAnnounceGather(time);
+		}
+
+		@Override
+		public void announceAcclimate(long time) {
+			handleAnnounceAcclimate(time);
+		}
+
+		@Override
+		public void announceWindDown(long time) {
+			handleAnnounceWindDown(time);
 		}
 	}
 
@@ -287,43 +279,67 @@ public class GatheredGame extends CowNetThingy implements Listener {
 	// ---- subclass interface
 
 	protected void handleGathering() {
-
 	}
 
 	protected void handleAcclimating() {
-
 	}
 
 	protected void handleInProgress() {
-
 	}
 
 	protected void handleEnded() {
-
 	}
 
 	protected void handleFailed() {
-
 	}
 
-	protected void handlePlayerAdded(String playerName) {
-
+	protected boolean handlePlayerAdded(String playerName) {
+		return true;
 	}
 
 	protected void handlePlayerLeft(String playerName) {
+	}
 
+	protected void handlePlayerBanned(String playerName) {
+	}
+
+	protected void handlePlayerUnbanned(String playerName) {
+	}
+
+	protected void handleAnnounceGather(long time) {
+		broadcast("Gathering for the games ends in " + time + " seconds");
+	}
+
+	protected void handleAnnounceAcclimate(long time) {
+		broadcast("The game starts in " + time + " seconds");
+	}
+
+	protected void handleAnnounceWindDown(long time) {
+		broadcast("The game ends in " + time + " seconds");
+	}
+
+	protected final void addPlayerToGame(String playerName) {
+		playerState.addPlayer(playerName);
+	}
+
+	protected final void removePlayerFromGame(String playerName) {
+		playerState.removePlayer(playerName);
 	}
 
 	protected final Set<String> getActivePlayers() {
 		return playerState.getPlayers();
 	}
 
-	protected final void accumulateWin(String playerName) {
-
+	protected final boolean playerIsAlive(String playerName) {
+		return playerState.getPlayerState(playerName) == PlayerState.ALIVE;
 	}
 
-	protected final void accumulateLoss(String playerName) {
+	protected final boolean playerIsDead(String playerName) {
+		return playerState.getPlayerState(playerName) == PlayerState.BANNED;
+	}
 
+	protected final boolean playerIsWatching(String playerName) {
+		return playerState.getPlayerState(playerName) == PlayerState.WATCHING;
 	}
 }
 
