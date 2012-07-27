@@ -21,6 +21,8 @@ import java.util.Set;
  */
 public class TntWars extends GatheredGame {
 	@Setting
+	private int minPlayers = 2;
+	@Setting
 	private String acclimatingWarpName = "tntWarsAcclimating";
 	@Setting
 	private String spawnWarpName = "tntWarsSpawn";
@@ -64,21 +66,31 @@ public class TntWars extends GatheredGame {
 		return true;
 	}
 
+	@Override
+	protected String getGameName() {
+		return "TntWars";
+	}
+
+	@Override
+	protected int getMinPlayers() {
+		return minPlayers;
+	}
+
 	// --------------------------------------------------------------
 	// ---- game state transitions
 
 	@Override
 	protected void handleGathering() {
-
+		debugInfo("handleGathering");
 	}
 
 	@Override
 	protected void handleAcclimating() {
+		debugInfo("handleAcclimating");
 		// teleport everyone to the lobby for acclimation
-		CowNetMod plugin = (CowNetMod) getPlugin();
-		CowWarp warpThingy = (CowWarp) plugin.getThingy("CowWarp");
-		Location loc = warpThingy.getWarpLocation(acclimatingWarpName);
+		Location loc = getWarpPoint(acclimatingWarpName);
 		if (loc != null) {
+			// hey jf - you need to jiggle this a bit or everyone will be on top of each other
 			Server server = getPlugin().getServer();
 			for (String playerName : getActivePlayers()) {
 				Player player = server.getPlayer(playerName);
@@ -89,10 +101,9 @@ public class TntWars extends GatheredGame {
 
 	@Override
 	protected void handleInProgress() {
+		debugInfo("handleInProgress");
 		// teleport everyone to the spawn point to start the game
-		CowNetMod plugin = (CowNetMod) getPlugin();
-		CowWarp warpThingy = (CowWarp) plugin.getThingy("CowWarp");
-		Location loc = warpThingy.getWarpLocation(spawnWarpName);
+		Location loc = getWarpPoint(spawnWarpName);
 		if (loc != null) {
 			Server server = getPlugin().getServer();
 			for (String playerName : getActivePlayers()) {
@@ -110,17 +121,20 @@ public class TntWars extends GatheredGame {
 
 	@Override
 	protected void handleEnded() {
+		debugInfo("handleEnded");
 		placements = null;
 	}
 
 	@Override
 	protected void handleFailed() {
+		debugInfo("handleFailed");
 		placements = null;
 	}
 
 	@Override
 	protected boolean handlePlayerAdded(String playerName) {
 		// just add anyone who wants to be added
+		debugInfo("handlePlayerAdded");
 		return true;
 	}
 
@@ -128,13 +142,22 @@ public class TntWars extends GatheredGame {
 	protected void handlePlayerLeft(String playerName) {
 		// should remove their bombs
 		// remove that player's tnt
-		placements.remove(playerName);
+		debugInfo("handlePlayerLeft");
+		if (placements != null) {
+			// placements is only non-null if the game has begun.
+			placements.remove(playerName);
+		}
 	}
 
 	public boolean gameIsInProgress() {
 		return placements != null;
 	}
 
+	private Location getWarpPoint(String warpName) {
+		CowNetMod plugin = (CowNetMod) getPlugin();
+		CowWarp warpThingy = (CowWarp) plugin.getThingy("cowwarp");
+		return warpThingy.getWarpLocation(warpName);
+	}
 
 	// --------------------------------------------------------------
 	// ---- explosive mgmt
@@ -220,10 +243,9 @@ public class TntWars extends GatheredGame {
 		if (playerIsAlive(playerName)) {
 			// Just teleport the person back to spawn here.
 			// losses and announcements are done when the player is killed.
-			CowNetMod plugin = (CowNetMod) getPlugin();
-			CowWarp warpThingy = (CowWarp) plugin.getThingy("CowWarp");
-			Location loc = warpThingy.getWarpLocation(spawnWarpName);
+			Location loc = getWarpPoint(spawnWarpName);
 			if (loc != null) {
+				// hey jf - you need to jiggle this a bit or everyone will be on top of each other
 				// have the player respawn in the game spawn
 				event.setRespawnLocation(loc);
 			}

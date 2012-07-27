@@ -68,42 +68,42 @@ public class GameGatheringTimer {
 			long timeToWait = getTimeToGather() / 1000;
 			return "Game Status: Gathering.  The games will start in " + timeToWait + " seconds";
 		} else if (isGameOn()) {
-			return "Game Status: IN PROGRESS";
+			return "Game Status: IN PROGRESS.  " + getTimeUntilEnd() / 1000 + " seconds to go.";
 		} else {
 			return "Game Status: Eneded.";
 		}
 	}
 
 	public boolean isGathering() {
-		return getGameState() == GamePhase.GATHERING;
+		return gameState == GamePhase.GATHERING;
 	}
 
 	public boolean isAcclimating() {
-		return getGameState() == GamePhase.ACCLIMATING;
+		return gameState == GamePhase.ACCLIMATING;
 	}
 
 	public boolean isInProgress() {
-		return getGameState() == GamePhase.IN_PROGRESS;
+		return gameState == GamePhase.IN_PROGRESS;
 	}
 
 	public boolean isGameOn() {
-		GamePhase phase = getGameState();
+		GamePhase phase = gameState;
 		return phase == GamePhase.IN_PROGRESS || phase == GamePhase.ACCLIMATING;
 	}
 
 	public boolean isEnded() {
-		return getGameState() == GamePhase.ENDED;
+		return gameState == GamePhase.ENDED;
 	}
 
-	public long getTimeToGather() {
+	private long getTimeToGather() {  // private because it is not state aware
 		return Math.max((timeToGather + time) - System.currentTimeMillis(), 0);
 	}
 
-	public long getTimeToAcclimate() {
+	private long getTimeToAcclimate() {  // private because it is not state aware
 		return Math.max((timeToAcclimate + time) - System.currentTimeMillis(), 0);
 	}
 
-	public long getTimeUntilEnd() {
+	private long getTimeUntilEnd() {  // private because it is not state aware
 		return Math.max((timeToRun + time) - System.currentTimeMillis(), 0);
 	}
 
@@ -118,7 +118,7 @@ public class GameGatheringTimer {
 
 	/* start the game if it isn't already started */
 	public void startGame() {
-		startAcclimating();
+		startAcclimating();  // don't skip acclimation phase!
 		if (gameState == GamePhase.ACCLIMATING) {
 			gameState = GamePhase.IN_PROGRESS;
 			time = System.currentTimeMillis();
@@ -136,10 +136,6 @@ public class GameGatheringTimer {
 		gameState = GamePhase.ENDED;
 		time = System.currentTimeMillis();
 		listener.gameEnded();
-	}
-
-	private GamePhase getGameState() {
-		return gameState;
 	}
 
 	private void gameWatcher() {
@@ -165,16 +161,26 @@ public class GameGatheringTimer {
 			} else {
 				long timeToWait = getTimeUntilEnd() / 1000;
 				if (timeToWait % 30 == 0 && timeToWait > 10) {
-					listener.announceGather(timeToWait);
+					listener.announceWindDown(timeToWait);
 				} else if (timeToWait <= 10) {
 					listener.announceWindDown(timeToWait);
 				}
 			}
 		} else {
 			// gamestate here should be ENDED, so kill the timer
-			if (gatherTaskId != 0) {
+			if (gatherTaskId != 0) { // gatherTaskId should never be 0 here
 				plugin.getServer().getScheduler().cancelTask(gatherTaskId);
 				gatherTaskId = 0;
+			} else {
+				// gameWatcher() should only be called by the watcher thread whose ID
+				// is stored in gatherTaskId.  If gatherTaskId == 0, then something
+				// is calling this method other than the thread or the thread
+				// wasn't killed properly.
+				try {
+					throw new Exception();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}

@@ -814,7 +814,7 @@ public class HardCore extends CowNetThingy implements Listener {
 						return false;
 					}
 				}
-				//TODO hey jf - can we create this world in another thread?
+				//TODO - can we create this world in another thread?
 				if (mgr.addWorld(worldName, World.Environment.NORMAL, "" + (new Random().nextLong()), WorldType.NORMAL, true, null, true)) {
 					savedState.resetWorldState();
 					World w = mgr.getMVWorld(worldName).getCBWorld();

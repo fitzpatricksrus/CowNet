@@ -100,7 +100,7 @@ public class PlayerGameState {
 
 	// who's in a particular game?  part of a bi-map from player <-> game
 	private static HashMap<String, HashSet<String>> participating = new HashMap<String, HashSet<String>>();
-	// what game is a particular player in?
+	// what game is a particular player in?   playerName -> game
 	private static HashMap<String, String> playerGames = new HashMap<String, String>();
 	// who's banned from a particular game
 	private static HashMap<String, HashSet<String>> banned = new HashMap<String, HashSet<String>>();
@@ -114,16 +114,19 @@ public class PlayerGameState {
 	}
 
 	private static void removeListener(String gameName) {
-		listeners.remove(gameName);
 		resetGame(gameName);
+		listeners.remove(gameName);
+		banned.remove(gameName);
+		participating.remove(gameName);
 	}
 
 	private static void resetGame(String gameName) {
-		banned.remove(gameName);
 		for (String player : participating.get(gameName)) {
+			// player was in this game, so remove the entry for this player.
 			playerGames.remove(player);
 		}
-		participating.remove(gameName);
+		participating.get(gameName).clear();
+		banned.get(gameName).clear();
 	}
 
 	/* add a player to the game.  return true if player was added   */
@@ -145,7 +148,7 @@ public class PlayerGameState {
 	* if the game has stared. */
 	private static void removePlayer(String gameName, String playerName) {
 		if (participating.get(gameName).contains(playerName)) {
-			participating.remove(playerName);
+			participating.get(gameName).remove(playerName);
 			playerGames.remove(playerName);
 			listeners.get(gameName).playerLeft(playerName);
 		}
@@ -161,7 +164,7 @@ public class PlayerGameState {
 
 	private static void unbanPlayer(String gameName, String playerName) {
 		if (banned.get(gameName).contains(playerName)) {
-			banned.remove(playerName);
+			banned.get(gameName).remove(playerName);
 			listeners.get(gameName).playerUnbanned(playerName);
 		}
 	}

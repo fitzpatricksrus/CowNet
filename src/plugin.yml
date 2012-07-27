@@ -71,9 +71,9 @@ commands:
       description: test game
       usage: Use "/ctest help"
   tntwars:
-      alias: [ tnt ]
-      description: He been blowed up!
-      usage: Use "/tnt help"
+      alias: [ tnt, tntwar ]
+      description: Blow up your friends for fun and profit!
+      usage: Use "/tntwar help"
 
 permissions:
     cownet.starve:

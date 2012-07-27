@@ -30,21 +30,27 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 	private static final String STATS_DEATHS = "deaths";
 	private static final String STATS_BOMBS = "bombs";
 
-	@Setting
-	private int minPlayers = 2;  //hey jf - this should go up to a higher level.
-
 	//game state
 	private GameGatheringTimer gameState;                       //the state of the game
 	private PlayerGameState playerState;                        //state of players in the game
+	private GameStats stats;                                    //game stats that we load and save
 
+	// hey jf - this should be abstract
 	protected String getGameName() {
 		return "GatheredGame";
+	}
+
+	// hey jf - this should be abstract
+	protected int getMinPlayers() {
+		return 2;
 	}
 
 	@Override
 	protected void onEnable() throws Exception {
 		playerState = new PlayerGameState(getGameName());
 		playerState.addListener(new CallbackStub());
+		stats = new GameStats(getPlugin(), getGameName() + ".yml");
+		stats.loadConfig();
 	}
 
 	@Override
@@ -97,15 +103,9 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 	}
 
 	@CowCommand
-	private boolean doIt(Player player) {
-		return doJoin(player);
-	}
-
-	@CowCommand
 	private boolean doJoin(Player player) {
 		if (playerState.addPlayer(player.getName())) {
-			player.sendMessage("You've joined the game.");
-			//hey jf - broadcast this message?
+			broadcastToAllOnlinePlayers(player.getName() + " has joined the game.");
 		} else {
 			player.sendMessage("You aren't allowed to join right now.  You can only watch.");
 		}
@@ -144,7 +144,6 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 		String name = player.getName();
 		if (playerState.getPlayerState(name).equals(PlayerState.ALIVE)) {
 			playerState.removePlayer(name);
-			//hey jf - do we want to broadcast this?
 		} else {
 			player.sendMessage("You are not currently in the game.");
 		}
@@ -170,12 +169,6 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 		return false;
 	}
 
-	private void broadcast(String msg) {
-		for (Player player : getPlugin().getServer().getOnlinePlayers()) {
-			player.sendMessage(msg);
-		}
-	}
-
 	// --------------------------------------------------------------
 	// ---- callbacks
 
@@ -190,7 +183,7 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 
 		@Override
 		public void gameAcclimating() {
-			if (playerState.getPlayers().size() < minPlayers) {
+			if (playerState.getPlayers().size() < getMinPlayers()) {
 				// game failed to gather enough players
 				gameState.cancelGame();
 				playerState.resetGame();
@@ -214,12 +207,16 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 		public void gameCanceled() {
 			debugInfo("gameCanceled()");
 			handleFailed();
+			playerState.resetGame();
+			gameState = null;
 		}
 
 		@Override
 		public void gameEnded() {
 			debugInfo("gameEnded()");
 			handleEnded();
+			playerState.resetGame();
+			gameState = null;
 		}
 
 		@Override
@@ -240,10 +237,11 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 		public void playerLeft(String playerName) {
 			handlePlayerLeft(playerName);
 			if (gameState != null && gameState.isInProgress()) {
-				if (playerState.getPlayers().size() < minPlayers) {
+				if (playerState.getPlayers().size() < getMinPlayers()) {
 					gameState.endGame();
 					playerState.resetGame();
 					handleEnded();
+					gameState = null;
 					debugInfo("playerLeft - endingGame");
 				}
 			}
@@ -307,15 +305,19 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 	}
 
 	protected void handleAnnounceGather(long time) {
-		broadcast("Gathering for the games ends in " + time + " seconds");
+		broadcastToAllOnlinePlayers("Gathering for the games ends in " + time + " seconds");
 	}
 
 	protected void handleAnnounceAcclimate(long time) {
-		broadcast("The game starts in " + time + " seconds");
+		broadcastToAllOnlinePlayers("The game starts in " + time + " seconds");
 	}
 
 	protected void handleAnnounceWindDown(long time) {
-		broadcast("The game ends in " + time + " seconds");
+		broadcastToAllOnlinePlayers("The game ends in " + time + " seconds");
+	}
+
+	protected final GameStats getStats() {
+		return stats;
 	}
 
 	protected final void addPlayerToGame(String playerName) {
@@ -340,6 +342,12 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 
 	protected final boolean playerIsWatching(String playerName) {
 		return playerState.getPlayerState(playerName) == PlayerState.WATCHING;
+	}
+
+	protected final void broadcastToAllOnlinePlayers(String msg) {
+		for (Player player : getPlugin().getServer().getOnlinePlayers()) {
+			player.sendMessage(msg);
+		}
 	}
 }
 

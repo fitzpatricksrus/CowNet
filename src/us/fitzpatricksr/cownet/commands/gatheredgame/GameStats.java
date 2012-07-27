@@ -13,32 +13,14 @@ import java.util.Map;
 import java.util.Set;
 
 /*
-This class keeps track of who is part of a game and who is not.
-It also keeps track of the player history persistently.
-
-A game is either started or unstarted.  When unstarted, players can
-be freely added and removed without any stats implications.
-
-When the game starts, the listener is called with all the players
-participating and all players will have a game attributed to their
-stats.  No additional players may be added once the game has started.
-
-Any players explicitly removed from the game once it is started
-will accumulate a loss.   All players still in the game when
-it ends will accumulate a win.
-
-Instances of this object can be reused.
- */
-public class GameStats extends CowNetConfig {
-	@CowNetThingy.Setting
-	private static int maxRecentWinners = 5;
-
-	/*
 	This class is a general bag for stats.  It's main structure is a multi-level
 	hash table that maps playerName->statKey->value
 	It also has a single, fixed length list that can be used to keep track
 	of recent winners/losers.
-	 */
+*/
+public class GameStats extends CowNetConfig {
+	@CowNetThingy.Setting
+	private static int maxRecentWinners = 5;
 
 	private String fileName;
 
@@ -85,20 +67,6 @@ public class GameStats extends CowNetConfig {
 		}
 	}
 
-	public void addRecentWinner(String playerName) {
-		LinkedList<String> recentWinners = new LinkedList<String>();
-		recentWinners.addAll(getStringList("recentWinners", Collections.EMPTY_LIST));
-		if (recentWinners.size() >= maxRecentWinners) {
-			recentWinners.removeLast();
-		}
-		recentWinners.addFirst(playerName);
-		updateConfigValue("recentWinners", recentWinners);
-	}
-
-	public List<String> getRecentWinners() {
-		return getStringList("recentWinners", Collections.EMPTY_LIST);
-	}
-
 	public Map<String, Integer> getStatSummary(String statName) {
 		HashMap<String, Integer> result = new HashMap<String, Integer>();
 		for (String playerName : getPlayerNames()) {
@@ -107,6 +75,39 @@ public class GameStats extends CowNetConfig {
 			}
 		}
 		return result;
+	}
+
+	//-------------------------------------------------
+	// leader boards
+
+	public void addRecentWinner(String playerName) {
+		addRecentLeader("recentWinners", playerName);
+	}
+
+	public void addRecentLeader(String leaderBoardName, String playerName) {
+		LinkedList<String> recentWinners = new LinkedList<String>();
+		recentWinners.addAll(getStringList(leaderBoardName, Collections.EMPTY_LIST));
+		if (recentWinners.size() >= maxRecentWinners) {
+			recentWinners.removeLast();
+		}
+		recentWinners.addFirst(playerName);
+		updateConfigValue(leaderBoardName, recentWinners);
+	}
+
+	public List<String> getRecentWinners() {
+		return getRecentLeaders("recentWinnders");
+	}
+
+	public List<String> getRecentLeaders(String leaderBoardName) {
+		return getStringList(leaderBoardName, Collections.EMPTY_LIST);
+	}
+
+	public void clearRecentWinners() {
+		clearRecentLeaders("recentWinnders");
+	}
+
+	public void clearRecentLeaders(String leaderBoardName) {
+		updateConfigValue(leaderBoardName, Collections.EMPTY_LIST);
 	}
 
 	private String configKeyFor(String playerName) {
