@@ -6,6 +6,7 @@ import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -282,21 +283,30 @@ public class CowPerms extends CowNetThingy implements Listener {
 
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void onPlayerTeleport(PlayerTeleportEvent event) {
-		refreshPermissions(event.getPlayer());
+		onPlayerMove(event);
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerMove(PlayerMoveEvent event) {
 		Location from = event.getFrom();
 		Location to = event.getTo();
+		World fromWorld = from.getWorld();
+		World toWorld = to.getWorld();
 
-		Set<ProtectedRegion> fromRegions = findRegionsFor(from);
-		Set<ProtectedRegion> toRegions = findRegionsFor(to);
-
-		if (!toRegions.equals(fromRegions)) {
-			//fix region permissions if they changed
-			debugInfo("Recalculating permission due to region change.");
+		if (fromWorld != toWorld) {
+			// cheap short circuit for world transitions
 			refreshPermissions(event.getPlayer());
+		} else {
+			// it's the same world, but maybe different regions
+
+			Set<ProtectedRegion> fromRegions = findRegionsFor(from);
+			Set<ProtectedRegion> toRegions = findRegionsFor(to);
+
+			if (!toRegions.equals(fromRegions)) {
+				//fix region permissions if they changed
+				debugInfo("Recalculating permission due to region change.");
+				refreshPermissions(event.getPlayer());
+			}
 		}
 	}
 

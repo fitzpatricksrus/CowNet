@@ -9,17 +9,24 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.inventory.ItemStack;
 import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.commands.gatheredgame.GatheredGame;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.Set;
 
 /**
  */
-public class TntWars extends GatheredGame {
+public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
+	private static final long GAME_FREQUENCY = 4;  // 5 times a second?
+	private static final String KILLS_KEY = "kills";
+	private static final String DEATHS_KEY = "deaths";
+	private static final String BOMBS_PLACED_KEY = "bombsPlaced";
+	private final Random rand = new Random();
+
 	@Setting
 	private int minPlayers = 2;
 	@Setting
@@ -29,15 +36,14 @@ public class TntWars extends GatheredGame {
 	@Setting
 	private int maxBlockPlacements = 1;
 	@Setting
-	private long explosionDelay = 3 * 1000; // 3 seconds
+	private long explosionDelay = 5 * 1000; // 3 seconds
 	@Setting
-	private long explosionPower = 4;
+	private int explosionRadius = 6;
 	// manual setting
 	private Material explosiveBlockType = Material.TNT;
 
 	private HashMap<String, LinkedList<BombPlacement>> placements;
 	private int gameTaskId;
-	private static final long GAME_FREQUENCY = 4;  // 5 times a second?
 
 	// --------------------------------------------------------------
 	// ---- Settings management
@@ -82,11 +88,13 @@ public class TntWars extends GatheredGame {
 	@Override
 	protected void handleGathering() {
 		debugInfo("handleGathering");
+		broadcastToAllOnlinePlayers("A game is gathering.  To join use /" + getTrigger() + " join.");
 	}
 
 	@Override
 	protected void handleAcclimating() {
 		debugInfo("handleAcclimating");
+		broadcastToAllOnlinePlayers("All the players are ready.  The games are about to start.");
 		// teleport everyone to the lobby for acclimation
 		Location loc = getWarpPoint(acclimatingWarpName);
 		if (loc != null) {
@@ -102,6 +110,7 @@ public class TntWars extends GatheredGame {
 	@Override
 	protected void handleInProgress() {
 		debugInfo("handleInProgress");
+		broadcastToAllOnlinePlayers("Let the games begin!");
 		// teleport everyone to the spawn point to start the game
 		Location loc = getWarpPoint(spawnWarpName);
 		if (loc != null) {
@@ -114,7 +123,6 @@ public class TntWars extends GatheredGame {
 		placements = new HashMap<String, LinkedList<BombPlacement>>();
 		Set<String> players = getActivePlayers();
 		for (String playerName : players) {
-			Player player = getPlugin().getServer().getPlayer(playerName);
 			placements.put(playerName, new LinkedList<BombPlacement>());
 		}
 	}
@@ -122,19 +130,29 @@ public class TntWars extends GatheredGame {
 	@Override
 	protected void handleEnded() {
 		debugInfo("handleEnded");
+		stopBombWatcher();
 		placements = null;
+		try {
+			getStats().saveConfig();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		broadcastToAllOnlinePlayers("The game has ended.");
 	}
 
 	@Override
 	protected void handleFailed() {
 		debugInfo("handleFailed");
+		stopBombWatcher();
 		placements = null;
+		broadcastToAllOnlinePlayers("The game has been canceled.");
 	}
 
 	@Override
 	protected boolean handlePlayerAdded(String playerName) {
 		// just add anyone who wants to be added
 		debugInfo("handlePlayerAdded");
+		broadcastToAllOnlinePlayers(playerName + " has joined the game.");
 		return true;
 	}
 
@@ -147,6 +165,7 @@ public class TntWars extends GatheredGame {
 			// placements is only non-null if the game has begun.
 			placements.remove(playerName);
 		}
+		broadcastToAllOnlinePlayers(playerName + " has left the game.");
 	}
 
 	public boolean gameIsInProgress() {
@@ -170,7 +189,9 @@ public class TntWars extends GatheredGame {
 			LinkedList<BombPlacement> placementList = placements.get(playerName);
 			if (placementList.size() < maxBlockPlacements) {
 				// place a bomb
-				placementList.addLast(new BombPlacement(loc));
+				placementList.addLast(new BombPlacement(player, loc));
+				startBombWatcher();
+				getStats().accumulate(player.getName(), BOMBS_PLACED_KEY, 1);
 				return true;
 			}
 		}
@@ -186,17 +207,22 @@ public class TntWars extends GatheredGame {
 				bombPlacements.removeFirst();
 			}
 		}
+		if (placements.size() <= 0) {
+			stopBombWatcher();
+		}
 		return result;
 	}
 
 	private class BombPlacement {
+		public Player placer;
 		public Location location;
 		public long blockPlacedTime;
 
-		public BombPlacement(Location loc) {
-			location = loc;
+		public BombPlacement(Player placer, Location loc) {
+			this.placer = placer;
+			this.location = loc;
 			blockPlacedTime = System.currentTimeMillis();
-			location.getWorld().playEffect(location, Effect.SMOKE, 2);
+			location.getWorld().playEffect(location, Effect.ENDER_SIGNAL, 2);
 		}
 
 		public boolean shouldExplode() {
@@ -204,7 +230,30 @@ public class TntWars extends GatheredGame {
 		}
 
 		public void doExplosion() {
-			location.getWorld().createExplosion(location, explosionPower, false);
+			placer.sendMessage("Boom!");
+			location.getWorld().createExplosion(location, 0F);
+			Server server = getPlugin().getServer();
+			long radiusSquared = explosionRadius * explosionRadius;
+			for (String playerName : getActivePlayers()) {
+				Player player = server.getPlayer(playerName);
+				if (player != null) {
+					Location playerLocation = player.getLocation();
+					if (location.distanceSquared(playerLocation) < radiusSquared) {
+						//this player is in the blast zone.
+						//chalk up a kill and a death.
+						getStats().accumulate(placer.getName(), KILLS_KEY, 1);
+						getStats().accumulate(playerName, DEATHS_KEY, 1);
+						Location dest = getWarpPoint(spawnWarpName);
+						player.teleport(dest);
+						for (int i = 0; i < 10; i++) {
+							location.getWorld().playEffect(dest, Effect.SMOKE, rand.nextInt(9));
+						}
+						player.sendMessage("You were blown up by " + placer.getDisplayName());
+						placer.sendMessage("You blew up " + player.getDisplayName());
+					}
+				}
+			}
+			//			location.getWorld().createExplosion(location, explosionPower, false);
 		}
 	}
 
@@ -224,8 +273,8 @@ public class TntWars extends GatheredGame {
 				// if they already have an unexploded block, just cancel event
 				if (placeBomb(player, event.getBlock().getLocation())) {
 					// remove the item in hand (ex. decrement count by one)
-					ItemStack itemInHand = player.getItemInHand();
-					itemInHand.setAmount(itemInHand.getAmount() - 1);
+					// ItemStack itemInHand = player.getItemInHand();
+					// itemInHand.setAmount(itemInHand.getAmount() - 1);
 				} else {
 					player.sendMessage("You already have the maximum number of explosive placed.");
 				}
@@ -260,22 +309,23 @@ public class TntWars extends GatheredGame {
 		removePlayerFromGame(playerName);
 	}
 
-
 	// --------------------------------------------------------------
 	// ---- Event handlers
 
 	private void startBombWatcher() {
-		debugInfo("startBombWatcher");
-		gameTaskId = getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
-			public void run() {
-				bombWatcher();
-			}
-		}, GAME_FREQUENCY, GAME_FREQUENCY);
+		if (gameTaskId == 0) {
+			debugInfo("startBombWatcher");
+			gameTaskId = getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
+				public void run() {
+					bombWatcher();
+				}
+			}, GAME_FREQUENCY, GAME_FREQUENCY);
+		}
 	}
 
 	private void stopBombWatcher() {
-		debugInfo("stopBombWatcher");
 		if (gameTaskId != 0) {
+			debugInfo("stopBombWatcher");
 			getPlugin().getServer().getScheduler().cancelTask(gameTaskId);
 			gameTaskId = 0;
 		}
@@ -287,4 +337,34 @@ public class TntWars extends GatheredGame {
 			bomb.doExplosion();
 		}
 	}
+
+
+	/*
+		private void fireBall(Location loc) {
+			final HashSet<Block> fires = new HashSet<Block>();
+			for (int x = loc.getBlockX()-1; x <= loc.getBlockX()+1; x++) {
+				for (int y = loc.getBlockY()-1; y <= loc.getBlockY()+1; y++) {
+					for (int z = loc.getBlockZ()-1; z <= loc.getBlockZ()+1; z++) {
+						if (loc.getWorld().getBlockTypeIdAt(x,y,z) == 0) {
+							Block b = loc.getWorld().getBlockAt(x,y,z);
+							b.setTypeIdAndData(Material.FIRE.getId(), (byte)15, false);
+							fires.add(b);
+						}
+					}
+				}
+			}
+			fireball.remove();
+			if (fires.size() > 0) {
+				Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(MagicSpells.plugin, new Runnable() {
+					@Override
+					public void run() {
+						for (Block b : fires) {
+							if (b.getType() == Material.FIRE) {
+								b.setType(Material.AIR);
+							}
+						}
+					}
+				}, 20);
+			}
+		} */
 }

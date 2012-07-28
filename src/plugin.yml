@@ -57,23 +57,19 @@ commands:
   cowperms:
       aliases: [ cperms, perms ]
       descritpion: It's the permissions mod.
-      usage: User /cperms help
+      usage: User /perms help
   cowrank:
       aliases: [ crank, rank ]
       description: promote/demote a player
-      usage: Use "/crank help"
+      usage: Use "/rank help"
   cowwarp:
       aliases: [ cwarp, warp ]
       description: define and use warp points
       usage: Use "/warp help"
-  gatheredgame:
-      aliases: [ ctest ]
-      description: test game
-      usage: Use "/ctest help"
   tntwars:
       alias: [ tnt, tntwar ]
       description: Blow up your friends for fun and profit!
-      usage: Use "/tntwar help"
+      usage: Use "/tntwar help, /tnt help or /tntwars help"
 
 permissions:
     cownet.starve:
@@ -171,9 +167,6 @@ permissions:
         default: op
     cownet.cowwarp:
         description: allowed to use warps
-        default: true
-    cownet.gatheredgame:
-        description: just a test
         default: true
     cownet.tntwars:
         description: Permission to participate in the war.

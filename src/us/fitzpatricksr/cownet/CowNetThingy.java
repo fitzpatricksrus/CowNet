@@ -192,18 +192,18 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
 	}
 
 	@Override
-	public Object getConfigValue(String key, Object def) {
+	public final Object getConfigValue(String key, Object def) {
 		return plugin.getConfig().get(key, def);
 	}
 
 	@Override
-	public List<String> getStringList(String key, List<String> def) {
+	public final List<String> getStringList(String key, List<String> def) {
 		List<String> result = plugin.getConfig().getStringList(key);
 		return (result != null) ? result : def;
 	}
 
 	@Override
-	public ConfigurationSection getConfigurationSection(String key) {
+	public final ConfigurationSection getConfigurationSection(String key) {
 		return plugin.getConfig().getConfigurationSection(key);
 	}
 

@@ -25,7 +25,7 @@ import java.util.Set;
        enum { player, deadPlayer, sponsor } gameState
        boolean lastTribute
  */
-public class GatheredGame extends CowNetThingy implements org.bukkit.event.Listener {
+public abstract class GatheredGame extends CowNetThingy {
 	private static final String STATS_KILLS = "kills";
 	private static final String STATS_DEATHS = "deaths";
 	private static final String STATS_BOMBS = "bombs";
@@ -35,15 +35,9 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 	private PlayerGameState playerState;                        //state of players in the game
 	private GameStats stats;                                    //game stats that we load and save
 
-	// hey jf - this should be abstract
-	protected String getGameName() {
-		return "GatheredGame";
-	}
+	protected abstract String getGameName();
 
-	// hey jf - this should be abstract
-	protected int getMinPlayers() {
-		return 2;
-	}
+	protected abstract int getMinPlayers();
 
 	@Override
 	protected void onEnable() throws Exception {
@@ -104,9 +98,7 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 
 	@CowCommand
 	private boolean doJoin(Player player) {
-		if (playerState.addPlayer(player.getName())) {
-			broadcastToAllOnlinePlayers(player.getName() + " has joined the game.");
-		} else {
+		if (!playerState.addPlayer(player.getName())) {
 			player.sendMessage("You aren't allowed to join right now.  You can only watch.");
 		}
 		return true;
@@ -186,8 +178,6 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 			if (playerState.getPlayers().size() < getMinPlayers()) {
 				// game failed to gather enough players
 				gameState.cancelGame();
-				playerState.resetGame();
-				handleFailed();
 				debugInfo("gameAcclimating() - game failed.");
 			} else {
 				// just forward the callback
@@ -236,12 +226,9 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 		@Override
 		public void playerLeft(String playerName) {
 			handlePlayerLeft(playerName);
-			if (gameState != null && gameState.isInProgress()) {
+			if (gameState.isInProgress()) {
 				if (playerState.getPlayers().size() < getMinPlayers()) {
 					gameState.endGame();
-					playerState.resetGame();
-					handleEnded();
-					gameState = null;
 					debugInfo("playerLeft - endingGame");
 				}
 			}
@@ -276,6 +263,7 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 	// --------------------------------------------------------------
 	// ---- subclass interface
 
+	// -- notification routines.
 	protected void handleGathering() {
 	}
 
@@ -316,6 +304,7 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 		broadcastToAllOnlinePlayers("The game ends in " + time + " seconds");
 	}
 
+	// -- routines for subclasses to inspect and modify game flow.
 	protected final GameStats getStats() {
 		return stats;
 	}
@@ -326,6 +315,14 @@ public class GatheredGame extends CowNetThingy implements org.bukkit.event.Liste
 
 	protected final void removePlayerFromGame(String playerName) {
 		playerState.removePlayer(playerName);
+	}
+
+	protected final void banPlayer(String playerName) {
+		playerState.banPlayer(playerName);
+	}
+
+	protected final void unbanPlayer(String playerName) {
+		playerState.unbanPlayer(playerName);
 	}
 
 	protected final Set<String> getActivePlayers() {

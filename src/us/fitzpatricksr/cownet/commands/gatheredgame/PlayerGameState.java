@@ -154,6 +154,10 @@ public class PlayerGameState {
 		}
 	}
 
+	/*
+	Banning a player removes them from the games (if they are in them)
+	and keeps them from joining in the future.
+	 */
 	private static void banPlayer(String gameName, String playerName) {
 		if (!banned.get(gameName).contains(playerName)) {
 			removePlayer(gameName, playerName);
@@ -162,6 +166,9 @@ public class PlayerGameState {
 		}
 	}
 
+	/*
+	Unbanning a player allows the to rejoin the game if they choose.
+	 */
 	private static void unbanPlayer(String gameName, String playerName) {
 		if (banned.get(gameName).contains(playerName)) {
 			banned.get(gameName).remove(playerName);

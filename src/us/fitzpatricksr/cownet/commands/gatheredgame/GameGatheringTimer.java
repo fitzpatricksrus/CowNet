@@ -38,7 +38,6 @@ public class GameGatheringTimer {
 		public void announceWindDown(long time);
 	}
 
-	// hey jf - these settings should be pushed up into the highest level client and passed down.
 	@CowNetThingy.Setting
 	public static long timeToGather = 1 * 60 * 1000; // 1 minute
 	@CowNetThingy.Setting

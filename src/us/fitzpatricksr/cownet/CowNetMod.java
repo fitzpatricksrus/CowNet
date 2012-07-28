@@ -17,7 +17,6 @@ import us.fitzpatricksr.cownet.commands.Starve;
 import us.fitzpatricksr.cownet.commands.Timber;
 import us.fitzpatricksr.cownet.commands.TntSheep;
 import us.fitzpatricksr.cownet.commands.TntWars;
-import us.fitzpatricksr.cownet.commands.gatheredgame.GatheredGame;
 
 import java.util.logging.Logger;
 
@@ -49,7 +48,6 @@ public class CowNetMod extends JavaPlugin {
 				cowPerms,
 				new CowRank(cowPerms),
 				new CowWarp(),
-				new GatheredGame(),
 				new TntWars()
 		};
 	}
