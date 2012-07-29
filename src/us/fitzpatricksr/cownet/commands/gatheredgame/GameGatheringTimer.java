@@ -13,17 +13,17 @@ import us.fitzpatricksr.cownet.CowNetThingy;
 public class GameGatheringTimer {
 	private static final int GAME_WATCHER_FREQUENCY = 20 * 1; // 1 second
 
-	public static enum GamePhase {
+	private static enum GamePhase {
 		GATHERING,      //gathering tributes
-		ACCLIMATING,    //players are in the arena but can't do anything yet.
+		LOUNGING,       //players are in the arena but can't do anything yet.
 		IN_PROGRESS,    //started but not over yet
-		ENDED            //the game is over
+		ENDED           //the game is over
 	}
 
 	public interface Listener {
 		public void gameGathering();
 
-		public void gameAcclimating();
+		public void gameLounging();
 
 		public void gameInProgress();
 
@@ -33,7 +33,7 @@ public class GameGatheringTimer {
 
 		public void announceGather(long time);
 
-		public void announceAcclimate(long time);
+		public void announceLounging(long time);
 
 		public void announceWindDown(long time);
 	}
@@ -41,7 +41,7 @@ public class GameGatheringTimer {
 	@CowNetThingy.Setting
 	public static long timeToGather = 1 * 60 * 1000; // 1 minute
 	@CowNetThingy.Setting
-	public static long timeToAcclimate = 10 * 1000; // 10 seconds
+	public static long timeToLounge = 10 * 1000; // 10 seconds
 	@CowNetThingy.Setting
 	public static long timeToRun = 2 * 60 * 1000; // 2 minute game
 
@@ -77,8 +77,8 @@ public class GameGatheringTimer {
 		return gameState == GamePhase.GATHERING;
 	}
 
-	public boolean isAcclimating() {
-		return gameState == GamePhase.ACCLIMATING;
+	public boolean isLounging() {
+		return gameState == GamePhase.LOUNGING;
 	}
 
 	public boolean isInProgress() {
@@ -87,7 +87,7 @@ public class GameGatheringTimer {
 
 	public boolean isGameOn() {
 		GamePhase phase = gameState;
-		return phase == GamePhase.IN_PROGRESS || phase == GamePhase.ACCLIMATING;
+		return phase == GamePhase.IN_PROGRESS || phase == GamePhase.LOUNGING;
 	}
 
 	public boolean isEnded() {
@@ -98,27 +98,27 @@ public class GameGatheringTimer {
 		return Math.max((timeToGather + time) - System.currentTimeMillis(), 0);
 	}
 
-	private long getTimeToAcclimate() {  // private because it is not state aware
-		return Math.max((timeToAcclimate + time) - System.currentTimeMillis(), 0);
+	private long getTimeToLounge() {  // private because it is not state aware
+		return Math.max((timeToLounge + time) - System.currentTimeMillis(), 0);
 	}
 
 	private long getTimeUntilEnd() {  // private because it is not state aware
 		return Math.max((timeToRun + time) - System.currentTimeMillis(), 0);
 	}
 
-	/* start acclimating if we haven't already done so */
-	public void startAcclimating() {
+	/* start lounging if we haven't already done so */
+	public void startLounging() {
 		if (gameState == GamePhase.GATHERING) {
-			gameState = GamePhase.ACCLIMATING;
+			gameState = GamePhase.LOUNGING;
 			time = System.currentTimeMillis();
-			listener.gameAcclimating();
+			listener.gameLounging();
 		}
 	}
 
 	/* start the game if it isn't already started */
 	public void startGame() {
-		startAcclimating();  // don't skip acclimation phase!
-		if (gameState == GamePhase.ACCLIMATING) {
+		startLounging();  // don't skip lounging phase!
+		if (gameState == GamePhase.LOUNGING) {
 			gameState = GamePhase.IN_PROGRESS;
 			time = System.currentTimeMillis();
 			listener.gameInProgress();
@@ -140,21 +140,24 @@ public class GameGatheringTimer {
 	private void gameWatcher() {
 		if (gameState == GamePhase.GATHERING) {
 			if (getTimeToGather() <= 0) {
-				startAcclimating();
+				startLounging();
 			} else {
 				long timeToWait = getTimeToGather() / 1000;
 				if (timeToWait % 10 == 0 || timeToWait < 10) {
 					listener.announceGather(timeToWait);
 				}
 			}
-		} else if (gameState == GamePhase.ACCLIMATING) {
-			if (getTimeToAcclimate() <= 0) {
+		}
+		// we check each state in case some state lasts for 0 time
+		if (gameState == GamePhase.LOUNGING) {
+			if (getTimeToLounge() <= 0) {
 				startGame();
 			} else {
-				long timeToWait = getTimeToAcclimate() / 1000;
-				listener.announceAcclimate(timeToWait);
+				long timeToWait = getTimeToLounge() / 1000;
+				listener.announceLounging(timeToWait);
 			}
-		} else if (gameState == GamePhase.IN_PROGRESS) {
+		}
+		if (gameState == GamePhase.IN_PROGRESS) {
 			if (getTimeUntilEnd() <= 0) {
 				endGame();
 			} else {
@@ -165,7 +168,8 @@ public class GameGatheringTimer {
 					listener.announceWindDown(timeToWait);
 				}
 			}
-		} else {
+		}
+		if (gameState == GamePhase.ENDED) {
 			// gamestate here should be ENDED, so kill the timer
 			if (gatherTaskId != 0) { // gatherTaskId should never be 0 here
 				plugin.getServer().getScheduler().cancelTask(gatherTaskId);

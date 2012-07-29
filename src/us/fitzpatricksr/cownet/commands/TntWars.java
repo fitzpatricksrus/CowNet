@@ -38,7 +38,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 	@Setting
 	private int minPlayers = 2;
 	@Setting
-	private String acclimatingWarpName = "tntWarsAcclimating";
+	private String loungeWarpName = "tntWarsLounge";
 	@Setting
 	private String spawnWarpName = "tntWarsSpawn";
 	@Setting
@@ -122,8 +122,8 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 				double k = tempStats.getStat(playerName, KILLS_KEY);
 				double d = tempStats.getStat(playerName, DEATHS_KEY);
 				double b = tempStats.getStat(playerName, BOMBS_PLACED_KEY);
-				double accuracy = (b > 0) ? 0 : k / b;
-				double stealth = (d > 0) ? k / d : k;
+				double accuracy = (b != 0) ? k / b : 0;
+				double stealth = (d != 0) ? k / d : k;
 				sender.sendMessage("  " + StringUtils.fitToColumnSize(playerName, 10) + " accuracy = " + StringUtils.fitToColumnSize(Double.toString(accuracy), 5) + " stealth = " + StringUtils.fitToColumnSize(Double.toString(stealth), 5));
 			}
 		}
@@ -140,8 +140,8 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		double k = getStats().getStat(playerName, KILLS_KEY);
 		double d = getStats().getStat(playerName, DEATHS_KEY);
 		double b = getStats().getStat(playerName, BOMBS_PLACED_KEY);
-		double accuracy = (b > 0) ? k / b : 0;
-		double stealth = (d > 0) ? k / d : k;
+		double accuracy = (b != 0) ? k / b : 0;
+		double stealth = (d != 0) ? k / d : k;
 		player.sendMessage("Your stats: ");
 		player.sendMessage("  kills: " + k);
 		player.sendMessage("  deaths: " + d);
@@ -179,7 +179,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		for (String playerName : getStats().getPlayerNames()) {
 			double k = getStats().getStat(playerName, KILLS_KEY);
 			double b = getStats().getStat(playerName, BOMBS_PLACED_KEY);
-			double a = (b > 0) ? 0 : k / b;
+			double a = (b != 0) ? k / b : 0;
 			accuracy.put(playerName, a * 100);
 		}
 		dumpLeaders(sender, accuracy);
@@ -193,7 +193,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		for (String playerName : getStats().getPlayerNames()) {
 			double k = getStats().getStat(playerName, KILLS_KEY);
 			double d = getStats().getStat(playerName, DEATHS_KEY);
-			double s = (d > 0) ? k / d : k;
+			double s = (d != 0) ? k / d : k;
 			stealth.put(playerName, s * 100);
 		}
 		dumpLeaders(sender, stealth);
@@ -220,11 +220,11 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 	}
 
 	@Override
-	protected void handleAcclimating() {
-		debugInfo("handleAcclimating");
+	protected void handleLounging() {
+		debugInfo("handleLounging");
 		broadcastToAllOnlinePlayers("All the players are ready.  The games are about to start.");
-		// teleport everyone to the lobby for acclimation
-		Location loc = getWarpPoint(acclimatingWarpName);
+		// teleport everyone to the lounge
+		Location loc = getWarpPoint(loungeWarpName);
 		if (loc != null) {
 			// hey jf - you need to jiggle this a bit or everyone will be on top of each other
 			Server server = getPlugin().getServer();
@@ -248,9 +248,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 			for (String playerName : getActivePlayers()) {
 				Player player = server.getPlayer(playerName);
 				player.teleport(loc);
-				//give everyone TNT in hand
-				ItemStack itemInHand = new ItemStack(Material.TNT, 1);
-				player.setItemInHand(itemInHand);
+				giveTnt(playerName);
 			}
 		}
 		placements = new HashMap<String, LinkedList<BombPlacement>>();
@@ -274,6 +272,11 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 			e.printStackTrace();
 		}
 		broadcastToAllOnlinePlayers("The game has ended.");
+		for (String playerName : getActivePlayers()) {
+			Player player = getPlayer(playerName);
+			player.sendMessage("Scores this game:");
+			doScores(player);
+		}
 	}
 
 	@Override
@@ -297,8 +300,8 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		// just add anyone who wants to be added
 		debugInfo("handlePlayerAdded");
 		broadcastToAllOnlinePlayers(playerName + " has joined the game.");
-		if (isGameAcclimating()) {
-			Location warp = getWarpPoint(acclimatingWarpName);
+		if (isGameLounging()) {
+			Location warp = getWarpPoint(loungeWarpName);
 			if (warp != null) {
 				getPlayer(playerName).teleport(warp);
 			}
@@ -348,12 +351,24 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		return loc;
 	}
 
+	private void giveTnt(String playerName) {
+		//give everyone TNT in hand
+		Player player = getPlayer(playerName);
+		ItemStack oldItemInHand = player.getItemInHand();
+		ItemStack itemInHand = new ItemStack(Material.TNT, 1);
+		player.setItemInHand(itemInHand);
+		player.getInventory().addItem(oldItemInHand);
+		player.updateInventory();
+	}
+
 	private void removeTnt(String playerName) {
 		Player player = getPlayer(playerName);
 		Inventory inventory = player.getInventory();
 		int slot = inventory.first(Material.TNT);
 		ItemStack stack = inventory.getItem(slot);
 		stack.setAmount(stack.getAmount() - 1);
+		inventory.setItem(slot, stack);
+		player.updateInventory();
 	}
 
 	private Player getPlayer(String playerName) {

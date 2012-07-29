@@ -96,8 +96,8 @@ public abstract class GatheredGame extends CowNetThingy {
 	private boolean doStart(Player player) {
 		if (gameState != null) {
 			if (gameState.isGathering()) {
-				gameState.startAcclimating();
-			} else if (gameState.isAcclimating()) {
+				gameState.startLounging();
+			} else if (gameState.isLounging()) {
 				gameState.startGame();
 			} else if (gameState.isGameOn()) {
 				player.sendMessage("The game has already begun.");
@@ -162,15 +162,15 @@ public abstract class GatheredGame extends CowNetThingy {
 		}
 
 		@Override
-		public void gameAcclimating() {
+		public void gameLounging() {
 			if (playerState.getPlayers().size() < getMinPlayers()) {
 				// game failed to gather enough players
 				gameState.cancelGame();
-				debugInfo("gameAcclimating() - game failed.");
+				debugInfo("gameLounging() - game failed.");
 			} else {
 				// just forward the callback
-				handleAcclimating();
-				debugInfo("gameAcclimating() - game starting.");
+				handleLounging();
+				debugInfo("gameLounging() - game starting.");
 			}
 		}
 
@@ -238,8 +238,8 @@ public abstract class GatheredGame extends CowNetThingy {
 		}
 
 		@Override
-		public void announceAcclimate(long time) {
-			handleAnnounceAcclimate(time);
+		public void announceLounging(long time) {
+			handleAnnounceLounging(time);
 		}
 
 		@Override
@@ -255,7 +255,7 @@ public abstract class GatheredGame extends CowNetThingy {
 	protected void handleGathering() {
 	}
 
-	protected void handleAcclimating() {
+	protected void handleLounging() {
 	}
 
 	protected void handleInProgress() {
@@ -284,7 +284,7 @@ public abstract class GatheredGame extends CowNetThingy {
 		broadcastToAllOnlinePlayers("Gathering for the games ends in " + time + " seconds");
 	}
 
-	protected void handleAnnounceAcclimate(long time) {
+	protected void handleAnnounceLounging(long time) {
 		broadcastToAllOnlinePlayers("The game starts in " + time + " seconds");
 	}
 
@@ -333,8 +333,8 @@ public abstract class GatheredGame extends CowNetThingy {
 		return (gameState != null) && gameState.isGathering();
 	}
 
-	protected final boolean isGameAcclimating() {
-		return (gameState != null) && gameState.isAcclimating();
+	protected final boolean isGameLounging() {
+		return (gameState != null) && gameState.isLounging();
 	}
 
 	protected final boolean isGameInProgress() {
