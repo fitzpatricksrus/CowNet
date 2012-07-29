@@ -65,12 +65,13 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 	@Override
 	// reload any settings not handled by @Setting
 	protected void reloadManualSettings() throws Exception {
+		super.reloadManualSettings();
 		this.explosiveBlockType = Material.matchMaterial(getConfigValue("explosiveBlockType", explosiveBlockType.toString()));
 	}
 
 	// return any custom settings that are not handled by @Settings code
 	protected HashMap<String, String> getManualSettings() {
-		HashMap<String, String> result = new HashMap<String, String>();
+		HashMap<String, String> result = super.getManualSettings();
 		result.put("explosiveBlockType", explosiveBlockType.toString());
 		return result;
 	}
@@ -80,10 +81,10 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		if (settingName.equalsIgnoreCase("explosiveBlockType")) {
 			explosiveBlockType = Material.valueOf(settingValue);
 			updateConfigValue("explosiveBlockType", settingValue);
+			return true;
 		} else {
-			return false;
+			return super.updateManualSetting(settingName, settingValue);
 		}
-		return true;
 	}
 
 	@Override
