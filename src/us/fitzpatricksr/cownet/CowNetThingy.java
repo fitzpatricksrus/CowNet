@@ -342,7 +342,7 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
 	 * command to set the value of a setting, both manual and automatic. Changes will be persistent.
 	 */
 	@CowCommand(opOnly = true)
-	private boolean doSetting(CommandSender sender, String settingName, String settingValue) {
+	private boolean doSettings(CommandSender sender, String settingName, String settingValue) {
 		// set <setting> <value>
 		if (!setAutoSettingValue(settingName, settingValue) && !updateManualSetting(settingName, settingValue)) {
 			sender.sendMessage("Setting not found or could not be updated.");

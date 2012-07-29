@@ -33,7 +33,7 @@ public abstract class GatheredGame extends CowNetThingy {
 	//game state
 	private GameGatheringTimer gameState;                       //the state of the game
 	private PlayerGameState playerState;                        //state of players in the game
-	private GameStats stats;                                    //game stats that we load and save
+	private GameStatsFile statsFile;                                    //game statsFile that we load and save
 
 	protected abstract String getGameName();
 
@@ -43,13 +43,13 @@ public abstract class GatheredGame extends CowNetThingy {
 	protected void onEnable() throws Exception {
 		playerState = new PlayerGameState(getGameName());
 		playerState.addListener(new CallbackStub());
-		stats = new GameStats(getPlugin(), getGameName() + ".yml");
-		stats.loadConfig();
+		statsFile = new GameStatsFile(getPlugin(), getGameName() + ".yml");
+		statsFile.loadConfig();
 	}
 
 	@Override
 	protected void reloadManualSettings() throws Exception {
-		reloadAutoSettings(GameStats.class);
+		reloadAutoSettings(GameStatsFile.class);
 		reloadAutoSettings(GameGatheringTimer.class);
 		reloadAutoSettings(PlayerGameState.class);
 	}
@@ -58,13 +58,13 @@ public abstract class GatheredGame extends CowNetThingy {
 	protected HashMap<String, String> getManualSettings() {
 		HashMap<String, String> result = getSettingValueMapFor(GameGatheringTimer.class);
 		result.putAll(getSettingValueMapFor(PlayerGameState.class));
-		result.putAll(getSettingValueMapFor(GameStats.class));
+		result.putAll(getSettingValueMapFor(GameStatsFile.class));
 		return result;
 	}
 
 	@Override
 	protected boolean updateManualSetting(String settingName, String settingValue) {
-		return setAutoSettingValue(GameGatheringTimer.class, settingName, settingValue) || setAutoSettingValue(PlayerGameState.class, settingName, settingValue) || setAutoSettingValue(GameStats.class, settingName, settingValue);
+		return setAutoSettingValue(GameGatheringTimer.class, settingName, settingValue) || setAutoSettingValue(PlayerGameState.class, settingName, settingValue) || setAutoSettingValue(GameStatsFile.class, settingName, settingValue);
 	}
 
 	@Override
@@ -76,25 +76,13 @@ public abstract class GatheredGame extends CowNetThingy {
 				"   quit - chicken out and just watch",
 				"   tp <player> - transport to a player, if you're a spectator",
 				"   start - just get things started already!",
-				"   stats - see how you stack up against others."
+				"   statsFile - see how you stack up against others."
 		};
 	}
 
 	//------------------------------------------------
 	//  command handlers
 	//
-
-	@CowCommand
-	private boolean doStats(CommandSender sender) {
-		if (sender instanceof Player) {
-			Player player = (Player) sender;
-			String name = player.getName();
-			//			player.sendMessage("Your wins: " + playerGameState.getPlayerWins(name) + "   " + StringUtils.fitToColumnSize(Double.toString(playerGameState.getPlayerAverage(name) * 100), 5) + "%");
-		}
-		//		playerGameState.dumpRecentHistory(sender);
-		//		playerGameState.dumpLeaderBoard(sender);
-		return true;
-	}
 
 	@CowCommand
 	private boolean doJoin(Player player) {
@@ -305,8 +293,8 @@ public abstract class GatheredGame extends CowNetThingy {
 	}
 
 	// -- routines for subclasses to inspect and modify game flow.
-	protected final GameStats getStats() {
-		return stats;
+	protected final GameStatsFile getStats() {
+		return statsFile;
 	}
 
 	protected final void addPlayerToGame(String playerName) {
@@ -339,6 +327,22 @@ public abstract class GatheredGame extends CowNetThingy {
 
 	protected final boolean playerIsWatching(String playerName) {
 		return playerState.getPlayerState(playerName) == PlayerState.WATCHING;
+	}
+
+	protected final boolean isGameGathering() {
+		return (gameState != null) && gameState.isGathering();
+	}
+
+	protected final boolean isGameAcclimating() {
+		return (gameState != null) && gameState.isAcclimating();
+	}
+
+	protected final boolean isGameInProgress() {
+		return (gameState != null) && gameState.isInProgress();
+	}
+
+	protected final boolean isGameEnded() {
+		return (gameState != null) && gameState.isEnded();
 	}
 
 	protected final void broadcastToAllOnlinePlayers(String msg) {
