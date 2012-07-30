@@ -13,7 +13,6 @@ it will limit the number of games a player can be in to 1.
 public class PlayerGameState {
 	public enum PlayerState {
 		ALIVE("a player"),
-		BANNED("an ex-player"),
 		WATCHING("a spectator");
 
 		private String printString;
@@ -35,10 +34,6 @@ public class PlayerGameState {
 		public boolean playerJoined(String playerName);
 
 		public void playerLeft(String playerName);
-
-		public void playerBanned(String playerName);
-
-		public void playerUnbanned(String playerName);
 	}
 
 	private String name;
@@ -47,8 +42,8 @@ public class PlayerGameState {
 		this.name = name;
 	}
 
-	public void addListener(Listener listener) {
-		addListener(name, listener);
+	public void setListener(Listener listener) {
+		setListener(name, listener);
 	}
 
 	public void removeListener() {
@@ -67,20 +62,8 @@ public class PlayerGameState {
 		removePlayer(name, playerName);
 	}
 
-	public void banPlayer(String playerName) {
-		banPlayer(name, playerName);
-	}
-
-	public void unbanPlayer(String playerName) {
-		unbanPlayer(name, playerName);
-	}
-
 	public Set<String> getPlayers() {
 		return getPlayers(name);
-	}
-
-	public Set<String> getBannedPlayers() {
-		return getBannedPlayers(name);
 	}
 
 	public String getGameOfPlayer(String playerName) {
@@ -98,25 +81,44 @@ public class PlayerGameState {
 	of recent winners/losers.
 	*/
 
-	// who's in a particular game?  part of a bi-map from player <-> game
+	private static class PlayerInfo {
+		public final String playerName;
+		public String teamName = "";
+
+		public PlayerInfo(String playerName, String teamName) {
+			this.playerName = playerName;
+			this.teamName = teamName;
+		}
+
+		@Override
+		public boolean equals(Object other) {
+			if (this == other) return true;
+			if (!(other instanceof PlayerInfo)) return false;
+			PlayerInfo info = (PlayerInfo) other;
+			return info.playerName.equalsIgnoreCase(playerName) && info.teamName.equalsIgnoreCase(teamName);
+		}
+
+		@Override
+		public int hashCode() {
+			return playerName.hashCode();
+		}
+	}
+
+	// who's in a particular game?  game -> list of players
 	private static HashMap<String, HashSet<String>> participating = new HashMap<String, HashSet<String>>();
 	// what game is a particular player in?   playerName -> game
 	private static HashMap<String, String> playerGames = new HashMap<String, String>();
-	// who's banned from a particular game
-	private static HashMap<String, HashSet<String>> banned = new HashMap<String, HashSet<String>>();
 	// who get's notified when players enter and leave games
 	private static HashMap<String, Listener> listeners = new HashMap<String, Listener>();
 
-	private static void addListener(String gameName, Listener listener) {
+	private static void setListener(String gameName, Listener listener) {
 		listeners.put(gameName, listener);
-		banned.put(gameName, new HashSet<String>());
 		participating.put(gameName, new HashSet<String>());
 	}
 
 	private static void removeListener(String gameName) {
 		resetGame(gameName);
 		listeners.remove(gameName);
-		banned.remove(gameName);
 		participating.remove(gameName);
 	}
 
@@ -126,12 +128,11 @@ public class PlayerGameState {
 			playerGames.remove(player);
 		}
 		participating.get(gameName).clear();
-		banned.get(gameName).clear();
 	}
 
 	/* add a player to the game.  return true if player was added   */
 	private static boolean addPlayer(String gameName, String playerName) {
-		if (!playerGames.containsKey(playerName) && !banned.get(gameName).contains(playerName)) {
+		if (!playerGames.containsKey(playerName)) {
 			// not in another game and not banned
 			if (listeners.get(gameName).playerJoined(playerName)) {
 				// game said this player is allowed to join, so add them to the mix.
@@ -154,41 +155,13 @@ public class PlayerGameState {
 		}
 	}
 
-	/*
-	Banning a player removes them from the games (if they are in them)
-	and keeps them from joining in the future.
-	 */
-	private static void banPlayer(String gameName, String playerName) {
-		if (!banned.get(gameName).contains(playerName)) {
-			removePlayer(gameName, playerName);
-			banned.get(gameName).add(playerName);
-			listeners.get(gameName).playerBanned(playerName);
-		}
-	}
-
-	/*
-	Unbanning a player allows the to rejoin the game if they choose.
-	 */
-	private static void unbanPlayer(String gameName, String playerName) {
-		if (banned.get(gameName).contains(playerName)) {
-			banned.get(gameName).remove(playerName);
-			listeners.get(gameName).playerUnbanned(playerName);
-		}
-	}
-
 	private static Set<String> getPlayers(String gameName) {
 		return participating.get(gameName);
-	}
-
-	private static Set<String> getBannedPlayers(String gameName) {
-		return banned.get(gameName);
 	}
 
 	private static PlayerState getPlayerState(String gameName, String playerName) {
 		if (participating.get(gameName).contains(playerName)) {
 			return PlayerState.ALIVE;
-		} else if (banned.get(gameName).contains(playerName)) {
-			return PlayerState.BANNED;
 		} else {
 			return PlayerState.WATCHING;
 		}

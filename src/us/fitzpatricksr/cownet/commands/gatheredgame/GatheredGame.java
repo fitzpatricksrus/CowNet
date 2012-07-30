@@ -42,7 +42,7 @@ public abstract class GatheredGame extends CowNetThingy {
 	@Override
 	protected void onEnable() throws Exception {
 		playerState = new PlayerGameState(getGameName());
-		playerState.addListener(new CallbackStub());
+		playerState.setListener(new CallbackStub());
 		statsFile = new GameStatsFile(getPlugin(), getGameName() + ".yml");
 		statsFile.loadConfig();
 	}
@@ -223,16 +223,6 @@ public abstract class GatheredGame extends CowNetThingy {
 		}
 
 		@Override
-		public void playerBanned(String playerName) {
-			handlePlayerBanned(playerName);
-		}
-
-		@Override
-		public void playerUnbanned(String playerName) {
-			handlePlayerUnbanned(playerName);
-		}
-
-		@Override
 		public void announceGather(long time) {
 			handleAnnounceGather(time);
 		}
@@ -305,24 +295,12 @@ public abstract class GatheredGame extends CowNetThingy {
 		playerState.removePlayer(playerName);
 	}
 
-	protected final void banPlayer(String playerName) {
-		playerState.banPlayer(playerName);
-	}
-
-	protected final void unbanPlayer(String playerName) {
-		playerState.unbanPlayer(playerName);
-	}
-
 	protected final Set<String> getActivePlayers() {
 		return playerState.getPlayers();
 	}
 
 	protected final boolean playerIsAlive(String playerName) {
 		return playerState.getPlayerState(playerName) == PlayerState.ALIVE;
-	}
-
-	protected final boolean playerIsDead(String playerName) {
-		return playerState.getPlayerState(playerName) == PlayerState.BANNED;
 	}
 
 	protected final boolean playerIsWatching(String playerName) {
