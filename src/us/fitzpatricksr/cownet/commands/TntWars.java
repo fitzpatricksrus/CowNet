@@ -342,12 +342,14 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		CowNetMod plugin = (CowNetMod) getPlugin();
 		CowWarp warpThingy = (CowWarp) plugin.getThingy("cowwarp");
 		Location loc = warpThingy.getWarpLocation(warpName);
-		if (spawnJiggle > 0) {
-			int dx = rand.nextInt(spawnJiggle * 2 + 1) - spawnJiggle - 1; // -5..5
-			int dz = rand.nextInt(spawnJiggle * 2 + 1) - spawnJiggle - 1; // -5..5
-			loc.add(dx, 0, dz);
-			loc = loc.getWorld().getHighestBlockAt(loc).getLocation();
-			loc.add(0, 1, 0);
+		if (loc != null) {
+			if (spawnJiggle > 0) {
+				int dx = rand.nextInt(spawnJiggle * 2 + 1) - spawnJiggle - 1; // -5..5
+				int dz = rand.nextInt(spawnJiggle * 2 + 1) - spawnJiggle - 1; // -5..5
+				loc.add(dx, 0, dz);
+				loc = loc.getWorld().getHighestBlockAt(loc).getLocation();
+				loc.add(0, 1, 0);
+			}
 		}
 		return loc;
 	}
