@@ -198,8 +198,8 @@ public abstract class GatheredGame extends CowNetThingy {
 		}
 
 		@Override
-		public boolean playerJoined(String playerName) {
-			if (handlePlayerAdded(playerName)) {
+		public boolean playerJoined(String playerName, String teamName) {
+			if (handlePlayerAdded(playerName, teamName)) {
 				if (gameState == null) {
 					// start the timer for the game to begin.  i.e. put it in gathering mode.
 					gameState = new GameGatheringTimer(getPlugin(), new CallbackStub());
@@ -257,7 +257,7 @@ public abstract class GatheredGame extends CowNetThingy {
 	protected void handleFailed() {
 	}
 
-	protected boolean handlePlayerAdded(String playerName) {
+	protected boolean handlePlayerAdded(String playerName, String teamName) {
 		return true;
 	}
 
@@ -291,12 +291,24 @@ public abstract class GatheredGame extends CowNetThingy {
 		playerState.addPlayer(playerName);
 	}
 
+	protected final void addPlayerToGame(String playerName, String teamName) {
+		playerState.addPlayer(playerName, teamName);
+	}
+
 	protected final void removePlayerFromGame(String playerName) {
 		playerState.removePlayer(playerName);
 	}
 
 	protected final Set<String> getActivePlayers() {
 		return playerState.getPlayers();
+	}
+
+	protected final String getPlayerTeam(String playerName) {
+		return playerState.getTeamOfPlayer(playerName);
+	}
+
+	protected final String getPlayerGame(String playerName) {
+		return playerState.getGameOfPlayer(playerName);
 	}
 
 	protected final boolean playerIsAlive(String playerName) {

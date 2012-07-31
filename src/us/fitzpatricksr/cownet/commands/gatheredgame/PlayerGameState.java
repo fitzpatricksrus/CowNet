@@ -31,7 +31,7 @@ public class PlayerGameState {
 	}
 
 	public interface Listener {
-		public boolean playerJoined(String playerName);
+		public boolean playerJoined(String playerName, String teamName);
 
 		public void playerLeft(String playerName);
 	}
@@ -55,7 +55,11 @@ public class PlayerGameState {
 	}
 
 	public boolean addPlayer(String playerName) {
-		return addPlayer(name, playerName);
+		return addPlayer(name, playerName, "");
+	}
+
+	public boolean addPlayer(String playerName, String teamName) {
+		return addPlayer(name, playerName, teamName);
 	}
 
 	public void removePlayer(String playerName) {
@@ -70,6 +74,14 @@ public class PlayerGameState {
 		return playerGames.get(playerName);
 	}
 
+	public String getTeamOfPlayer(String playerName) {
+		if (getGameOfPlayer(playerName).equals(name)) {
+			return playerTeams.get(playerName);
+		} else {
+			return null;
+		}
+	}
+
 	public PlayerState getPlayerState(String playerName) {
 		return getPlayerState(name, playerName);
 	}
@@ -81,33 +93,12 @@ public class PlayerGameState {
 	of recent winners/losers.
 	*/
 
-	private static class PlayerInfo {
-		public final String playerName;
-		public String teamName = "";
-
-		public PlayerInfo(String playerName, String teamName) {
-			this.playerName = playerName;
-			this.teamName = teamName;
-		}
-
-		@Override
-		public boolean equals(Object other) {
-			if (this == other) return true;
-			if (!(other instanceof PlayerInfo)) return false;
-			PlayerInfo info = (PlayerInfo) other;
-			return info.playerName.equalsIgnoreCase(playerName) && info.teamName.equalsIgnoreCase(teamName);
-		}
-
-		@Override
-		public int hashCode() {
-			return playerName.hashCode();
-		}
-	}
-
 	// who's in a particular game?  game -> list of players
 	private static HashMap<String, HashSet<String>> participating = new HashMap<String, HashSet<String>>();
 	// what game is a particular player in?   playerName -> game
 	private static HashMap<String, String> playerGames = new HashMap<String, String>();
+	// what team is a particular player on?
+	private static HashMap<String, String> playerTeams = new HashMap<String, String>();
 	// who get's notified when players enter and leave games
 	private static HashMap<String, Listener> listeners = new HashMap<String, Listener>();
 
@@ -126,18 +117,20 @@ public class PlayerGameState {
 		for (String player : participating.get(gameName)) {
 			// player was in this game, so remove the entry for this player.
 			playerGames.remove(player);
+			playerTeams.remove(player);
 		}
 		participating.get(gameName).clear();
 	}
 
 	/* add a player to the game.  return true if player was added   */
-	private static boolean addPlayer(String gameName, String playerName) {
+	private static boolean addPlayer(String gameName, String playerName, String teamName) {
 		if (!playerGames.containsKey(playerName)) {
 			// not in another game and not banned
-			if (listeners.get(gameName).playerJoined(playerName)) {
+			if (listeners.get(gameName).playerJoined(playerName, teamName)) {
 				// game said this player is allowed to join, so add them to the mix.
 				participating.get(gameName).add(playerName);
 				playerGames.put(playerName, gameName);
+				playerTeams.put(playerName, teamName);
 				return true;
 			}
 		}
@@ -151,6 +144,7 @@ public class PlayerGameState {
 		if (participating.get(gameName).contains(playerName)) {
 			participating.get(gameName).remove(playerName);
 			playerGames.remove(playerName);
+			playerTeams.remove(playerName);
 			listeners.get(gameName).playerLeft(playerName);
 		}
 	}
@@ -165,5 +159,9 @@ public class PlayerGameState {
 		} else {
 			return PlayerState.WATCHING;
 		}
+	}
+
+	private String getPlayerTeam(String playerName) {
+		return playerTeams.get(playerName);
 	}
 }
