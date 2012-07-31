@@ -31,59 +31,46 @@ public class PlayerGameState {
 	}
 
 	public interface Listener {
-		public boolean playerJoined(String playerName, String teamName);
+		public boolean playerJoined(String playerName);
 
 		public void playerLeft(String playerName);
 	}
 
-	private String name;
-
-	public PlayerGameState(String name) {
-		this.name = name;
-	}
-
-	public void setListener(Listener listener) {
-		setListener(name, listener);
-	}
-
-	public void removeListener() {
-		removeListener(name);
-	}
-
-	public void resetGame() {
-		resetGame(name);
-	}
-
-	public boolean addPlayer(String playerName) {
-		return addPlayer(name, playerName, "");
-	}
-
-	public boolean addPlayer(String playerName, String teamName) {
-		return addPlayer(name, playerName, teamName);
-	}
-
-	public void removePlayer(String playerName) {
-		removePlayer(name, playerName);
-	}
-
-	public Set<String> getPlayers() {
-		return getPlayers(name);
-	}
-
-	public String getGameOfPlayer(String playerName) {
-		return playerGames.get(playerName);
-	}
-
-	public String getTeamOfPlayer(String playerName) {
-		if (getGameOfPlayer(playerName).equals(name)) {
-			return playerTeams.get(playerName);
-		} else {
-			return null;
+	private static final Listener DUMMY_LISTENER = new Listener() {  //stub listener so we always have one.
+		@Override
+		public boolean playerJoined(String playerName) {
+			return false;
 		}
+
+		@Override
+		public void playerLeft(String playerName) {
+		}
+	};
+
+	// what game is a particular player in?   playerName -> game
+	// this is statis shared state in order to limit players to one
+	// game at a time.
+	private static HashMap<String, String> globalPlayerGames = new HashMap<String, String>();
+
+	// who's in a particular game?  game -> list of players
+	private HashSet<String> participating = new HashSet<String>();
+	// who get's notified when players enter and leave games
+	private Listener listener;
+	// a reference to the list of public games to use.  If it's a local game, use a local list.
+	private HashMap<String, String> playerGames;
+	// The name of the game.   Null if this is a local game.
+	private String gameName;
+
+	public PlayerGameState(Listener newListener) {
+		this.gameName = null;
+		this.playerGames = new HashMap<String, String>();
+		this.listener = (newListener != null) ? newListener : DUMMY_LISTENER;
 	}
 
-	public PlayerState getPlayerState(String playerName) {
-		return getPlayerState(name, playerName);
+	public PlayerGameState(String gameName, Listener newListener) {
+		this.gameName = gameName;
+		this.playerGames = globalPlayerGames;
+		this.listener = (newListener != null) ? newListener : DUMMY_LISTENER;
 	}
 
 	/*
@@ -93,44 +80,34 @@ public class PlayerGameState {
 	of recent winners/losers.
 	*/
 
-	// who's in a particular game?  game -> list of players
-	private static HashMap<String, HashSet<String>> participating = new HashMap<String, HashSet<String>>();
-	// what game is a particular player in?   playerName -> game
-	private static HashMap<String, String> playerGames = new HashMap<String, String>();
-	// what team is a particular player on?
-	private static HashMap<String, String> playerTeams = new HashMap<String, String>();
-	// who get's notified when players enter and leave games
-	private static HashMap<String, Listener> listeners = new HashMap<String, Listener>();
-
-	private static void setListener(String gameName, Listener listener) {
-		listeners.put(gameName, listener);
-		participating.put(gameName, new HashSet<String>());
+	public void setListener(Listener newListener) {
+		if (newListener == null) {
+			// hey jf - do we want to tell the old listener that all players left the game?
+			listener = DUMMY_LISTENER;
+		} else {
+			listener = newListener;
+			for (String playerName : participating) {
+				listener.playerJoined(playerName);
+			}
+		}
 	}
 
-	private static void removeListener(String gameName) {
-		resetGame(gameName);
-		listeners.remove(gameName);
-		participating.remove(gameName);
-	}
-
-	private static void resetGame(String gameName) {
-		for (String player : participating.get(gameName)) {
+	public void resetGame() {
+		for (String player : participating) {
 			// player was in this game, so remove the entry for this player.
 			playerGames.remove(player);
-			playerTeams.remove(player);
 		}
-		participating.get(gameName).clear();
+		participating.clear();
 	}
 
 	/* add a player to the game.  return true if player was added   */
-	private static boolean addPlayer(String gameName, String playerName, String teamName) {
+	public boolean addPlayer(String playerName) {
 		if (!playerGames.containsKey(playerName)) {
 			// not in another game and not banned
-			if (listeners.get(gameName).playerJoined(playerName, teamName)) {
+			if (listener.playerJoined(playerName)) {
 				// game said this player is allowed to join, so add them to the mix.
-				participating.get(gameName).add(playerName);
+				participating.add(playerName);
 				playerGames.put(playerName, gameName);
-				playerTeams.put(playerName, teamName);
 				return true;
 			}
 		}
@@ -140,28 +117,27 @@ public class PlayerGameState {
 	/* remove a player from the game.  If the game has already started
 	* this player accumulates a loss.  listener.playerLeft() is called
 	* if the game has stared. */
-	private static void removePlayer(String gameName, String playerName) {
-		if (participating.get(gameName).contains(playerName)) {
-			participating.get(gameName).remove(playerName);
+	public void removePlayer(String playerName) {
+		if (participating.contains(playerName)) {
+			participating.remove(playerName);
 			playerGames.remove(playerName);
-			playerTeams.remove(playerName);
-			listeners.get(gameName).playerLeft(playerName);
+			listener.playerLeft(playerName);
 		}
 	}
 
-	private static Set<String> getPlayers(String gameName) {
-		return participating.get(gameName);
+	public Set<String> getPlayers() {
+		return participating;
 	}
 
-	private static PlayerState getPlayerState(String gameName, String playerName) {
-		if (participating.get(gameName).contains(playerName)) {
+	public String getGameOfPlayer(String playerName) {
+		return playerGames.get(playerName);
+	}
+
+	public PlayerState getPlayerState(String playerName) {
+		if (participating.contains(playerName)) {
 			return PlayerState.ALIVE;
 		} else {
 			return PlayerState.WATCHING;
 		}
-	}
-
-	private String getPlayerTeam(String playerName) {
-		return playerTeams.get(playerName);
 	}
 }

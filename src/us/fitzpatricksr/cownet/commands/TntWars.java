@@ -297,7 +297,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 	}
 
 	@Override
-	protected boolean handlePlayerAdded(String playerName, String teamName) {
+	protected boolean handlePlayerAdded(String playerName) {
 		// just add anyone who wants to be added
 		debugInfo("handlePlayerAdded");
 		broadcastToAllOnlinePlayers(playerName + " has joined the game.");
