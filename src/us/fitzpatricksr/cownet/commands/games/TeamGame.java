@@ -22,8 +22,6 @@ public class TeamGame extends GatheredGame implements Listener {
 		BLUE
 	}
 
-	;
-
 	private final Random rand = new Random();
 
 	@Setting
@@ -40,9 +38,11 @@ public class TeamGame extends GatheredGame implements Listener {
 	private String spawnWarpName = "teamSpawn-";
 	@Setting
 	private int spawnJiggle = 5;
+	@Setting
+	private int maxTeamsOutOfBalance = 1;
 
-	private PlayerGameState redTeam = new PlayerGameState(new RedPlayerListener());
-	private PlayerGameState blueTeam = new PlayerGameState(new BluePlayerListener());
+	private PlayerGameState redTeam = new PlayerGameState();
+	private PlayerGameState blueTeam = new PlayerGameState();
 
 
 	// --------------------------------------------------------------
@@ -73,76 +73,110 @@ public class TeamGame extends GatheredGame implements Listener {
 		};
 	}
 
+	//------------------------------------------------
+	//  command handlers
+	//
+
+	@CowCommand
+	private boolean doTeam(Player player) {
+		String playerName = player.getName();
+		if (getActivePlayers().contains(playerName)) {
+			Team t = addPlayerToRandomTeam(playerName);
+			player.sendMessage("You are on the " + t + " team.");
+		} else {
+			player.sendMessage("You are not currently in the game.");
+		}
+		return true;
+	}
+
+	@CowCommand
+	private boolean doTeam(Player player, String teamName) {
+		String playerName = player.getName();
+		if (getActivePlayers().contains(playerName)) {
+			Team newTeam;
+			try {
+				newTeam = Team.valueOf(teamName.toLowerCase());
+				if (canPlayerJoinTeam(playerName, newTeam)) {
+					setPlayerTeam(playerName, newTeam);
+				} else {
+					player.sendMessage("Sorry, that would make the teams unbalanced.");
+				}
+			} catch (IllegalArgumentException e) {
+				player.sendMessage("There is no team with that name.");
+			}
+		} else {
+			player.sendMessage("You are not currently in the game.");
+		}
+		return true;
+	}
+
 	// --------------------------------------------------------------
 	// ---- team management
 
-	private Team addPlayerToRandomTeam(String playerName) {
-		try {
-			if (redTeam.getPlayers().contains(playerName)) {
-				return Team.RED;
-			} else if (blueTeam.getPlayers().contains(playerName)) {
-				return Team.BLUE;
-			} else {
-				if (redTeam.getPlayers().size() < blueTeam.getPlayers().size()) {
-					redTeam.addPlayer(playerName);
-					return Team.RED;
-				} else if (redTeam.getPlayers().size() > blueTeam.getPlayers().size()) {
-					blueTeam.addPlayer(playerName);
-					return Team.BLUE;
-				} else if (rand.nextBoolean()) {
-					redTeam.addPlayer(playerName);
-					return Team.RED;
-				} else {
-					blueTeam.addPlayer(playerName);
-					return Team.BLUE;
-				}
-			}
-		} catch (PlayerGameState.PlayerCantJoinException e) {
+	private Team getPlayerTeam(String playerName) {
+		if (redTeam.getPlayers().contains(playerName)) {
+			return Team.RED;
+		} else if (blueTeam.getPlayers().contains(playerName)) {
+			return Team.BLUE;
+		} else {
 			return Team.NONE;
 		}
 	}
 
-	private class BluePlayerListener implements PlayerGameState.Listener {
-		@Override
-		public void playerJoined(String playerName) throws PlayerGameState.PlayerCantJoinException {
-			if (forceBalanceTeams) {
-				// if this would unbalance the teams, reject it
-				int newBlueTeamSize = blueTeam.getPlayers().size() + 1;
-				int newRedTeamSize = redTeam.getPlayers().size();
+	private boolean canPlayerJoinTeam(String playerName, Team newTeam) {
+		if (!forceBalanceTeams || (newTeam == getPlayerTeam(playerName)) || (newTeam == Team.NONE)) return true;
+		int newRedTeamSize = redTeam.getPlayers().size();
+		int newBlueTeamSize = blueTeam.getPlayers().size();
+		if (blueTeam.getPlayers().contains(playerName)) {
+			// this player would need to leave the red team to join blue
+			newBlueTeamSize = newBlueTeamSize - 1;
+			newRedTeamSize = newRedTeamSize + 1;
+		} else {
+			newBlueTeamSize = newBlueTeamSize + 1;
+			newRedTeamSize = newRedTeamSize - 1;
+		}
+		return (Math.abs(newBlueTeamSize - newRedTeamSize) <= maxTeamsOutOfBalance);
+	}
+
+	private boolean setPlayerTeam(String playerName, Team newTeam) {
+		if (canPlayerJoinTeam(playerName, newTeam)) {
+			Team currentTeam = getPlayerTeam(playerName);
+			if (currentTeam != newTeam) {
 				if (redTeam.getPlayers().contains(playerName)) {
-					// this player would need to leave the red team to join blue
-					newRedTeamSize = newRedTeamSize - 1;
+					redTeam.removePlayer(playerName);
+				} else if (blueTeam.getPlayers().contains(playerName)) {
+					blueTeam.removePlayer(playerName);
 				}
-				if (Math.abs(newBlueTeamSize - newRedTeamSize) > 1) {
-					throw new PlayerGameState.PlayerCantJoinException("The teams would be uneven");
+				if (newTeam == Team.RED) {
+					redTeam.addPlayer(playerName);
+				} else if (newTeam == Team.BLUE) {
+					blueTeam.addPlayer(playerName);
 				}
 			}
-		}
-
-		@Override
-		public void playerLeft(String playerName) {
+			return true;
+		} else {
+			return false;
 		}
 	}
 
-	private class RedPlayerListener implements PlayerGameState.Listener {
-		@Override
-		public void playerJoined(String playerName) throws PlayerGameState.PlayerCantJoinException {
-			if (forceBalanceTeams) {
-				// if this would unbalance the teams, reject it
-				int newRedTeamSize = redTeam.getPlayers().size() + 1;
-				int newBlueTeamSize = blueTeam.getPlayers().size();
-				if (blueTeam.getPlayers().contains(playerName)) {
-					// this player would need to leave the red team to join blue
-					newBlueTeamSize = newBlueTeamSize - 1;
-				}
-				if (Math.abs(newBlueTeamSize - newRedTeamSize) > 1) {
-					throw new PlayerGameState.PlayerCantJoinException("The teams would be uneven");
-				}
+	private Team addPlayerToRandomTeam(String playerName) {
+		Team t = getPlayerTeam(playerName);
+		if (t != Team.NONE) {
+			return t;
+		} else {
+			if (redTeam.getPlayers().size() < blueTeam.getPlayers().size()) {
+				redTeam.addPlayer(playerName);
+				return Team.RED;
+			} else if (redTeam.getPlayers().size() > blueTeam.getPlayers().size()) {
+				blueTeam.addPlayer(playerName);
+				return Team.BLUE;
+			} else if (rand.nextBoolean()) {
+				redTeam.addPlayer(playerName);
+				return Team.RED;
+			} else {
+				blueTeam.addPlayer(playerName);
+				return Team.BLUE;
 			}
-		}
-
-		@Override
-		public void playerLeft(String playerName) {
 		}
 	}
 
@@ -190,7 +224,7 @@ public class TeamGame extends GatheredGame implements Listener {
 	}
 
 	@Override
-	protected void handlePlayerAdded(String playerName) throws PlayerGameState.PlayerCantJoinException {
+	protected void handlePlayerAdded(String playerName) {
 		// just add anyone who wants to be added
 		debugInfo("handlePlayerAdded");
 		Team team = addPlayerToRandomTeam(playerName);
@@ -216,7 +250,7 @@ public class TeamGame extends GatheredGame implements Listener {
 		Location blueLounge = getWarpPoint(loungeWarpName + blueTeamName);
 		Location redLounge = getWarpPoint(loungeWarpName + redTeamName);
 		Player player = getPlayer(playerName);
-		Team team = addPlayerToRandomTeam(playerName);
+		Team team = getPlayerTeam(playerName);
 		if (team.equals(Team.RED)) {
 			if (redLounge != null) {
 				player.teleport(redLounge);
@@ -234,7 +268,7 @@ public class TeamGame extends GatheredGame implements Listener {
 		Location blueSpawn = getWarpPoint(spawnWarpName + blueTeamName);
 		Location redSpawn = getWarpPoint(spawnWarpName + redTeamName);
 		Player player = getPlayer(playerName);
-		Team team = addPlayerToRandomTeam(playerName);
+		Team team = getPlayerTeam(playerName);
 		if (team.equals(Team.RED)) {
 			if (redSpawn != null) {
 				player.teleport(redSpawn);
@@ -284,7 +318,7 @@ public class TeamGame extends GatheredGame implements Listener {
 			// losses and announcements are done when the player is killed.
 			Location blueSpawn = getWarpPoint(spawnWarpName + blueTeamName);
 			Location redSpawn = getWarpPoint(spawnWarpName + redTeamName);
-			Team t = addPlayerToRandomTeam(playerName);
+			Team t = getPlayerTeam(playerName);
 			if (t == Team.RED) {
 				if (redSpawn != null) {
 					event.setRespawnLocation(redSpawn);

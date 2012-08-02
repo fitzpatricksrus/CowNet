@@ -85,11 +85,8 @@ public abstract class GatheredGame extends CowNetThingy {
 
 	@CowCommand
 	private boolean doJoin(Player player) {
-		try {
-			playerState.addPlayer(player.getName());
-		} catch (PlayerGameState.PlayerCantJoinException e) {
+		if (!playerState.addPlayer(player.getName())) {
 			player.sendMessage("You aren't allowed to join right now.");
-			player.sendMessage(e.getMessage());
 		}
 		return true;
 	}
@@ -200,7 +197,12 @@ public abstract class GatheredGame extends CowNetThingy {
 		}
 
 		@Override
-		public void playerJoined(String playerName) throws PlayerGameState.PlayerCantJoinException {
+		public boolean playerCanJoin(String playerName) {
+			return handleCanAddPlayer(playerName);
+		}
+
+		@Override
+		public void playerJoined(String playerName) {
 			handlePlayerAdded(playerName);
 			if (gameState == null) {
 				// start the timer for the game to begin.  i.e. put it in gathering mode.
@@ -255,7 +257,11 @@ public abstract class GatheredGame extends CowNetThingy {
 	protected void handleFailed() {
 	}
 
-	protected void handlePlayerAdded(String playerName) throws PlayerGameState.PlayerCantJoinException {
+	protected boolean handleCanAddPlayer(String playerName) {
+		return true;
+	}
+
+	protected void handlePlayerAdded(String playerName) {
 	}
 
 	protected void handlePlayerLeft(String playerName) {
@@ -284,7 +290,7 @@ public abstract class GatheredGame extends CowNetThingy {
 		return statsFile;
 	}
 
-	protected final void addPlayerToGame(String playerName) throws PlayerGameState.PlayerCantJoinException {
+	protected final void addPlayerToGame(String playerName) {
 		playerState.addPlayer(playerName);
 	}
 

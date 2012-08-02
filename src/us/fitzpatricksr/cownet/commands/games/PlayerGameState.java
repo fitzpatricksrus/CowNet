@@ -30,21 +30,22 @@ public class PlayerGameState {
 		}
 	}
 
-	public static class PlayerCantJoinException extends Exception {
-		public PlayerCantJoinException(String reason) {
-			super(reason);
-		}
-	}
-
 	public interface Listener {
-		public void playerJoined(String playerName) throws PlayerCantJoinException;
+		public boolean playerCanJoin(String playerName);
+
+		public void playerJoined(String playerName);
 
 		public void playerLeft(String playerName);
 	}
 
 	private static final Listener DUMMY_LISTENER = new Listener() {  //stub listener so we always have one.
 		@Override
-		public void playerJoined(String playerName) throws PlayerCantJoinException {
+		public boolean playerCanJoin(String playerName) {
+			return true;
+		}
+
+		@Override
+		public void playerJoined(String playerName) {
 		}
 
 		@Override
@@ -65,6 +66,12 @@ public class PlayerGameState {
 	private HashMap<String, String> playerGames;
 	// The name of the game.   Null if this is a local game.
 	private String gameName;
+
+	public PlayerGameState() {
+		this.gameName = null;
+		this.playerGames = new HashMap<String, String>();
+		this.listener = DUMMY_LISTENER;
+	}
 
 	public PlayerGameState(Listener newListener) {
 		this.gameName = null;
@@ -99,16 +106,24 @@ public class PlayerGameState {
 		participating.clear();
 	}
 
-	/* add a player to the game.  return true if player was added   */
-	public void addPlayer(String playerName) throws PlayerCantJoinException {
-		if (!playerGames.containsKey(playerName)) {
-			// not in another game and not banned
-			listener.playerJoined(playerName);
-			// game said this player is allowed to join, so add them to the mix.
-			participating.add(playerName);
-			playerGames.put(playerName, gameName);
+	/* add a player to the game.  return true if player is then in the game   */
+	public boolean addPlayer(String playerName) {
+		String playersCurrentGame = playerGames.get(playerName);
+		if (playersCurrentGame == null) {
+			if (listener.playerCanJoin(playerName)) {
+				// not in another game and not banned
+				listener.playerJoined(playerName);
+				// game said this player is allowed to join, so add them to the mix.
+				participating.add(playerName);
+				playerGames.put(playerName, gameName);
+				return true;
+			} else {
+				// listener says player can't join
+				return false;
+			}
 		} else {
-			throw new PlayerCantJoinException(playerName + " is already in a game. (" + playerGames.get(playerName) + ")");
+			// player is already in a game.  OK if it's this one.  :-)
+			return gameName.equals(playersCurrentGame);
 		}
 	}
 
