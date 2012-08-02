@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet.commands.gatheredgame;
+package us.fitzpatricksr.cownet.commands.games;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;

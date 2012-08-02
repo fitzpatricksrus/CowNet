@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet.commands.gatheredgame;
+package us.fitzpatricksr.cownet.commands.games;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -38,12 +38,12 @@ public class CowWarp extends CowNetThingy {
 	// ---- API
 
 	/* get public warp */
-	protected Location getWarpLocation(String warpName) {
+	public Location getWarpLocation(String warpName) {
 		return getWarp(publicWarpKey, warpName);
 	}
 
 	/* get warp accessible by given player */
-	protected Location getWarpLocation(Player player, String warpName) {
+	public Location getWarpLocation(Player player, String warpName) {
 		return getWarp(player.getName(), warpName);
 	}
 

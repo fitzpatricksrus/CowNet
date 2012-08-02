@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet.commands.gatheredgame;
+package us.fitzpatricksr.cownet.commands.games;
 
 import org.bukkit.entity.Player;
 
@@ -31,9 +31,6 @@ public class PlayerGameState {
 	}
 
 	public static class PlayerCantJoinException extends Exception {
-		public PlayerCantJoinException() {
-		}
-
 		public PlayerCantJoinException(String reason) {
 			super(reason);
 		}

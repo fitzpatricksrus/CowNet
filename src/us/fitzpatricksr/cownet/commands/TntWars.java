@@ -13,10 +13,10 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import us.fitzpatricksr.cownet.CowNetMod;
-import us.fitzpatricksr.cownet.commands.gatheredgame.GameStats;
-import us.fitzpatricksr.cownet.commands.gatheredgame.GameStatsMemory;
-import us.fitzpatricksr.cownet.commands.gatheredgame.GatheredGame;
-import us.fitzpatricksr.cownet.commands.gatheredgame.PlayerGameState;
+import us.fitzpatricksr.cownet.commands.games.GameStats;
+import us.fitzpatricksr.cownet.commands.games.GameStatsMemory;
+import us.fitzpatricksr.cownet.commands.games.GatheredGame;
+import us.fitzpatricksr.cownet.commands.games.PlayerGameState;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
 import java.io.IOException;

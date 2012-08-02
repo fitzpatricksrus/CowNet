@@ -1,10 +1,10 @@
-package us.fitzpatricksr.cownet.commands.gatheredgame;
+package us.fitzpatricksr.cownet.commands.games;
 
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import us.fitzpatricksr.cownet.CowNetThingy;
-import us.fitzpatricksr.cownet.commands.gatheredgame.PlayerGameState.PlayerState;
+import us.fitzpatricksr.cownet.commands.games.PlayerGameState.PlayerState;
 
 import java.util.HashMap;
 import java.util.Set;
