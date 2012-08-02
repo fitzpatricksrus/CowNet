@@ -30,16 +30,24 @@ public class PlayerGameState {
 		}
 	}
 
+	public static class PlayerCantJoinException extends Exception {
+		public PlayerCantJoinException() {
+		}
+
+		public PlayerCantJoinException(String reason) {
+			super(reason);
+		}
+	}
+
 	public interface Listener {
-		public boolean playerJoined(String playerName);
+		public void playerJoined(String playerName) throws PlayerCantJoinException;
 
 		public void playerLeft(String playerName);
 	}
 
 	private static final Listener DUMMY_LISTENER = new Listener() {  //stub listener so we always have one.
 		@Override
-		public boolean playerJoined(String playerName) {
-			return false;
+		public void playerJoined(String playerName) throws PlayerCantJoinException {
 		}
 
 		@Override
@@ -82,13 +90,7 @@ public class PlayerGameState {
 
 	public void setListener(Listener newListener) {
 		if (newListener == null) {
-			// hey jf - do we want to tell the old listener that all players left the game?
 			listener = DUMMY_LISTENER;
-		} else {
-			listener = newListener;
-			for (String playerName : participating) {
-				listener.playerJoined(playerName);
-			}
 		}
 	}
 
@@ -101,17 +103,16 @@ public class PlayerGameState {
 	}
 
 	/* add a player to the game.  return true if player was added   */
-	public boolean addPlayer(String playerName) {
+	public void addPlayer(String playerName) throws PlayerCantJoinException {
 		if (!playerGames.containsKey(playerName)) {
 			// not in another game and not banned
-			if (listener.playerJoined(playerName)) {
-				// game said this player is allowed to join, so add them to the mix.
-				participating.add(playerName);
-				playerGames.put(playerName, gameName);
-				return true;
-			}
+			listener.playerJoined(playerName);
+			// game said this player is allowed to join, so add them to the mix.
+			participating.add(playerName);
+			playerGames.put(playerName, gameName);
+		} else {
+			throw new PlayerCantJoinException(playerName + " is already in a game. (" + playerGames.get(playerName) + ")");
 		}
-		return false;
 	}
 
 	/* remove a player from the game.  If the game has already started

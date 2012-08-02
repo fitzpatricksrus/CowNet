@@ -85,8 +85,11 @@ public abstract class GatheredGame extends CowNetThingy {
 
 	@CowCommand
 	private boolean doJoin(Player player) {
-		if (!playerState.addPlayer(player.getName())) {
-			player.sendMessage("You aren't allowed to join right now.  You can only watch.");
+		try {
+			playerState.addPlayer(player.getName());
+		} catch (PlayerGameState.PlayerCantJoinException e) {
+			player.sendMessage("You aren't allowed to join right now.");
+			player.sendMessage(e.getMessage());
 		}
 		return true;
 	}
@@ -197,16 +200,12 @@ public abstract class GatheredGame extends CowNetThingy {
 		}
 
 		@Override
-		public boolean playerJoined(String playerName) {
-			if (handlePlayerAdded(playerName)) {
-				if (gameState == null) {
-					// start the timer for the game to begin.  i.e. put it in gathering mode.
-					gameState = new GameGatheringTimer(getPlugin(), new CallbackStub());
-					debugInfo("playerJoined - startGatheringTimer");
-				}
-				return true;
-			} else {
-				return false;
+		public void playerJoined(String playerName) throws PlayerGameState.PlayerCantJoinException {
+			handlePlayerAdded(playerName);
+			if (gameState == null) {
+				// start the timer for the game to begin.  i.e. put it in gathering mode.
+				gameState = new GameGatheringTimer(getPlugin(), new CallbackStub());
+				debugInfo("playerJoined - startGatheringTimer");
 			}
 		}
 
@@ -256,8 +255,7 @@ public abstract class GatheredGame extends CowNetThingy {
 	protected void handleFailed() {
 	}
 
-	protected boolean handlePlayerAdded(String playerName) {
-		return true;
+	protected void handlePlayerAdded(String playerName) throws PlayerGameState.PlayerCantJoinException {
 	}
 
 	protected void handlePlayerLeft(String playerName) {
@@ -286,7 +284,7 @@ public abstract class GatheredGame extends CowNetThingy {
 		return statsFile;
 	}
 
-	protected final void addPlayerToGame(String playerName) {
+	protected final void addPlayerToGame(String playerName) throws PlayerGameState.PlayerCantJoinException {
 		playerState.addPlayer(playerName);
 	}
 

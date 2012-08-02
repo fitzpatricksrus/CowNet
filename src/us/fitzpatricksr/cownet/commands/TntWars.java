@@ -16,6 +16,7 @@ import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.commands.gatheredgame.GameStats;
 import us.fitzpatricksr.cownet.commands.gatheredgame.GameStatsMemory;
 import us.fitzpatricksr.cownet.commands.gatheredgame.GatheredGame;
+import us.fitzpatricksr.cownet.commands.gatheredgame.PlayerGameState;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
 import java.io.IOException;
@@ -297,7 +298,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 	}
 
 	@Override
-	protected boolean handlePlayerAdded(String playerName) {
+	protected void handlePlayerAdded(String playerName) throws PlayerGameState.PlayerCantJoinException {
 		// just add anyone who wants to be added
 		debugInfo("handlePlayerAdded");
 		broadcastToAllOnlinePlayers(playerName + " has joined the game.");
@@ -315,7 +316,6 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 			ItemStack itemInHand = new ItemStack(Material.TNT, 1);
 			player.setItemInHand(itemInHand);
 		}
-		return true;
 	}
 
 	@Override
