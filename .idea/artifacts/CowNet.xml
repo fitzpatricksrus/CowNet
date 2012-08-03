@@ -6,7 +6,6 @@
       <element id="file-copy" path="$PROJECT_DIR$/src/config.yml" />
       <element id="file-copy" path="$PROJECT_DIR$/src/plugin.yml" />
       <element id="dir-copy" path="$PROJECT_DIR$/src" />
-      <element id="file-copy" path="$PROJECT_DIR$/src/Permissions.yml" />
       <element id="module-output" name="CowNet" />
     </root>
   </artifact>

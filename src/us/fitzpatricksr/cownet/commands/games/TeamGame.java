@@ -77,6 +77,9 @@ public class TeamGame extends GatheredGame implements Listener {
 	//  command handlers
 	//
 
+	/*
+	Print what team a player is on.
+	 */
 	@CowCommand
 	private boolean doTeam(Player player) {
 		String playerName = player.getName();
@@ -89,6 +92,9 @@ public class TeamGame extends GatheredGame implements Listener {
 		return true;
 	}
 
+	/*
+	Set the team a player is on.
+	 */
 	@CowCommand
 	private boolean doTeam(Player player, String teamName) {
 		String playerName = player.getName();
@@ -195,6 +201,10 @@ public class TeamGame extends GatheredGame implements Listener {
 		broadcastToAllOnlinePlayers("All the players are ready.  The games are about to start.");
 		for (String playerName : getActivePlayers()) {
 			loungeAPlayer(playerName);
+			broadcastToAllOnlinePlayers(playerName + " is on the " + getPlayerTeam(playerName) + " team.");
+		}
+		for (String playerName : getActivePlayers()) {
+			getPlayer(playerName).sendMessage("** You are on the " + getPlayerTeam(playerName) + " team.");
 		}
 	}
 
@@ -261,6 +271,7 @@ public class TeamGame extends GatheredGame implements Listener {
 			}
 		} else {
 			// hey jf - what happens if they aren't on a team.  How did they get here?
+			logInfo("OMG!  There's a player without a team trying to lounge.");
 		}
 	}
 
@@ -279,6 +290,7 @@ public class TeamGame extends GatheredGame implements Listener {
 			}
 		} else {
 			// hey jf - what happens if they aren't on a team.  How did they get here?
+			logInfo("OMG!  There's a player without a team trying to spawn.");
 		}
 	}
 
