@@ -138,9 +138,9 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 
 	@CowCommand
 	private boolean doStats(CommandSender player, String playerName) {
-		double k = getStats().getStat(playerName, KILLS_KEY);
-		double d = getStats().getStat(playerName, DEATHS_KEY);
-		double b = getStats().getStat(playerName, BOMBS_PLACED_KEY);
+		double k = getHistoricStats().getStat(playerName, KILLS_KEY);
+		double d = getHistoricStats().getStat(playerName, DEATHS_KEY);
+		double b = getHistoricStats().getStat(playerName, BOMBS_PLACED_KEY);
 		double accuracy = (b != 0) ? k / b : 0;
 		double stealth = (d != 0) ? k / d : k;
 		player.sendMessage("Your stats: ");
@@ -155,21 +155,21 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 	@CowCommand
 	private boolean doLeadersKills(CommandSender sender) {
 		sender.sendMessage("Top killers: ");
-		dumpLeaders(sender, getStats().getStatSummary(KILLS_KEY));
+		dumpLeaders(sender, getHistoricStats().getStatSummary(KILLS_KEY));
 		return true;
 	}
 
 	@CowCommand
 	private boolean doLeadersDeaths(CommandSender sender) {
 		sender.sendMessage("Most likely to die: ");
-		dumpLeaders(sender, getStats().getStatSummary(DEATHS_KEY));
+		dumpLeaders(sender, getHistoricStats().getStatSummary(DEATHS_KEY));
 		return true;
 	}
 
 	@CowCommand
 	private boolean doLeadersBombs(CommandSender sender) {
 		sender.sendMessage("Top bombers: ");
-		dumpLeaders(sender, getStats().getStatSummary(BOMBS_PLACED_KEY));
+		dumpLeaders(sender, getHistoricStats().getStatSummary(BOMBS_PLACED_KEY));
 		return true;
 	}
 
@@ -177,9 +177,9 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 	private boolean doLeadersAccuracy(CommandSender sender) {
 		sender.sendMessage("Most accurate: ");
 		HashMap<String, Double> accuracy = new HashMap<String, Double>();
-		for (String playerName : getStats().getPlayerNames()) {
-			double k = getStats().getStat(playerName, KILLS_KEY);
-			double b = getStats().getStat(playerName, BOMBS_PLACED_KEY);
+		for (String playerName : getHistoricStats().getPlayerNames()) {
+			double k = getHistoricStats().getStat(playerName, KILLS_KEY);
+			double b = getHistoricStats().getStat(playerName, BOMBS_PLACED_KEY);
 			double a = (b != 0) ? k / b : 0;
 			accuracy.put(playerName, a * 100);
 		}
@@ -191,9 +191,9 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 	private boolean doLeadersStealth(CommandSender sender) {
 		sender.sendMessage("Top stealthy: ");
 		HashMap<String, Double> stealth = new HashMap<String, Double>();
-		for (String playerName : getStats().getPlayerNames()) {
-			double k = getStats().getStat(playerName, KILLS_KEY);
-			double d = getStats().getStat(playerName, DEATHS_KEY);
+		for (String playerName : getHistoricStats().getPlayerNames()) {
+			double k = getHistoricStats().getStat(playerName, KILLS_KEY);
+			double d = getHistoricStats().getStat(playerName, DEATHS_KEY);
 			double s = (d != 0) ? k / d : k;
 			stealth.put(playerName, s * 100);
 		}
@@ -268,7 +268,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 			removeTnt(player);
 		}
 		try {
-			getStats().saveConfig();
+			getHistoricStats().saveConfig();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -289,7 +289,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 			removeTnt(player);
 		}
 		try {
-			getStats().saveConfig();
+			getHistoricStats().saveConfig();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -463,7 +463,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 	// ---- Stats
 
 	private void accumulatStats(String playerName, String statName, int amount) {
-		getStats().accumulate(playerName, statName, amount);
+		getHistoricStats().accumulate(playerName, statName, amount);
 		tempStats.accumulate(playerName, statName, amount);
 	}
 

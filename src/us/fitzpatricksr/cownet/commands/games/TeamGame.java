@@ -16,7 +16,7 @@ import java.util.Random;
 /**
  */
 public class TeamGame extends GatheredGame implements Listener {
-	private enum Team {
+	public enum Team {
 		NONE,
 		RED,
 		BLUE
@@ -166,24 +166,18 @@ public class TeamGame extends GatheredGame implements Listener {
 	}
 
 	private Team addPlayerToRandomTeam(String playerName) {
-		Team t = getPlayerTeam(playerName);
-		if (t != Team.NONE) {
-			return t;
-		} else {
+		if (getPlayerTeam(playerName) == Team.NONE) {
 			if (redTeam.getPlayers().size() < blueTeam.getPlayers().size()) {
-				redTeam.addPlayer(playerName);
-				return Team.RED;
+				setPlayerTeam(playerName, Team.RED);
 			} else if (redTeam.getPlayers().size() > blueTeam.getPlayers().size()) {
-				blueTeam.addPlayer(playerName);
-				return Team.BLUE;
+				setPlayerTeam(playerName, Team.BLUE);
 			} else if (rand.nextBoolean()) {
-				redTeam.addPlayer(playerName);
-				return Team.RED;
+				setPlayerTeam(playerName, Team.RED);
 			} else {
-				blueTeam.addPlayer(playerName);
-				return Team.BLUE;
+				setPlayerTeam(playerName, Team.BLUE);
 			}
 		}
+		return getPlayerTeam(playerName);
 	}
 
 	// --------------------------------------------------------------
@@ -292,6 +286,10 @@ public class TeamGame extends GatheredGame implements Listener {
 			// hey jf - what happens if they aren't on a team.  How did they get here?
 			logInfo("OMG!  There's a player without a team trying to spawn.");
 		}
+	}
+
+	protected void handlePlayerJoinedTeam(String playerName, String newTeam, String oldTeam) {
+
 	}
 
 	private Location getWarpPoint(String warpName) {

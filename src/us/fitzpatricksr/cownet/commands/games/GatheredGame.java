@@ -26,10 +26,6 @@ import java.util.Set;
        boolean lastTribute
  */
 public abstract class GatheredGame extends CowNetThingy {
-	private static final String STATS_KILLS = "kills";
-	private static final String STATS_DEATHS = "deaths";
-	private static final String STATS_BOMBS = "bombs";
-
 	//game state
 	private GameGatheringTimer gameState;                       //the state of the game
 	private PlayerGameState playerState;                        //state of players in the game
@@ -286,7 +282,7 @@ public abstract class GatheredGame extends CowNetThingy {
 	}
 
 	// -- routines for subclasses to inspect and modify game flow.
-	protected final GameStatsFile getStats() {
+	protected final GameStatsFile getHistoricStats() {
 		return statsFile;
 	}
 
