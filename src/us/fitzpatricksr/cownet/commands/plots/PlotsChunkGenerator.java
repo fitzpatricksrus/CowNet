@@ -173,28 +173,28 @@ public class PlotsChunkGenerator extends ChunkGenerator {
 
 	static {
 		contentsFor(biomeContents, Material.GRASS, Biome.EXTREME_HILLS, Biome.FOREST_HILLS, Biome.TAIGA_HILLS, Biome.SMALL_MOUNTAINS).add(Material.STONE, 2.0);
-		contentsFor(biomeContents, Material.GRASS, Biome.PLAINS, Biome.SAVANNA, Biome.SEASONAL_FOREST, Biome.FOREST, Biome.TAIGA, Biome.SHRUBLAND, Biome.JUNGLE, Biome.JUNGLE_HILLS);
+		contentsFor(biomeContents, Material.GRASS, Biome.PLAINS, Biome.FOREST, Biome.TAIGA, Biome.JUNGLE, Biome.JUNGLE_HILLS);
 		contentsFor(biomeContents, Material.SAND, Biome.DESERT, Biome.BEACH).add(Material.SANDSTONE, 10).add(Material.GRAVEL, 2);
-		contentsFor(biomeContents, Material.SNOW_BLOCK, Biome.ICE_DESERT, Biome.TUNDRA, Biome.ICE_PLAINS, Biome.ICE_MOUNTAINS);
+		contentsFor(biomeContents, Material.SNOW_BLOCK, Biome.ICE_PLAINS, Biome.ICE_MOUNTAINS);
 		contentsFor(biomeContents, Material.WATER, Biome.OCEAN, Biome.RIVER, Biome.FROZEN_OCEAN, Biome.FROZEN_RIVER);
 		contentsFor(biomeContents, Material.AIR, Biome.SKY);
 		contentsFor(biomeContents, Material.NETHERRACK, Biome.HELL).add(Material.SOUL_SAND, 20);
-		contentsFor(biomeContents, Material.GRASS, Biome.SWAMPLAND, Biome.RAINFOREST, Biome.MUSHROOM_ISLAND, Biome.MUSHROOM_SHORE);
+		contentsFor(biomeContents, Material.GRASS, Biome.SWAMPLAND, Biome.MUSHROOM_ISLAND, Biome.MUSHROOM_SHORE);
 	}
 
 	private static HashMap<Biome, BiomeContents> biomeDecorations = new HashMap<Biome, BiomeContents>();
 
 	static {
-		contentsFor(biomeDecorations, Material.AIR, Biome.RAINFOREST).add(Material.SAPLING, 0.2).add(Material.LEAVES, 0.2);
+		//		contentsFor(biomeDecorations, Material.AIR, Biome.RAINFOREST).add(Material.SAPLING, 0.2).add(Material.LEAVES, 0.2);
 		contentsFor(biomeDecorations, Material.AIR, Biome.SWAMPLAND, Biome.JUNGLE, Biome.JUNGLE_HILLS);
-		contentsFor(biomeDecorations, Material.AIR, Biome.SEASONAL_FOREST, Biome.FOREST, Biome.FOREST_HILLS).add(Material.LEAVES, 0.2).add(Material.LONG_GRASS, 0.2).add(Material.SAPLING, 0.2).add(Material.MELON_BLOCK, 0.1);
-		contentsFor(biomeDecorations, Material.AIR, Biome.TAIGA, Biome.TAIGA_HILLS, Biome.SAVANNA, Biome.EXTREME_HILLS, Biome.SMALL_MOUNTAINS).add(Material.YELLOW_FLOWER, 0.1).add(Material.RED_ROSE, 0.1);
-		contentsFor(biomeDecorations, Material.AIR, Biome.SHRUBLAND);
+		//		contentsFor(biomeDecorations, Material.AIR, Biome.SEASONAL_FOREST, Biome.FOREST, Biome.FOREST_HILLS).add(Material.LEAVES, 0.2).add(Material.LONG_GRASS, 0.2).add(Material.SAPLING, 0.2).add(Material.MELON_BLOCK, 0.1);
+		//		contentsFor(biomeDecorations, Material.AIR, Biome.TAIGA, Biome.TAIGA_HILLS, Biome.SAVANNA, Biome.EXTREME_HILLS, Biome.SMALL_MOUNTAINS).add(Material.YELLOW_FLOWER, 0.1).add(Material.RED_ROSE, 0.1);
+		//		contentsFor(biomeDecorations, Material.AIR, Biome.SHRUBLAND);
 		contentsFor(biomeDecorations, Material.AIR, Biome.DESERT, Biome.DESERT_HILLS).add(Material.CACTUS, 0.1).add(Material.DEAD_BUSH, 0.02);
 		contentsFor(biomeDecorations, Material.AIR, Biome.PLAINS).add(Material.LONG_GRASS, 0.3).add(Material.SAPLING, 0.1).add(Material.CROPS, 0.1).add(Material.SUGAR_CANE_BLOCK, 0.1);
-		contentsFor(biomeDecorations, Material.AIR, Biome.TUNDRA).add(Material.SNOW, 20).add(Material.ICE, 2);
+		//		contentsFor(biomeDecorations, Material.AIR, Biome.TUNDRA).add(Material.SNOW, 20).add(Material.ICE, 2);
 		contentsFor(biomeDecorations, Material.ICE, Biome.FROZEN_OCEAN, Biome.FROZEN_RIVER).add(Material.SNOW, 2).add(Material.AIR, 2);
-		contentsFor(biomeDecorations, Material.AIR, Biome.ICE_DESERT, Biome.ICE_PLAINS, Biome.ICE_MOUNTAINS).add(Material.SNOW, 50).add(Material.ICE, 25);
+		//		contentsFor(biomeDecorations, Material.AIR, Biome.ICE_DESERT, Biome.ICE_PLAINS, Biome.ICE_MOUNTAINS).add(Material.SNOW, 50).add(Material.ICE, 25);
 		contentsFor(biomeDecorations, Material.AIR, Biome.MUSHROOM_ISLAND, Biome.MUSHROOM_SHORE).add(Material.RED_MUSHROOM, 0.2);
 		contentsFor(biomeDecorations, Material.AIR, Biome.RIVER).add(Material.WATER_LILY, 1);
 		contentsFor(biomeDecorations, Material.AIR, Biome.BEACH, Biome.HELL, Biome.SKY, Biome.OCEAN);
