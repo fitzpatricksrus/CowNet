@@ -1,35 +1,25 @@
 package us.fitzpatricksr.cownet.commands.games;
 
 import org.bukkit.Location;
+import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.CowNetThingy;
+import us.fitzpatricksr.cownet.commands.CowWarp;
 import us.fitzpatricksr.cownet.commands.games.PlayerGameState.PlayerState;
 
 import java.util.HashMap;
+import java.util.Random;
 import java.util.Set;
 
-/*
-    the game world is off limits until a game starts
-    the first person to enter starts the gathering
-    gathering continues for a specified period of time
-    all players who entered after that time are teleported in and their inventory cleared.
-    after the last player dies the world is regenerated.
-
-    games have 3 states
-       ended - nothing in progress
-       gathering - someone is waiting for the games to start
-       inprogress - the games are underway
-
-    for each person
-       enum { player, deadPlayer, sponsor } gameState
-       boolean lastTribute
- */
 public abstract class GatheredGame extends CowNetThingy {
+	private final Random rand = new Random();
+
 	//game state
 	private GameGatheringTimer gameState;                       //the state of the game
 	private PlayerGameState playerState;                        //state of players in the game
-	private GameStatsFile statsFile;                                    //game statsFile that we load and save
+	private GameStatsFile statsFile;                            //game statsFile that we load and save
 
 	protected abstract String getGameName();
 
@@ -171,7 +161,6 @@ public abstract class GatheredGame extends CowNetThingy {
 
 		@Override
 		public void gameInProgress() {
-			// at this point, we don't need the game state anymore.
 			debugInfo("gameInProgress()");
 			handleInProgress();
 		}
@@ -263,12 +252,6 @@ public abstract class GatheredGame extends CowNetThingy {
 	protected void handlePlayerLeft(String playerName) {
 	}
 
-	protected void handlePlayerBanned(String playerName) {
-	}
-
-	protected void handlePlayerUnbanned(String playerName) {
-	}
-
 	protected void handleAnnounceGather(long time) {
 		broadcastToAllOnlinePlayers("Gathering for the games ends in " + time + " seconds");
 	}
@@ -330,6 +313,33 @@ public abstract class GatheredGame extends CowNetThingy {
 		for (Player player : getPlugin().getServer().getOnlinePlayers()) {
 			player.sendMessage(msg);
 		}
+	}
+
+	// --------------------------------------------------------------
+	// ---- Utility methods
+
+	protected final Location getWarpPoint(String warpName, int jiggle) {
+		CowNetMod plugin = (CowNetMod) getPlugin();
+		CowWarp warpThingy = (CowWarp) plugin.getThingy("cowwarp");
+		return jigglePoint(warpThingy.getWarpLocation(warpName), jiggle);
+	}
+
+	protected final Location jigglePoint(Location loc, int jiggle) {
+		if (loc != null) {
+			if (jiggle > 0) {
+				int dx = rand.nextInt(jiggle * 2 + 1) - jiggle - 1; // -5..5
+				int dz = rand.nextInt(jiggle * 2 + 1) - jiggle - 1; // -5..5
+				loc.add(dx, 0, dz);
+				loc = loc.getWorld().getHighestBlockAt(loc).getLocation();
+				loc.add(0, 1, 0);
+			}
+		}
+		return loc;
+	}
+
+	protected final Player getPlayer(String playerName) {
+		Server server = getPlugin().getServer();
+		return server.getPlayer(playerName);
 	}
 }
 

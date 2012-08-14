@@ -1,33 +1,23 @@
 package us.fitzpatricksr.cownet.commands.games;
 
 import org.bukkit.Location;
-import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import us.fitzpatricksr.cownet.CowNetMod;
-import us.fitzpatricksr.cownet.commands.CowWarp;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 /**
  */
 public class TeamGame extends GatheredGame implements Listener {
-	public enum Team {
-		NONE,
-		RED,
-		BLUE
-	}
-
 	private final Random rand = new Random();
 
-	@Setting
-	private String redTeamName = "red";
-	@Setting
-	private String blueTeamName = "blue";
 	@Setting
 	private int minPlayers = 2;
 	@Setting
@@ -41,12 +31,26 @@ public class TeamGame extends GatheredGame implements Listener {
 	@Setting
 	private int maxTeamsOutOfBalance = 1;
 
-	private PlayerGameState redTeam = new PlayerGameState();
-	private PlayerGameState blueTeam = new PlayerGameState();
+	// map from playername -> team
+	private HashMap<String, Integer> teamOfPlayer;
 
+	// map from team -> playerName[]
+	private HashMap<Integer, HashSet<String>> playersOnTeam;
 
 	// --------------------------------------------------------------
 	// ---- Settings management
+
+	protected String[] getTeamNames() {
+		return new String[] {
+				"Spectator",
+				"Red",
+				"Blue"
+		};
+	}
+
+	protected final int getTeamCount() {
+		return getTeamNames().length;
+	}
 
 	@Override
 	protected String getGameName() {
@@ -84,8 +88,12 @@ public class TeamGame extends GatheredGame implements Listener {
 	private boolean doTeam(Player player) {
 		String playerName = player.getName();
 		if (getActivePlayers().contains(playerName)) {
-			Team t = addPlayerToRandomTeam(playerName);
-			player.sendMessage("You are on the " + t + " team.");
+			int team = getPlayerTeam(playerName);
+			if (team == 0) {
+				player.sendMessage("You are not on a team.");
+			} else {
+				player.sendMessage("You are on the " + getTeamNames()[team] + " team.");
+			}
 		} else {
 			player.sendMessage("You are not currently in the game.");
 		}
@@ -99,11 +107,11 @@ public class TeamGame extends GatheredGame implements Listener {
 	private boolean doTeam(Player player, String teamName) {
 		String playerName = player.getName();
 		if (getActivePlayers().contains(playerName)) {
-			Team newTeam;
 			try {
-				newTeam = Team.valueOf(teamName.toLowerCase());
+				int newTeam = getTeamByName(teamName);
 				if (canPlayerJoinTeam(playerName, newTeam)) {
 					setPlayerTeam(playerName, newTeam);
+					player.sendMessage("You are now on the " + getTeamNames()[newTeam] + " team.");
 				} else {
 					player.sendMessage("Sorry, that would make the teams unbalanced.");
 				}
@@ -119,65 +127,88 @@ public class TeamGame extends GatheredGame implements Listener {
 	// --------------------------------------------------------------
 	// ---- team management
 
-	private Team getPlayerTeam(String playerName) {
-		if (redTeam.getPlayers().contains(playerName)) {
-			return Team.RED;
-		} else if (blueTeam.getPlayers().contains(playerName)) {
-			return Team.BLUE;
-		} else {
-			return Team.NONE;
-		}
-	}
-
-	private boolean canPlayerJoinTeam(String playerName, Team newTeam) {
-		if (!forceBalanceTeams || (newTeam == getPlayerTeam(playerName)) || (newTeam == Team.NONE)) return true;
-		int newRedTeamSize = redTeam.getPlayers().size();
-		int newBlueTeamSize = blueTeam.getPlayers().size();
-		if (blueTeam.getPlayers().contains(playerName)) {
-			// this player would need to leave the red team to join blue
-			newBlueTeamSize = newBlueTeamSize - 1;
-			newRedTeamSize = newRedTeamSize + 1;
-		} else {
-			newBlueTeamSize = newBlueTeamSize + 1;
-			newRedTeamSize = newRedTeamSize - 1;
-		}
-		return (Math.abs(newBlueTeamSize - newRedTeamSize) <= maxTeamsOutOfBalance);
-	}
-
-	private boolean setPlayerTeam(String playerName, Team newTeam) {
-		if (canPlayerJoinTeam(playerName, newTeam)) {
-			Team currentTeam = getPlayerTeam(playerName);
-			if (currentTeam != newTeam) {
-				if (redTeam.getPlayers().contains(playerName)) {
-					redTeam.removePlayer(playerName);
-				} else if (blueTeam.getPlayers().contains(playerName)) {
-					blueTeam.removePlayer(playerName);
-				}
-				if (newTeam == Team.RED) {
-					redTeam.addPlayer(playerName);
-				} else if (newTeam == Team.BLUE) {
-					blueTeam.addPlayer(playerName);
-				}
+	private int getTeamByName(String teamName) {
+		String[] names = getTeamNames();
+		for (int ndx = 0; ndx < names.length; ndx++) {
+			if (names[ndx].equalsIgnoreCase(teamName)) {
+				return ndx;
 			}
+		}
+		return 0;
+	}
+
+	private Set<String> getTeamMembers(int ndx) {
+		return playersOnTeam.get(ndx);
+	}
+
+	private int getPlayerTeam(String playerName) {
+		if (teamOfPlayer.containsKey(playerName)) {
+			return teamOfPlayer.get(playerName);
+		} else {
+			return 0;
+		}
+	}
+
+	private boolean canPlayerJoinTeam(String playerName, int newTeam) {
+		if (isGameInProgress() && (newTeam > 0)) {
+			if (getPlayerTeam(playerName) > 0) {
+				// you can't change teams once the games have started
+				return false;
+			} else {
+				// you can only join a team who's size is < average size
+				// we ignore spectators here.
+				int totalPlayersOnTeams = 0;
+				for (int i = 1; i < getTeamCount(); i++) {
+					totalPlayersOnTeams += getTeamMembers(i).size();
+				}
+				double averageSize = totalPlayersOnTeams / (getTeamCount() - 1);
+				return getTeamMembers(newTeam).size() < averageSize;
+			}
+		} else {
+			// do whatever you want before the game starts or after it ends.
+			return true;
+		}
+	}
+
+	private boolean setPlayerTeam(String playerName, int newTeam) {
+		int currentTeam = getPlayerTeam(playerName);
+		if (currentTeam == newTeam) return true;
+
+		if (canPlayerJoinTeam(playerName, newTeam)) {
+			getTeamMembers(currentTeam).remove(playerName);
+			getTeamMembers(newTeam).add(playerName);
+			teamOfPlayer.put(playerName, newTeam);
+			handlePlayerJoinedTeam(playerName, currentTeam, newTeam);
 			return true;
 		} else {
 			return false;
 		}
 	}
 
-	private Team addPlayerToRandomTeam(String playerName) {
-		if (getPlayerTeam(playerName) == Team.NONE) {
-			if (redTeam.getPlayers().size() < blueTeam.getPlayers().size()) {
-				setPlayerTeam(playerName, Team.RED);
-			} else if (redTeam.getPlayers().size() > blueTeam.getPlayers().size()) {
-				setPlayerTeam(playerName, Team.BLUE);
-			} else if (rand.nextBoolean()) {
-				setPlayerTeam(playerName, Team.RED);
-			} else {
-				setPlayerTeam(playerName, Team.BLUE);
+	private int addPlayerToRandomTeam(String playerName) {
+		if (getPlayerTeam(playerName) == 0) {
+			int newTeam = 1;
+			for (int i = 2; i < getTeamCount(); i++) {
+				if (getTeamMembers(i).size() < getTeamMembers(newTeam).size()) {
+					newTeam = i;
+				}
 			}
+			setPlayerTeam(playerName, newTeam);
 		}
 		return getPlayerTeam(playerName);
+	}
+
+	private void resetTeams() {
+		// generate empty team data structures here
+		teamOfPlayer = new HashMap<String, Integer>();
+		playersOnTeam = new HashMap<Integer, HashSet<String>>();
+		for (int i = 0; i < getTeamCount(); i++) {
+			playersOnTeam.put(i, new HashSet<String>());
+		}
+	}
+
+	protected void handlePlayerJoinedTeam(String playerName, int oldTeam, int newTeam) {
+		// called when a player's team is set or changed.
 	}
 
 	// --------------------------------------------------------------
@@ -187,12 +218,14 @@ public class TeamGame extends GatheredGame implements Listener {
 	protected void handleGathering() {
 		debugInfo("handleGathering");
 		broadcastToAllOnlinePlayers("A game is gathering.  To join use /" + getTrigger() + " join.");
+		resetTeams();
 	}
 
 	@Override
 	protected void handleLounging() {
 		debugInfo("handleLounging");
 		broadcastToAllOnlinePlayers("All the players are ready.  The games are about to start.");
+		// put players on random team
 		for (String playerName : getActivePlayers()) {
 			loungeAPlayer(playerName);
 			broadcastToAllOnlinePlayers(playerName + " is on the " + getPlayerTeam(playerName) + " team.");
@@ -205,6 +238,9 @@ public class TeamGame extends GatheredGame implements Listener {
 	@Override
 	protected void handleInProgress() {
 		debugInfo("handleInProgress");
+
+		//TODO hey jf - we need to make sure the teams are still balanced here.
+
 		broadcastToAllOnlinePlayers("Let the games begin!");
 		for (String playerName : getActivePlayers()) {
 			spawnAPlayer(playerName);
@@ -215,28 +251,40 @@ public class TeamGame extends GatheredGame implements Listener {
 	protected void handleEnded() {
 		debugInfo("handleEnded");
 		broadcastToAllOnlinePlayers("The game has ended.");
-		redTeam.resetGame();
-		blueTeam.resetGame();
+		resetTeams();
 	}
 
 	@Override
 	protected void handleFailed() {
 		debugInfo("handleFailed");
 		broadcastToAllOnlinePlayers("The game has been canceled.");
-		redTeam.resetGame();
-		blueTeam.resetGame();
+		resetTeams();
 	}
 
 	@Override
 	protected void handlePlayerAdded(String playerName) {
 		// just add anyone who wants to be added
 		debugInfo("handlePlayerAdded");
-		Team team = addPlayerToRandomTeam(playerName);
-		broadcastToAllOnlinePlayers(playerName + " has joined the " + team + " team.");
-		if (isGameLounging()) {
-			loungeAPlayer(playerName);
-		} else if (isGameInProgress()) {
-			spawnAPlayer(playerName);
+		if (isGameGathering()) {
+			// don't do anything if we're still gather players.  We don't assign teams
+			// until we're lounging.
+		} else if (isGameEnded()) {
+			// once the game is over, you're a spectator.  Do we even care?
+			setPlayerTeam(playerName, 0);
+		} else if (getPlayerTeam(playerName) == 0) {
+			int team = addPlayerToRandomTeam(playerName);
+			String teamName = getTeamNames()[getPlayerTeam(playerName)];
+			broadcastToAllOnlinePlayers(playerName + " has joined the " + teamName + " team.");
+			getPlayer(playerName).sendMessage("You are on the " + teamName + " team.");
+			if (isGameLounging()) {
+				loungeAPlayer(playerName);
+			} else if (isGameInProgress()) {
+				spawnAPlayer(playerName);
+			}
+		} else {
+			String teamName = getTeamNames()[getPlayerTeam(playerName)];
+			broadcastToAllOnlinePlayers(playerName + " has re-joined the " + teamName + " team.");
+			getPlayer(playerName).sendMessage("You are on the " + teamName + " team.");
 		}
 	}
 
@@ -250,69 +298,49 @@ public class TeamGame extends GatheredGame implements Listener {
 		// they will rejoin the same team they were on.
 	}
 
-	protected void loungeAPlayer(String playerName) {
-		Location blueLounge = getWarpPoint(loungeWarpName + blueTeamName);
-		Location redLounge = getWarpPoint(loungeWarpName + redTeamName);
-		Player player = getPlayer(playerName);
-		Team team = getPlayerTeam(playerName);
-		if (team.equals(Team.RED)) {
-			if (redLounge != null) {
-				player.teleport(redLounge);
-			}
-		} else if (team.equals(Team.BLUE)) {
-			if (blueLounge != null) {
-				player.teleport(blueLounge);
-			}
+	protected final void loungeAPlayer(String playerName) {
+		Location loc = getPlayerLoungePoint(playerName);
+		if (loc != null) {
+			Player player = getPlayer(playerName);
+			player.teleport(loc);
 		} else {
 			// hey jf - what happens if they aren't on a team.  How did they get here?
 			logInfo("OMG!  There's a player without a team trying to lounge.");
 		}
 	}
 
-	protected void spawnAPlayer(String playerName) {
-		Location blueSpawn = getWarpPoint(spawnWarpName + blueTeamName);
-		Location redSpawn = getWarpPoint(spawnWarpName + redTeamName);
-		Player player = getPlayer(playerName);
-		Team team = getPlayerTeam(playerName);
-		if (team.equals(Team.RED)) {
-			if (redSpawn != null) {
-				player.teleport(redSpawn);
-			}
-		} else if (team.equals(Team.BLUE)) {
-			if (blueSpawn != null) {
-				player.teleport(blueSpawn);
-			}
+	protected final void spawnAPlayer(String playerName) {
+		Location loc = getPlayerSpawnPoint(playerName);
+		if (loc != null) {
+			Player player = getPlayer(playerName);
+			player.teleport(loc);
 		} else {
 			// hey jf - what happens if they aren't on a team.  How did they get here?
 			logInfo("OMG!  There's a player without a team trying to spawn.");
 		}
 	}
 
-	protected void handlePlayerJoinedTeam(String playerName, String newTeam, String oldTeam) {
-
+	protected final Location getTeamSpawnPoint(int team) {
+		return getWarpPoint(spawnWarpName + getTeamNames()[team], 0);
 	}
 
-	private Location getWarpPoint(String warpName) {
-		CowNetMod plugin = (CowNetMod) getPlugin();
-		CowWarp warpThingy = (CowWarp) plugin.getThingy("cowwarp");
-		Location loc = warpThingy.getWarpLocation(warpName);
-		if (loc != null) {
-			if (spawnJiggle > 0) {
-				int dx = rand.nextInt(spawnJiggle * 2 + 1) - spawnJiggle - 1; // -5..5
-				int dz = rand.nextInt(spawnJiggle * 2 + 1) - spawnJiggle - 1; // -5..5
-				loc.add(dx, 0, dz);
-				loc = loc.getWorld().getHighestBlockAt(loc).getLocation();
-				loc.add(0, 1, 0);
-			}
-		}
-		return loc;
+	protected final Location getPlayerSpawnPoint(String playerName) {
+		Player player = getPlayer(playerName);
+		int team = getPlayerTeam(playerName);
+		Location loc = getTeamSpawnPoint(team);
+		return jigglePoint(loc, spawnJiggle);
 	}
 
-	private Player getPlayer(String playerName) {
-		Server server = getPlugin().getServer();
-		return server.getPlayer(playerName);
+	protected final Location getTeamLoungePoint(int team) {
+		return getWarpPoint(loungeWarpName + getTeamNames()[team], 0);
 	}
 
+	protected final Location getPlayerLoungePoint(String playerName) {
+		Player player = getPlayer(playerName);
+		int team = getPlayerTeam(playerName);
+		Location loc = getTeamLoungePoint(team);
+		return jigglePoint(loc, spawnJiggle);
+	}
 
 	// --------------------------------------------------------------
 	// ---- Event handlers
@@ -324,19 +352,11 @@ public class TeamGame extends GatheredGame implements Listener {
 		Player player = event.getPlayer();
 		String playerName = player.getName();
 		if (playerIsAlive(playerName)) {
-			// Just teleport the person back to spawn here.
-			// losses and announcements are done when the player is killed.
-			Location blueSpawn = getWarpPoint(spawnWarpName + blueTeamName);
-			Location redSpawn = getWarpPoint(spawnWarpName + redTeamName);
-			Team t = getPlayerTeam(playerName);
-			if (t == Team.RED) {
-				if (redSpawn != null) {
-					event.setRespawnLocation(redSpawn);
-				}
-			} else if (t == Team.BLUE) {
-				if (blueSpawn != null) {
-					event.setRespawnLocation(blueSpawn);
-				}
+			Location loc = getPlayerSpawnPoint(playerName);
+			if (loc != null) {
+				// Just teleport the person back to spawn here.
+				// losses and announcements are done when the player is killed.
+				event.setRespawnLocation(loc);
 			}
 		}
 	}

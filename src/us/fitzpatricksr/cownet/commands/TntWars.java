@@ -12,7 +12,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.commands.games.GameStats;
 import us.fitzpatricksr.cownet.commands.games.GameStatsMemory;
 import us.fitzpatricksr.cownet.commands.games.GatheredGame;
@@ -225,7 +224,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		debugInfo("handleLounging");
 		broadcastToAllOnlinePlayers("All the players are ready.  The games are about to start.");
 		// teleport everyone to the lounge
-		Location loc = getWarpPoint(loungeWarpName);
+		Location loc = getWarpPoint(loungeWarpName, spawnJiggle);
 		if (loc != null) {
 			// hey jf - you need to jiggle this a bit or everyone will be on top of each other
 			Server server = getPlugin().getServer();
@@ -243,7 +242,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		tempStats = new GameStatsMemory();
 
 		// teleport everyone to the spawn point to start the game
-		Location loc = getWarpPoint(spawnWarpName);
+		Location loc = getWarpPoint(spawnWarpName, spawnJiggle);
 		if (loc != null) {
 			Server server = getPlugin().getServer();
 			for (String playerName : getActivePlayers()) {
@@ -302,13 +301,13 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		debugInfo("handlePlayerAdded");
 		broadcastToAllOnlinePlayers(playerName + " has joined the game.");
 		if (isGameLounging()) {
-			Location warp = getWarpPoint(loungeWarpName);
+			Location warp = getWarpPoint(loungeWarpName, spawnJiggle);
 			if (warp != null) {
 				getPlayer(playerName).teleport(warp);
 			}
 		} else if (isGameInProgress()) {
 			Player player = getPlayer(playerName);
-			Location warp = getWarpPoint(spawnWarpName);
+			Location warp = getWarpPoint(spawnWarpName, spawnJiggle);
 			if (warp != null) {
 				player.teleport(warp);
 			}
@@ -337,22 +336,6 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		return placements != null;
 	}
 
-	private Location getWarpPoint(String warpName) {
-		CowNetMod plugin = (CowNetMod) getPlugin();
-		CowWarp warpThingy = (CowWarp) plugin.getThingy("cowwarp");
-		Location loc = warpThingy.getWarpLocation(warpName);
-		if (loc != null) {
-			if (spawnJiggle > 0) {
-				int dx = rand.nextInt(spawnJiggle * 2 + 1) - spawnJiggle - 1; // -5..5
-				int dz = rand.nextInt(spawnJiggle * 2 + 1) - spawnJiggle - 1; // -5..5
-				loc.add(dx, 0, dz);
-				loc = loc.getWorld().getHighestBlockAt(loc).getLocation();
-				loc.add(0, 1, 0);
-			}
-		}
-		return loc;
-	}
-
 	private void giveTnt(String playerName) {
 		//give everyone TNT in hand
 		Player player = getPlayer(playerName);
@@ -371,11 +354,6 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		stack.setAmount(stack.getAmount() - 1);
 		inventory.setItem(slot, stack);
 		player.updateInventory();
-	}
-
-	private Player getPlayer(String playerName) {
-		Server server = getPlugin().getServer();
-		return server.getPlayer(playerName);
 	}
 
 	// --------------------------------------------------------------
@@ -446,7 +424,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 							//you only get a kill if you don't kill yourself
 							accumulatStats(placer.getName(), KILLS_KEY, 1);
 						}
-						Location dest = getWarpPoint(spawnWarpName);
+						Location dest = getWarpPoint(spawnWarpName, spawnJiggle);
 						player.teleport(dest);
 						for (int i = 0; i < 10; i++) {
 							location.getWorld().playEffect(dest, Effect.SMOKE, rand.nextInt(9));
@@ -502,7 +480,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		if (playerIsAlive(playerName)) {
 			// Just teleport the person back to spawn here.
 			// losses and announcements are done when the player is killed.
-			Location loc = getWarpPoint(spawnWarpName);
+			Location loc = getWarpPoint(spawnWarpName, spawnJiggle);
 			if (loc != null) {
 				// hey jf - you need to jiggle this a bit or everyone will be on top of each other
 				// have the player respawn in the game spawn

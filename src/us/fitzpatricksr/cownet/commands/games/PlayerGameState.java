@@ -7,8 +7,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 /*
-This class keeps track of who is part of what game.  Eventually
-it will limit the number of games a player can be in to 1.
+This class keeps track of who is part of what game.  It keeps track of the
+games players are in globally in order to limit the players to one
+game at a time.
  */
 public class PlayerGameState {
 	public enum PlayerState {
@@ -53,48 +54,28 @@ public class PlayerGameState {
 		}
 	};
 
-	// what game is a particular player in?   playerName -> game
-	// this is statis shared state in order to limit players to one
+	// what game is a particular player in?   playerName -> gameName
+	// this is static shared state in order to limit players to one
 	// game at a time.
-	private static HashMap<String, String> globalPlayerGames = new HashMap<String, String>();
+	private static final HashMap<String, String> playerGames = new HashMap<String, String>();
 
 	// who's in a particular game?  game -> list of players
 	private HashSet<String> participating = new HashSet<String>();
-	// who get's notified when players enter and leave games
+	// who gets notified when players enter and leave games
 	private Listener listener;
-	// a reference to the list of public games to use.  If it's a local game, use a local list.
-	private HashMap<String, String> playerGames;
 	// The name of the game.   Null if this is a local game.
 	private String gameName;
 
-	public PlayerGameState() {
-		this.gameName = null;
-		this.playerGames = new HashMap<String, String>();
-		this.listener = DUMMY_LISTENER;
-	}
-
-	public PlayerGameState(Listener newListener) {
-		this.gameName = null;
-		this.playerGames = new HashMap<String, String>();
-		this.listener = (newListener != null) ? newListener : DUMMY_LISTENER;
-	}
-
 	public PlayerGameState(String gameName, Listener newListener) {
 		this.gameName = gameName;
-		this.playerGames = globalPlayerGames;
 		this.listener = (newListener != null) ? newListener : DUMMY_LISTENER;
 	}
-
-	/*
-	This class is a general bag for stats.  It's main structure is a multi-level
-	hash table that maps playerName->statKey->value
-	It also has a single, fixed length list that can be used to keep track
-	of recent winners/losers.
-	*/
 
 	public void setListener(Listener newListener) {
 		if (newListener == null) {
 			listener = DUMMY_LISTENER;
+		} else {
+			listener = newListener;
 		}
 	}
 
