@@ -109,6 +109,7 @@ public class Ctf extends TeamGame implements org.bukkit.event.Listener {
 	@Override
 	protected void handleLounging() {
 		super.handleLounging();
+		// might as well set up the arena here, since the players are out of the way.
 	}
 
 	@Override
@@ -118,11 +119,13 @@ public class Ctf extends TeamGame implements org.bukkit.event.Listener {
 
 	@Override
 	protected void handleEnded() {
+		// dump scores, clean up arena
 		super.handleEnded();
 	}
 
 	@Override
 	protected void handleFailed() {
+		// clean up arena
 		super.handleFailed();
 	}
 
@@ -134,6 +137,7 @@ public class Ctf extends TeamGame implements org.bukkit.event.Listener {
 	@Override
 	protected void handlePlayerLeft(String playerName) {
 		super.handlePlayerLeft(playerName);
+		// if that player had the flag, restore it to the spawn point
 	}
 
 	// --------------------------------------------------------------

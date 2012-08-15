@@ -70,6 +70,10 @@ commands:
       alias: [ tnt, tntwar ]
       description: Blow up your friends for fun and profit!
       usage: Use "/tntwar help, /tnt help or /tntwars help"
+  snowwars:
+      alias: [ snowballs ]
+      description: A good ol snowball fight.
+      usage: Use "/snowballs help or /snowwars help"
 
 permissions:
     cownet.starve:
@@ -170,6 +174,9 @@ permissions:
         default: true
     cownet.tntwars:
         description: Permission to participate in the war.
+        default: true
+    cownet.snowwars:
+        description: Permission to participate in the snowball fight.
         default: true
 
 

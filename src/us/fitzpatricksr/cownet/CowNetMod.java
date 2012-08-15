@@ -13,6 +13,7 @@ import us.fitzpatricksr.cownet.commands.HungerGames;
 import us.fitzpatricksr.cownet.commands.Logins;
 import us.fitzpatricksr.cownet.commands.NoSwearing;
 import us.fitzpatricksr.cownet.commands.Plot;
+import us.fitzpatricksr.cownet.commands.SnowWars;
 import us.fitzpatricksr.cownet.commands.Starve;
 import us.fitzpatricksr.cownet.commands.Timber;
 import us.fitzpatricksr.cownet.commands.TntSheep;
@@ -48,7 +49,8 @@ public class CowNetMod extends JavaPlugin {
 				cowPerms,
 				new CowRank(cowPerms),
 				new CowWarp(),
-				new TntWars()
+				new TntWars(),
+				new SnowWars()
 		};
 	}
 

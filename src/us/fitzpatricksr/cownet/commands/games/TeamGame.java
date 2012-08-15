@@ -82,11 +82,18 @@ public class TeamGame extends GatheredGame implements Listener {
 	//
 
 	/*
-	Print what team a player is on.
+	Print what team a player is on.  /game team
 	 */
 	@CowCommand
 	private boolean doTeam(Player player) {
-		String playerName = player.getName();
+		return doTeam(player, player.getName());
+	}
+
+	/*
+	Print what team a player is on.  /game team <playerName>
+	 */
+	@CowCommand
+	private boolean doTeam(CommandSender player, String playerName) {
 		if (getActivePlayers().contains(playerName)) {
 			int team = getPlayerTeam(playerName);
 			if (team == 0) {
@@ -101,10 +108,10 @@ public class TeamGame extends GatheredGame implements Listener {
 	}
 
 	/*
-	Set the team a player is on.
+	Set the team a player is on.  /game join team red
 	 */
 	@CowCommand
-	private boolean doTeam(Player player, String teamName) {
+	private boolean doJoinTeam(Player player, String teamName) {
 		String playerName = player.getName();
 		if (getActivePlayers().contains(playerName)) {
 			try {
@@ -150,13 +157,14 @@ public class TeamGame extends GatheredGame implements Listener {
 	}
 
 	private boolean canPlayerJoinTeam(String playerName, int newTeam) {
-		if (isGameInProgress() && (newTeam > 0)) {
+		if (isGameInProgress()) {
 			if (getPlayerTeam(playerName) > 0) {
 				// you can't change teams once the games have started
 				return false;
 			} else {
 				// you can only join a team who's size is < average size
 				// we ignore spectators here.
+				// this should only be hit by new players joining a game in progress
 				int totalPlayersOnTeams = 0;
 				for (int i = 1; i < getTeamCount(); i++) {
 					totalPlayersOnTeams += getTeamMembers(i).size();
@@ -325,7 +333,6 @@ public class TeamGame extends GatheredGame implements Listener {
 	}
 
 	protected final Location getPlayerSpawnPoint(String playerName) {
-		Player player = getPlayer(playerName);
 		int team = getPlayerTeam(playerName);
 		Location loc = getTeamSpawnPoint(team);
 		return jigglePoint(loc, spawnJiggle);
