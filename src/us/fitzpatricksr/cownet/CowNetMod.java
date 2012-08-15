@@ -66,8 +66,9 @@ public class CowNetMod extends JavaPlugin {
 	public void onEnable() {
 		if (getResource("config.yml") == null) {
 			this.saveConfig();
+			this.getConfig().options().copyDefaults(true);
+			this.saveConfig();
 		}
-		this.getConfig().options().copyDefaults(true);
 		if (getConfig().getBoolean("cownet.enable", true)) {
 			logger.info("CowNetMod enabled.");
 			for (CowNetThingy thingy : commands) {

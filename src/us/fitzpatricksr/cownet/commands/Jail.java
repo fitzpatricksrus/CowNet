@@ -87,7 +87,7 @@ public class Jail extends CowNetThingy {
 	private void spawnGift(Location loc) {
 		int t = rand.nextInt(types.length);
 		loc.add(0, 2, 0);
-		loc.getWorld().spawnCreature(loc, types[t]);
+		loc.getWorld().spawnEntity(loc, types[t]);
 	}
 
 	@CowCommand
