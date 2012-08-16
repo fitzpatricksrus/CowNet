@@ -40,7 +40,7 @@ public class SnowWars extends GatheredGame implements org.bukkit.event.Listener 
 	@Setting
 	private String loungeWarpName = "snowWarsLounge";
 	@Setting
-	private String spawnWarpName = "SnowWarsSpawn";
+	private String spawnWarpName = "snowWarsSpawn";
 	@Setting
 	private int refillRate = 60;    // how often a player's supply is topped off
 	@Setting
@@ -57,7 +57,7 @@ public class SnowWars extends GatheredGame implements org.bukkit.event.Listener 
 
 	@Override
 	protected String getGameName() {
-		return "TntWars";
+		return "SnowWars";
 	}
 
 	@Override
