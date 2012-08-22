@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 import us.fitzpatricksr.cownet.CowNetThingy;
@@ -42,7 +42,7 @@ public class NoSwearing extends CowNetThingy implements Listener {
 	}
 
 	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-	public void onPlayerChat(AsyncPlayerChatEvent event) {
+	public void onPlayerChat(PlayerChatEvent event) {
 		Player player = event.getPlayer();
 		if (hasPermissions(player, "allowed")) {
 			return;

@@ -134,7 +134,7 @@ public class TeamGame extends GatheredGame implements Listener {
 	// --------------------------------------------------------------
 	// ---- team management
 
-	private int getTeamByName(String teamName) {
+	public final int getTeamByName(String teamName) {
 		String[] names = getTeamNames();
 		for (int ndx = 0; ndx < names.length; ndx++) {
 			if (names[ndx].equalsIgnoreCase(teamName)) {
@@ -144,11 +144,11 @@ public class TeamGame extends GatheredGame implements Listener {
 		return 0;
 	}
 
-	private Set<String> getTeamMembers(int ndx) {
+	public final Set<String> getTeamMembers(int ndx) {
 		return playersOnTeam.get(ndx);
 	}
 
-	private int getPlayerTeam(String playerName) {
+	public final int getPlayerTeam(String playerName) {
 		if (teamOfPlayer.containsKey(playerName)) {
 			return teamOfPlayer.get(playerName);
 		} else {
@@ -217,6 +217,7 @@ public class TeamGame extends GatheredGame implements Listener {
 
 	protected void handlePlayerJoinedTeam(String playerName, int oldTeam, int newTeam) {
 		// called when a player's team is set or changed.
+
 	}
 
 	// --------------------------------------------------------------
@@ -235,9 +236,14 @@ public class TeamGame extends GatheredGame implements Listener {
 		broadcastToAllOnlinePlayers("All the players are ready.  The games are about to start.");
 		// put players on random team
 		for (String playerName : getActivePlayers()) {
+			addPlayerToRandomTeam(playerName);
+		}
+		// send everyone to the lounge and announce teams
+		for (String playerName : getActivePlayers()) {
 			loungeAPlayer(playerName);
 			broadcastToAllOnlinePlayers(playerName + " is on the " + getPlayerTeam(playerName) + " team.");
 		}
+		// one last msg to let people know what team they're on
 		for (String playerName : getActivePlayers()) {
 			getPlayer(playerName).sendMessage("** You are on the " + getPlayerTeam(playerName) + " team.");
 		}
@@ -297,6 +303,9 @@ public class TeamGame extends GatheredGame implements Listener {
 	}
 
 	@Override
+	/* Broadcast that a player left. However, we don't remove the player from their team.
+	This allows us to re-add that player to the same team later.  It's a bit clunky.
+	 */
 	protected void handlePlayerLeft(String playerName) {
 		// should remove their bombs
 		// remove that player's tnt

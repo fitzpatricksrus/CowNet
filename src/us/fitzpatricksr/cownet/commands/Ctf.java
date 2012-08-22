@@ -1,12 +1,21 @@
 package us.fitzpatricksr.cownet.commands;
 
+import org.bukkit.DyeColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.material.Wool;
 import us.fitzpatricksr.cownet.commands.games.GameStats;
 import us.fitzpatricksr.cownet.commands.games.TeamGame;
 
-import java.util.HashMap;
 import java.util.Random;
 
 /**
@@ -14,10 +23,15 @@ import java.util.Random;
 public class Ctf extends TeamGame implements org.bukkit.event.Listener {
 	private final Random rand = new Random();
 
-	// manual setting
-	private Material redFlagBlockType = Material.RED_MUSHROOM;
-	// manual setting
-	private Material blueFlagBlockType = Material.BROWN_MUSHROOM;
+	@Setting
+	private int sizeOfHomeBase = 5;
+	// manual setting...some day
+	private ItemStack flagBlockColors[] = new ItemStack[] {
+			new ItemStack(Material.AIR, 1),
+			new ItemStack(Material.WOOL, 1, new Wool(DyeColor.BLUE).getData()),
+			new ItemStack(Material.WOOL, 1, new Wool(DyeColor.RED).getData()),
+	};
+	private Flag[] flags = new Flag[getTeamCount()];
 	private GameStats tempStats;
 
 
@@ -25,39 +39,16 @@ public class Ctf extends TeamGame implements org.bukkit.event.Listener {
 	// ---- Settings management
 
 	@Override
-	// reload any settings not handled by @Setting
-	protected void reloadManualSettings() throws Exception {
-		super.reloadManualSettings();
-		this.redFlagBlockType = Material.matchMaterial(getConfigValue("redFlagBlockType", redFlagBlockType.toString()));
-		this.blueFlagBlockType = Material.matchMaterial(getConfigValue("blueFlagBlockType", blueFlagBlockType.toString()));
-	}
-
-	// return any custom settings that are not handled by @Settings code
-	protected HashMap<String, String> getManualSettings() {
-		HashMap<String, String> result = super.getManualSettings();
-		result.put("redFlagBlockType", redFlagBlockType.toString());
-		result.put("blueFlagBlockType", blueFlagBlockType.toString());
-		return result;
-	}
-
-	// update a setting that was not handled by @Setting and return true if it has been updated.
-	protected boolean updateManualSetting(String settingName, String settingValue) {
-		if (settingName.equalsIgnoreCase("redFlagBlockType")) {
-			redFlagBlockType = Material.valueOf(settingValue);
-			updateConfigValue("redFlagBlockType", settingValue);
-			return true;
-		} else if (settingName.equalsIgnoreCase("blueFlagBlockType")) {
-			blueFlagBlockType = Material.valueOf(settingValue);
-			updateConfigValue("blueFlagBlockType", settingValue);
-			return true;
-		} else {
-			return super.updateManualSetting(settingName, settingValue);
-		}
-	}
-
-	@Override
 	protected String getGameName() {
 		return "CaptureTheFlag";
+	}
+
+	protected String[] getTeamNames() {
+		return new String[] {
+				"Spectator",
+				"Red",
+				"Blue"
+		};
 	}
 
 	@Override
@@ -96,7 +87,78 @@ public class Ctf extends TeamGame implements org.bukkit.event.Listener {
 	}
 
 	// --------------------------------------------------------------
-	// ---- Settings management
+	// ---- event handling
+
+	@EventHandler(ignoreCancelled = true)
+	public void onBlockBreak(BlockBreakEvent event) {
+		debugInfo("BlockBreakEvent");
+		if (!isGameInProgress()) return;
+		Player player = event.getPlayer();
+		int team = getPlayerTeam(player.getName());
+		Location blockLocation = event.getBlock().getLocation();
+		for (int i = 0; i < getTeamCount(); i++) {
+			if (flags[i].isFlagBlock(blockLocation)) {
+				if (getPlayerTeam(player.getName()) > 0) {
+					// OK, it's a flag block.  If it's for another team, give it to the player.
+					if (flags[i].getTeam() != team) {
+						flags[i].setOwner(player.getName());
+					}
+				}
+				event.setCancelled(true);
+				return;
+			}
+		}
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerMoved(PlayerMoveEvent event) {
+		debugInfo("BlockBreakEvent");
+		if (!isGameInProgress()) return;
+		// check to see if the player has delivered the flag to their base.
+		Player player = event.getPlayer();
+		String playerName = player.getName();
+		if (getPlayerTeam(playerName) > 0) {
+			for (int i = 0; i < getTeamCount(); i++) {
+				if (flags[i].getOwner().equals(playerName)) {
+					// OK, this player owns a flag
+					Location to = event.getTo();
+					Location spawn = getPlayerSpawnPoint(playerName);
+					double distance = to.distance(spawn);
+					if (distance < sizeOfHomeBase) {
+						// they win!
+						for (int j = 0; j < getTeamCount(); j++) {
+							flags[j].clear();
+						}
+						broadcastToAllOnlinePlayers("The " + getTeamNames()[i] + " WINS!");
+					}
+				}
+			}
+		}
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerDeath(PlayerDeathEvent event) {
+		debugInfo("PlayerDeathEvent");
+		if (!isGameInProgress()) return;
+		Player player = event.getEntity();
+		for (int i = 0; i < getTeamCount(); i++) {
+			if (flags[i].getOwner().equals(player.getName())) {
+				flags[i].setOwner(null);
+			}
+		}
+	}
+
+	@EventHandler(ignoreCancelled = true)
+	public void onPlayerQuit(PlayerQuitEvent event) {
+		debugInfo("PlayerQuitEvent");
+		if (!isGameInProgress()) return;
+		Player player = event.getPlayer();
+		for (int i = 0; i < getTeamCount(); i++) {
+			if (flags[i].getOwner().equals(player.getName())) {
+				flags[i].setOwner(null);
+			}
+		}
+	}
 
 	// --------------------------------------------------------------
 	// ---- game state transitions
@@ -115,6 +177,11 @@ public class Ctf extends TeamGame implements org.bukkit.event.Listener {
 	@Override
 	protected void handleInProgress() {
 		super.handleInProgress();
+		// generate the flag blocks for each team.
+		for (int i = 1; i < getTeamCount(); i++) {
+			flags[i] = new Flag(i);
+			flags[i].setOwner(null);
+		}
 	}
 
 	@Override
@@ -136,8 +203,14 @@ public class Ctf extends TeamGame implements org.bukkit.event.Listener {
 
 	@Override
 	protected void handlePlayerLeft(String playerName) {
-		super.handlePlayerLeft(playerName);
+		// remove the player's armor
 		// if that player had the flag, restore it to the spawn point
+		super.handlePlayerLeft(playerName);
+	}
+
+	protected void handlePlayerJoinedTeam(String playerName, int oldTeam, int newTeam) {
+		// give the player the proper team armor
+		setArmor(playerName, newTeam, true);
 	}
 
 	// --------------------------------------------------------------
@@ -152,22 +225,74 @@ public class Ctf extends TeamGame implements org.bukkit.event.Listener {
 	// ---- Flag management
 
 	private class Flag {
+		private String ownerName;
+		private int team;
+
+		public Flag(int team) {
+			this.team = team;
+		}
+
 		/* return the team that owns this flag */
 		public int getTeam() {
-			return 0;
+			return team;
 		}
 
 		/* return the player currently holding this flag.  Null if at flag position */
 		public String getOwner() {
-			return null;
+			return ownerName;
 
 		}
 
 		/* Change the owner of this flag.  */
 		public void setOwner(String playerName) {
+			if (ownerName != null) {
+				setHat(ownerName, 0, false);
+			}
+			ownerName = playerName;
+			if (ownerName != null) {
+				setHat(ownerName, 0, false);
+			} else {
+				// no new owner, so move the block back to the block spawn point.
+				Location spawnPoint = getTeamSpawnPoint(getTeam());
+				spawnPoint.getWorld().dropItem(spawnPoint, flagBlockColors[getTeam()]);
+			}
+		}
 
+		public void clear() {
+			if (ownerName != null) {
+				setHat(ownerName, 0, false);
+			}
+			getTeamSpawnPoint(getTeam()).getBlock().setType(Material.AIR);
+			ownerName = null;
+		}
+
+		public boolean isFlagBlock(Location blockLocation) {
+			return blockLocation.equals(getTeamSpawnPoint(getTeam()));
+		}
+
+		private void setHat(String playerName, int team, boolean saveOldHat) {
+			if (team == 0) return;
+			Player player = getPlayer(playerName);
+			PlayerInventory inv = player.getInventory();
+			ItemStack helmet = inv.getArmorContents()[3]; // getHelmet() wouldn't give me non-helmet blocks
+			// if they already have a helmet, remove it and put it in their inventory
+			if (helmet != null && helmet.getType() != Material.AIR && saveOldHat) {
+				inv.addItem(helmet);
+			}
+			inv.setHelmet(flagBlockColors[team]);
 		}
 	}
 
+	private void setArmor(String playerName, int team, boolean saveOldArmor) {
+		if (team == 0) return;
+		Player player = getPlayer(playerName);
+		PlayerInventory inv = player.getInventory();
+		ItemStack armor = inv.getArmorContents()[2]; // getArmor() wouldn't give me non-helmet blocks
+		// if they already have a helmet, remove it and put it in their inventory
+		if (armor != null && armor.getType() != Material.AIR && saveOldArmor) {
+			inv.addItem(armor);
+		}
+		inv.setChestplate(flagBlockColors[team]);
+	}
 
 }
