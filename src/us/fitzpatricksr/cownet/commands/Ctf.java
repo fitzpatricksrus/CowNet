@@ -112,14 +112,14 @@ public class Ctf extends TeamGame implements org.bukkit.event.Listener {
 
 	@EventHandler(ignoreCancelled = true)
 	public void onPlayerMoved(PlayerMoveEvent event) {
-		debugInfo("BlockBreakEvent");
+		debugInfo("onPlayerMoved");
 		if (!isGameInProgress()) return;
 		// check to see if the player has delivered the flag to their base.
 		Player player = event.getPlayer();
 		String playerName = player.getName();
 		if (getPlayerTeam(playerName) > 0) {
 			for (int i = 0; i < getTeamCount(); i++) {
-				if (flags[i].getOwner().equals(playerName)) {
+				if (playerName.equalsIgnoreCase(flags[i].getOwner())) {
 					// OK, this player owns a flag
 					Location to = event.getTo();
 					Location spawn = getPlayerSpawnPoint(playerName);

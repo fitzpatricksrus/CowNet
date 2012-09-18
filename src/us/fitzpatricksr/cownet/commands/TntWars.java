@@ -362,7 +362,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 	/* place a bomb at players current location? */
 	private boolean placeBomb(Player player, Location loc) {
 		String playerName = player.getName();
-		if (playerIsAlive(playerName)) {
+		if (isPlayerAlive(playerName)) {
 			// check to see if they've already placed the maximum number of blocks.
 			LinkedList<BombPlacement> placementList = placements.get(playerName);
 			if (placementList.size() < maxBlockPlacements) {
@@ -455,7 +455,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		// if it's an explosive block, update state
 		Player player = event.getPlayer();
 		String playerName = player.getName();
-		if (playerIsAlive(playerName)) {
+		if (isPlayerAlive(playerName)) {
 			// hey jf - do you want to look at the block in hand or block placed?
 			if (event.getBlock().getType().equals(explosiveBlockType)) {
 				// if they already have an unexploded block, just cancel event
@@ -477,7 +477,7 @@ public class TntWars extends GatheredGame implements org.bukkit.event.Listener {
 		// register a loss and teleport back to spawn point
 		Player player = event.getPlayer();
 		String playerName = player.getName();
-		if (playerIsAlive(playerName)) {
+		if (isPlayerAlive(playerName)) {
 			// Just teleport the person back to spawn here.
 			// losses and announcements are done when the player is killed.
 			Location loc = getWarpPoint(spawnWarpName, spawnJiggle);

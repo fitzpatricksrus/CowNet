@@ -337,11 +337,11 @@ public class SnowWars extends GatheredGame implements org.bukkit.event.Listener 
 			Entity hitBySnowball = event.getEntity();
 			if (hitBySnowball instanceof Player) {
 				Player victim = (Player) hitBySnowball;
-				if (playerIsAlive(victim.getName())) {
+				if (isPlayerAlive(victim.getName())) {
 					LivingEntity snowSource = snowball.getShooter();
 					if (snowSource instanceof Player) {
 						Player shooter = (Player) snowSource;
-						if (playerIsAlive(shooter.getName())) {
+						if (isPlayerAlive(shooter.getName())) {
 							// OK, someone got plastered.  Accumulate stats.
 							event.setDamage(0);
 							accumulatStats(victim.getName(), DEATHS_KEY, 1);
@@ -360,7 +360,7 @@ public class SnowWars extends GatheredGame implements org.bukkit.event.Listener 
 		Entity shooter = entity.getShooter();
 		if (entity instanceof Snowball && shooter instanceof Player) {
 			Player source = (Player) shooter;
-			if (playerIsAlive(source.getName())) {
+			if (isPlayerAlive(source.getName())) {
 				accumulatStats(source.getName(), SNOW_THROWN_KEY, 1);
 			}
 		}
@@ -372,7 +372,7 @@ public class SnowWars extends GatheredGame implements org.bukkit.event.Listener 
 		// register a loss and teleport back to spawn point
 		Player player = event.getPlayer();
 		String playerName = player.getName();
-		if (playerIsAlive(playerName)) {
+		if (isPlayerAlive(playerName)) {
 			// Just teleport the person back to spawn here.
 			// losses and announcements are done when the player is killed.
 			Location loc = getWarpPoint(spawnWarpName, spawnJiggle);

@@ -74,6 +74,10 @@ commands:
       alias: [ snowballs ]
       description: A good ol snowball fight.
       usage: Use "/snowballs help or /snowwars help"
+  ctf:
+      alias: [ capturetheflaf ]
+      description: Capture the flag.
+      usage: Use "/ctf help"
 
 permissions:
     cownet.starve:
@@ -177,6 +181,9 @@ permissions:
         default: true
     cownet.snowwars:
         description: Permission to participate in the snowball fight.
+        default: true
+    cownet.ctf:
+        description: Permission to participate in ctf.
         default: true
 
 

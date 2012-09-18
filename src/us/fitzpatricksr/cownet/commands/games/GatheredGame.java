@@ -224,7 +224,7 @@ public abstract class GatheredGame extends CowNetThingy {
 	}
 
 	// --------------------------------------------------------------
-	// ---- subclass interface
+	// ---- subclass notification interface
 
 	// -- notification routines.
 	protected void handleGathering() {
@@ -264,13 +264,15 @@ public abstract class GatheredGame extends CowNetThingy {
 		broadcastToAllOnlinePlayers("The game ends in " + time + " seconds");
 	}
 
-	// -- routines for subclasses to inspect and modify game flow.
+	// --------------------------------------------------------------
+	// ---- utility routines for subclasses
+
 	protected final GameStatsFile getHistoricStats() {
 		return statsFile;
 	}
 
-	protected final void addPlayerToGame(String playerName) {
-		playerState.addPlayer(playerName);
+	protected final boolean addPlayerToGame(String playerName) {
+		return playerState.addPlayer(playerName);
 	}
 
 	protected final void removePlayerFromGame(String playerName) {
@@ -285,11 +287,11 @@ public abstract class GatheredGame extends CowNetThingy {
 		return playerState.getGameOfPlayer(playerName);
 	}
 
-	protected final boolean playerIsAlive(String playerName) {
+	protected final boolean isPlayerAlive(String playerName) {
 		return playerState.getPlayerState(playerName) == PlayerState.ALIVE;
 	}
 
-	protected final boolean playerIsWatching(String playerName) {
+	protected final boolean isPlayerWatching(String playerName) {
 		return playerState.getPlayerState(playerName) == PlayerState.WATCHING;
 	}
 

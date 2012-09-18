@@ -14,6 +14,18 @@ import java.util.Random;
 import java.util.Set;
 
 /**
+ * beginGathering
+ * playerEnteredGathering
+ * playerLeftGathering
+ * endGathering
+ * beginLounging
+ * playerEnteredLounge
+ * playerLeftLounge
+ * endLounging
+ * beginGame
+ * playerEnteredGame
+ * playerLeftGame
+ * endGame
  */
 public class TeamGame extends GatheredGame implements Listener {
 	private final Random rand = new Random();
@@ -77,6 +89,12 @@ public class TeamGame extends GatheredGame implements Listener {
 		};
 	}
 
+	@Override
+	protected void onEnable() throws Exception {
+		super.onEnable();
+		resetTeams();
+	}
+
 	//------------------------------------------------
 	//  command handlers
 	//
@@ -97,36 +115,45 @@ public class TeamGame extends GatheredGame implements Listener {
 		if (getActivePlayers().contains(playerName)) {
 			int team = getPlayerTeam(playerName);
 			if (team == 0) {
-				player.sendMessage("You are not on a team.");
+				player.sendMessage(playerName + " is not on a team.");
 			} else {
-				player.sendMessage("You are on the " + getTeamNames()[team] + " team.");
+				player.sendMessage(playerName + " is on the " + getTeamNames()[team] + " team.");
 			}
 		} else {
-			player.sendMessage("You are not currently in the game.");
+			player.sendMessage(playerName + " is not currently in the game.");
 		}
 		return true;
 	}
 
 	/*
-	Set the team a player is on.  /game join team red
+	Set the team a player is on.  /game join <teamname>
 	 */
 	@CowCommand
 	private boolean doJoinTeam(Player player, String teamName) {
+		if (isGameGathering() || isGameEnded()) {
+			// you can only join a team once teams have been formed (i.e. lounging has started)
+			player.sendMessage("You can't join a team right now.");
+			return true;
+		}
+
 		String playerName = player.getName();
-		if (getActivePlayers().contains(playerName)) {
-			try {
-				int newTeam = getTeamByName(teamName);
-				if (canPlayerJoinTeam(playerName, newTeam)) {
-					setPlayerTeam(playerName, newTeam);
-					player.sendMessage("You are now on the " + getTeamNames()[newTeam] + " team.");
-				} else {
-					player.sendMessage("Sorry, that would make the teams unbalanced.");
-				}
-			} catch (IllegalArgumentException e) {
-				player.sendMessage("There is no team with that name.");
+		if (!getActivePlayers().contains(playerName)) {
+			// if the player isn't in the game yet, add them before they join a team
+			if (!addPlayerToGame(playerName)) {
+				player.sendMessage("Sorry, you can't join the game at this time.");
+				return true;
 			}
-		} else {
-			player.sendMessage("You are not currently in the game.");
+		}
+		try {
+			int newTeam = getTeamByName(teamName);
+			if (canPlayerJoinTeam(playerName, newTeam)) {
+				setPlayerTeam(playerName, newTeam);
+				player.sendMessage("You are now on the " + getTeamNames()[newTeam] + " team.");
+			} else {
+				player.sendMessage("Sorry, that would make the teams unbalanced.");
+			}
+		} catch (IllegalArgumentException e) {
+			player.sendMessage("There is no team with that name.");
 		}
 		return true;
 	}
@@ -178,7 +205,7 @@ public class TeamGame extends GatheredGame implements Listener {
 		}
 	}
 
-	private boolean setPlayerTeam(String playerName, int newTeam) {
+	protected final boolean setPlayerTeam(String playerName, int newTeam) {
 		int currentTeam = getPlayerTeam(playerName);
 		if (currentTeam == newTeam) return true;
 
@@ -193,7 +220,7 @@ public class TeamGame extends GatheredGame implements Listener {
 		}
 	}
 
-	private int addPlayerToRandomTeam(String playerName) {
+	protected final int addPlayerToRandomTeam(String playerName) {
 		if (getPlayerTeam(playerName) == 0) {
 			int newTeam = 1;
 			for (int i = 2; i < getTeamCount(); i++) {
@@ -206,7 +233,7 @@ public class TeamGame extends GatheredGame implements Listener {
 		return getPlayerTeam(playerName);
 	}
 
-	private void resetTeams() {
+	protected final void resetTeams() {
 		// generate empty team data structures here
 		teamOfPlayer = new HashMap<String, Integer>();
 		playersOnTeam = new HashMap<Integer, HashSet<String>>();
@@ -236,7 +263,8 @@ public class TeamGame extends GatheredGame implements Listener {
 		broadcastToAllOnlinePlayers("All the players are ready.  The games are about to start.");
 		// put players on random team
 		for (String playerName : getActivePlayers()) {
-			addPlayerToRandomTeam(playerName);
+			int team = addPlayerToRandomTeam(playerName);
+			debugInfo(playerName + " added to team " + team);
 		}
 		// send everyone to the lounge and announce teams
 		for (String playerName : getActivePlayers()) {
@@ -286,6 +314,7 @@ public class TeamGame extends GatheredGame implements Listener {
 			// once the game is over, you're a spectator.  Do we even care?
 			setPlayerTeam(playerName, 0);
 		} else if (getPlayerTeam(playerName) == 0) {
+			// either lounging or in progress, add new players to a random team
 			int team = addPlayerToRandomTeam(playerName);
 			String teamName = getTeamNames()[getPlayerTeam(playerName)];
 			broadcastToAllOnlinePlayers(playerName + " has joined the " + teamName + " team.");
@@ -367,7 +396,7 @@ public class TeamGame extends GatheredGame implements Listener {
 		// register a loss and teleport back to spawn point
 		Player player = event.getPlayer();
 		String playerName = player.getName();
-		if (playerIsAlive(playerName)) {
+		if (isPlayerAlive(playerName)) {
 			Location loc = getPlayerSpawnPoint(playerName);
 			if (loc != null) {
 				// Just teleport the person back to spawn here.

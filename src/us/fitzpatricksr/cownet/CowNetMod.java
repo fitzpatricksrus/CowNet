@@ -7,6 +7,7 @@ import us.fitzpatricksr.cownet.commands.Bounce;
 import us.fitzpatricksr.cownet.commands.CowPerms;
 import us.fitzpatricksr.cownet.commands.CowRank;
 import us.fitzpatricksr.cownet.commands.CowWarp;
+import us.fitzpatricksr.cownet.commands.Ctf;
 import us.fitzpatricksr.cownet.commands.HardCore;
 import us.fitzpatricksr.cownet.commands.Hide;
 import us.fitzpatricksr.cownet.commands.HungerGames;
@@ -50,7 +51,8 @@ public class CowNetMod extends JavaPlugin {
 				new CowRank(cowPerms),
 				new CowWarp(),
 				new TntWars(),
-				new SnowWars()
+				new SnowWars(),
+				new Ctf()
 		};
 	}
 
@@ -87,6 +89,7 @@ public class CowNetMod extends JavaPlugin {
 						}
 						getCommand(thingy.getTrigger()).setExecutor(thingy);
 					} catch (Exception e) {
+						e.printStackTrace();
 						thingy.logInfo(thingy.getTrigger() + " disabled");
 					}
 				} else {

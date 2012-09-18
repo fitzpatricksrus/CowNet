@@ -124,3 +124,11 @@ snowwars:
   minPlayers: 2
   timeToGather: 60000
   timeToAcclimate: 10000
+
+ctf:
+  enable: true
+  debug: false
+  maxRecentWinners: 5
+  minPlayers: 2
+  timeToGather: 60000
+  timeToAcclimate: 10000
