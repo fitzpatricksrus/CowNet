@@ -732,4 +732,10 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
 			return result.toString();
 		}
 	}
+
+	protected final void broadcastToAllOnlinePlayers(String msg) {
+		for (Player player : getPlugin().getServer().getOnlinePlayers()) {
+			player.sendMessage(msg);
+		}
+	}
 }

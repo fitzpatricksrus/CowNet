@@ -311,12 +311,6 @@ public abstract class GatheredGame extends CowNetThingy {
 		return (gameState != null) && gameState.isEnded();
 	}
 
-	protected final void broadcastToAllOnlinePlayers(String msg) {
-		for (Player player : getPlugin().getServer().getOnlinePlayers()) {
-			player.sendMessage(msg);
-		}
-	}
-
 	// --------------------------------------------------------------
 	// ---- Utility methods
 
