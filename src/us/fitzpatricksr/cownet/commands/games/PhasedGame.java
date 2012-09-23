@@ -27,6 +27,17 @@ public class PhasedGame extends CowNetThingy {
 		}
 	}
 
+
+	//-----------------------------------------------------------
+	// Player management
+	//
+	// These methods don't keep track of the players, only ensure
+	// that the proper callbacks are made and that gathering
+	// begins when the first player enters the game.  Subclasses
+	// should keep track of players as needed.  This allows
+	// subclasses to organize players as they see fit.
+	// The first player added to the game starts the gathering timer.
+
 	public final void addPlayer(String playerName) throws PlayerCantBeAddedException {
 		if (timer.isGathering()) {
 			handlePlayerEnteredGathering(playerName);
@@ -45,6 +56,28 @@ public class PhasedGame extends CowNetThingy {
 			handlePlayerLeftLounge(playerName);
 		} else if (timer.isGameOn()) {
 			handlePlayerLeftGame(playerName);
+		}
+	}
+
+	//-----------------------------------------------------------
+	// Game management
+	//
+	// The first player added to the game starts the gathering timer.
+	// Since PhasedGame does not track individual players or know
+	// conditions that will terminate the game this is left to
+	// subclasses to determine.  endGame() and cancelGame()
+	// allow subclasses to stop the gathering timer and clear
+	// game state.
+
+	public final void startLounging() {
+		if (timer != null) {
+			timer.startLounging();
+		}
+	}
+
+	public final void startGame() {
+		if (timer != null) {
+			timer.startGame();
 		}
 	}
 
