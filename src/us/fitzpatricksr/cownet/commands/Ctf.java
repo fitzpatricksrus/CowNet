@@ -14,6 +14,8 @@ public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
 	private final Random rand = new Random();
 
 	@Setting
+	private boolean allowJoinGameInProgress = true;
+	@Setting
 	private int minPlayers = 2;
 	@Setting
 	private String[] teamNames = new String[] {
@@ -83,16 +85,10 @@ public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
 	@Override
 	protected void handlePlayerEnteredLounge(String playerName) throws PlayerCantBeAddedException {
 		// allocate player to the team with the fewest people
-		String team = teams.getPlayerTeam(playerName);
-		if (team != null) {
-			// broadcast player joining
-			broadcastToAllOnlinePlayers("CTF: " + playerName + " has rejoined the " + team + " team.");
-		} else {
-			// broadcast player joining
-			team = teams.getSmallestTeam();
-			teams.setPlayerTeam(playerName, team);
-			broadcastToAllOnlinePlayers("CTF: " + playerName + " is on the " + team + " team.");
-		}
+		String team = teams.getSmallestTeam();
+		teams.setPlayerTeam(playerName, team);
+		// broadcast player joining
+		broadcastToAllOnlinePlayers("CTF: " + playerName + " is on the " + team + " team.");
 		// teleport player to the lounge
 		loungeAPlayer(playerName);
 	}
@@ -101,26 +97,32 @@ public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
 	protected void handlePlayerLeftLounge(String playerName) {
 		// announce to players that someone left the game.
 		broadcastToAllOnlinePlayers("CTF: " + playerName + " has left the game.");
-		// remove that player to the pool of gathered players
+		// remove player from the records so they will re-added randomly if they rejoin
+		teams.setPlayerTeam(playerName, null);
 		gatheredPlayers.remove(playerName);
 		// TODO hey jf - if teams are way out of balance, what do we do?
 	}
 
 	@Override
 	protected void handleEndLounging() {
-		// if teams are not balanced, rebalance them (or fail?)
-		// TODO hey jf - if teams are way out of balance, what do we do?
-		// if teams are balanced, broadcast final teams
-		for (String teamName : teams.getTeamNames()) {
-			StringBuilder msg = new StringBuilder();
-			msg.append("CTF:  The ");
-			msg.append(teamName);
-			msg.append(" team is: ");
-			for (String playerName : teams.getPlayersForTeam(teamName)) {
-				msg.append(playerName);
-				msg.append("  ");
+		if (gatheredPlayers.size() < minPlayers) {
+			broadcastToAllOnlinePlayers("CTF: Game canceled due to lack of players.");
+			cancelGame();
+		} else {
+			// if teams are not balanced, re-balance them (or fail?)
+			// TODO hey jf - if teams are way out of balance, what do we do?
+			// if teams are balanced, broadcast final teams
+			for (String teamName : teams.getTeamNames()) {
+				StringBuilder msg = new StringBuilder();
+				msg.append("CTF:  The ");
+				msg.append(teamName);
+				msg.append(" team is: ");
+				for (String playerName : teams.getPlayersForTeam(teamName)) {
+					msg.append(playerName);
+					msg.append("  ");
+				}
+				broadcastToAllOnlinePlayers(msg.toString());
 			}
-			broadcastToAllOnlinePlayers(msg.toString());
 		}
 	}
 
@@ -129,17 +131,39 @@ public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
 	@Override
 	protected void handleBeginGame() {
 		// teleport everyone to their base
+		for (String playerName : gatheredPlayers) {
+			spawnAPlayer(playerName);
+		}
 	}
 
 	@Override
 	protected void handlePlayerEnteredGame(String playerName) throws PlayerCantBeAddedException {
 		// allocate player to their previous team or to team with fewest players
 		// announce player entered.
+		String team = teams.getPlayerTeam(playerName);
+		if (team != null) {
+			// broadcast player re-joining
+			broadcastToAllOnlinePlayers("CTF: " + playerName + " has rejoined the " + team + " team.");
+		} else if (allowJoinGameInProgress) {
+			// broadcast player joining
+			team = teams.getSmallestTeam();
+			teams.setPlayerTeam(playerName, team);
+			broadcastToAllOnlinePlayers("CTF: " + playerName + " is on the " + team + " team.");
+		} else {
+			throw new PlayerCantBeAddedException("You can't join a game that is in progress.");
+		}
+		// teleport player to the lounge
+		spawnAPlayer(playerName);
 	}
 
 	@Override
 	protected void handlePlayerLeftGame(String playerName) {
-		// announce player left.
+		// announce to players that someone left the game.
+		broadcastToAllOnlinePlayers("CTF: " + playerName + " has left the game.");
+		if (gatheredPlayers.size() < 1) {
+			// if everyone left, just cancel the game
+			cancelGame();
+		}
 	}
 
 	@Override
