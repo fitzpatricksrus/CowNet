@@ -56,7 +56,7 @@ public class PhasedGame extends CowNetThingy {
 	}
 
 	@CowCommand
-	private boolean doQuit(Player player) {
+	protected boolean doQuit(Player player) {
 		removePlayer(player.getName());
 		return true;
 	}
@@ -136,19 +136,19 @@ public class PhasedGame extends CowNetThingy {
 		}
 	}
 
-	public boolean isGathering() {
+	public final boolean isGathering() {
 		return (timer != null) && timer.isGathering();
 	}
 
-	public boolean isLounging() {
+	public final boolean isLounging() {
 		return (timer != null) && timer.isLounging();
 	}
 
-	public boolean isInProgress() {
+	public final boolean isInProgress() {
 		return (timer != null) && timer.isInProgress();
 	}
 
-	public boolean isEnded() {
+	public final boolean isEnded() {
 		return (timer == null) || timer.isEnded();
 	}
 
@@ -221,6 +221,9 @@ public class PhasedGame extends CowNetThingy {
 		}
 	}
 
+	// This method is called when the first player is added.  Subclasses may start the gathering
+	// timer sooner if they desire.  Once gathering has started, additional calls to this
+	// method don't affect the game progression.
 	protected final void startGathering() {
 		if (timer != null) return; // only start a new timer if one isn't already running.
 		timer = new GameGatheringTimer(getPlugin(), new GameGatheringTimer.Listener() {
@@ -255,17 +258,17 @@ public class PhasedGame extends CowNetThingy {
 
 			@Override
 			public void announceGather(long time) {
-				PhasedGame.this.announceGathering(time, timer.getGameStatusMessage());
+				PhasedGame.this.announceGathering(time, getGameStatusMessage());
 			}
 
 			@Override
 			public void announceLounging(long time) {
-				PhasedGame.this.announceLounging(time, timer.getGameStatusMessage());
+				PhasedGame.this.announceLounging(time, getGameStatusMessage());
 			}
 
 			@Override
 			public void announceWindDown(long time) {
-				PhasedGame.this.announceEnding(time, timer.getGameStatusMessage());
+				PhasedGame.this.announceEnding(time, getGameStatusMessage());
 			}
 		});
 	}

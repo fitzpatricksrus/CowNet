@@ -163,6 +163,7 @@ public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
 		if (gatheredPlayers.size() < 1) {
 			// if everyone left, just cancel the game
 			cancelGame();
+			broadcastToAllOnlinePlayers("CTF: all players left the game so it has been canceled without a winner.");
 		}
 	}
 
@@ -220,7 +221,6 @@ public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
 	}
 
 	protected final Location getPlayerLoungePoint(String playerName) {
-		Player player = getPlayer(playerName);
 		String team = teams.getPlayerTeam(playerName);
 		Location loc = getTeamLoungePoint(team);
 		return jigglePoint(loc, spawnJiggle);
