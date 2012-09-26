@@ -1,5 +1,7 @@
 package us.fitzpatricksr.cownet.commands.games;
 
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 /**
@@ -19,14 +21,45 @@ import us.fitzpatricksr.cownet.CowNetThingy;
  */
 public class PhasedGame extends CowNetThingy {
 
-	protected static class PlayerCantBeAddedException extends Exception {
-		public final String reason;
+	//------------------------------------------------
+	//  command handlers
+	//
 
-		public PlayerCantBeAddedException(String reason) {
-			this.reason = reason;
+	@CowCommand
+	protected boolean doJoin(Player player) {
+		try {
+			addPlayer(player.getName());
+		} catch (PlayerCantBeAddedException e) {
+			player.sendMessage(e.getMessage());
 		}
+		return true;
 	}
 
+	@CowCommand
+	protected boolean doStart(Player player) {
+		if (isGathering()) {
+			startLounging();
+		} else if (isLounging()) {
+			startGame();
+		} else if (isInProgress()) {
+			player.sendMessage("The game has already begun.");
+		} else {
+			player.sendMessage("No players have joined the game.  Not much fun without players...");
+		}
+		return true;
+	}
+
+	@CowCommand
+	protected boolean doInfo(CommandSender sender) {
+		sender.sendMessage(getGameStatusMessage());
+		return true;
+	}
+
+	@CowCommand
+	private boolean doQuit(Player player) {
+		removePlayer(player.getName());
+		return true;
+	}
 
 	//-----------------------------------------------------------
 	// Player management
@@ -37,6 +70,14 @@ public class PhasedGame extends CowNetThingy {
 	// should keep track of players as needed.  This allows
 	// subclasses to organize players as they see fit.
 	// The first player added to the game starts the gathering timer.
+
+	public static class PlayerCantBeAddedException extends Exception {
+		public final String reason;
+
+		public PlayerCantBeAddedException(String reason) {
+			this.reason = reason;
+		}
+	}
 
 	public final void addPlayer(String playerName) throws PlayerCantBeAddedException {
 		startGathering();
@@ -171,6 +212,14 @@ public class PhasedGame extends CowNetThingy {
 	//-----------------------------------------------------------
 	// Game phase control
 	private GameGatheringTimer timer;
+
+	protected final String getGameStatusMessage() {
+		if (timer != null) {
+			return timer.getGameStatusMessage();
+		} else {
+			return "Nobody joined the game.  Not much fun without players.";
+		}
+	}
 
 	protected final void startGathering() {
 		if (timer != null) return; // only start a new timer if one isn't already running.
