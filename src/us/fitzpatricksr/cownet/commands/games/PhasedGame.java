@@ -39,14 +39,14 @@ public class PhasedGame extends CowNetThingy {
 	// The first player added to the game starts the gathering timer.
 
 	public final void addPlayer(String playerName) throws PlayerCantBeAddedException {
+		startGathering();
 		if (timer.isGathering()) {
 			handlePlayerEnteredGathering(playerName);
 		} else if (timer.isLounging()) {
 			handlePlayerEnteredLounge(playerName);
-		} else if (timer.isGameOn()) {
+		} else if (timer.isInProgress()) {
 			handlePlayerEnteredGame(playerName);
 		}
-		startGathering();
 	}
 
 	public final void removePlayer(String playerName) {
@@ -54,7 +54,7 @@ public class PhasedGame extends CowNetThingy {
 			handlePlayerLeftGathering(playerName);
 		} else if (timer.isLounging()) {
 			handlePlayerLeftLounge(playerName);
-		} else if (timer.isGameOn()) {
+		} else if (timer.isInProgress()) {
 			handlePlayerLeftGame(playerName);
 		}
 	}
@@ -95,12 +95,32 @@ public class PhasedGame extends CowNetThingy {
 		}
 	}
 
-	//-----------------------------------------------------------
-	// Gathering events
-	protected void handleBeingGathering() {
+	public boolean isGathering() {
+		return (timer != null) && timer.isGathering();
 	}
 
-	protected void handlePlayerEnteredGathering(String playerName) throws PlayerCantBeAddedException {
+	public boolean isLounging() {
+		return (timer != null) && timer.isLounging();
+	}
+
+	public boolean isInProgress() {
+		return (timer != null) && timer.isInProgress();
+	}
+
+	public boolean isEnded() {
+		return (timer == null) || timer.isEnded();
+	}
+
+	//-----------------------------------------------------------
+	// Gathering events
+	protected void handleBeginGathering() {
+	}
+
+	protected void announceGathering(long time, String message) {
+		broadcastToAllOnlinePlayers(message);
+	}
+
+	protected void handlePlayerEnteredGathering(String playerName) {
 	}
 
 	protected void handlePlayerLeftGathering(String playerName) {
@@ -112,6 +132,10 @@ public class PhasedGame extends CowNetThingy {
 	//-----------------------------------------------------------
 	// lounging events
 	protected void handleBeginLounging() {
+	}
+
+	protected void announceLounging(long time, String message) {
+		broadcastToAllOnlinePlayers(message);
 	}
 
 	protected void handlePlayerEnteredLounge(String playerName) throws PlayerCantBeAddedException {
@@ -134,6 +158,10 @@ public class PhasedGame extends CowNetThingy {
 	protected void handlePlayerLeftGame(String playerName) {
 	}
 
+	protected void announceEnding(long time, String message) {
+		broadcastToAllOnlinePlayers(message);
+	}
+
 	protected void handleEndGame() {
 	}
 
@@ -144,49 +172,51 @@ public class PhasedGame extends CowNetThingy {
 	// Game phase control
 	private GameGatheringTimer timer;
 
-	private void startGathering() {
+	protected final void startGathering() {
 		if (timer != null) return; // only start a new timer if one isn't already running.
 		timer = new GameGatheringTimer(getPlugin(), new GameGatheringTimer.Listener() {
 			@Override
 			public void gameGathering() {
-				handleBeingGathering();
+				PhasedGame.this.handleBeginGathering();
 			}
 
 			@Override
 			public void gameLounging() {
-				handleEndGathering();
-				handleBeginLounging();
+				PhasedGame.this.handleEndGathering();
+				PhasedGame.this.handleBeginLounging();
 			}
 
 			@Override
 			public void gameInProgress() {
-				handleEndLounging();
-				handleBeginGame();
+				PhasedGame.this.handleEndLounging();
+				PhasedGame.this.handleBeginGame();
 			}
 
 			@Override
 			public void gameEnded() {
-				handleEndGame();
+				PhasedGame.this.handleEndGame();
+				timer = null;
 			}
 
 			@Override
 			public void gameCanceled() {
-				handleCancelGame();
+				PhasedGame.this.handleCancelGame();
+				timer = null;
 			}
 
 			@Override
 			public void announceGather(long time) {
-				broadcastToAllOnlinePlayers(timer.getGameStatusMessage());
+				PhasedGame.this.announceGathering(time, timer.getGameStatusMessage());
 			}
 
 			@Override
 			public void announceLounging(long time) {
-				broadcastToAllOnlinePlayers(timer.getGameStatusMessage());
+				PhasedGame.this.announceLounging(time, timer.getGameStatusMessage());
 			}
 
 			@Override
 			public void announceWindDown(long time) {
-				broadcastToAllOnlinePlayers(timer.getGameStatusMessage());
+				PhasedGame.this.announceEnding(time, timer.getGameStatusMessage());
 			}
 		});
 	}

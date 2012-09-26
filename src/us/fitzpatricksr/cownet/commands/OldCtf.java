@@ -20,7 +20,7 @@ import java.util.Random;
 
 /**
  */
-public class Ctf extends TeamGame implements org.bukkit.event.Listener {
+public class OldCtf extends TeamGame implements org.bukkit.event.Listener {
 	private final Random rand = new Random();
 
 	@Setting

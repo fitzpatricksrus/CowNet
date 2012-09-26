@@ -7,12 +7,12 @@ import us.fitzpatricksr.cownet.commands.Bounce;
 import us.fitzpatricksr.cownet.commands.CowPerms;
 import us.fitzpatricksr.cownet.commands.CowRank;
 import us.fitzpatricksr.cownet.commands.CowWarp;
-import us.fitzpatricksr.cownet.commands.Ctf;
 import us.fitzpatricksr.cownet.commands.HardCore;
 import us.fitzpatricksr.cownet.commands.Hide;
 import us.fitzpatricksr.cownet.commands.HungerGames;
 import us.fitzpatricksr.cownet.commands.Logins;
 import us.fitzpatricksr.cownet.commands.NoSwearing;
+import us.fitzpatricksr.cownet.commands.OldCtf;
 import us.fitzpatricksr.cownet.commands.Plot;
 import us.fitzpatricksr.cownet.commands.SnowWars;
 import us.fitzpatricksr.cownet.commands.Starve;
@@ -52,7 +52,7 @@ public class CowNetMod extends JavaPlugin {
 				new CowWarp(),
 				new TntWars(),
 				new SnowWars(),
-				new Ctf()
+				new OldCtf()
 		};
 	}
 

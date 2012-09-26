@@ -8,18 +8,23 @@ import java.util.HashMap;
 public class TeamState {
 	//-----------------------------------------------------------
 	// team methods
-	private HashMultimap<String, String> teams = HashMultimap.create();
-	private HashMap<String, String> team = new HashMap<String, String>();
+	private HashMultimap<String, String> teams = HashMultimap.create();        // teamName -> playerName[]
+	private HashMap<String, String> team = new HashMap<String, String>();    // playerName -> teamName
+	private String[] teamNames;
 
-	protected final Collection<String> getPlayersForTeam(String teamName) {
+	public TeamState(String[] teamNames) {
+		this.teamNames = teamNames;
+	}
+
+	public Collection<String> getPlayersForTeam(String teamName) {
 		return teams.get(teamName);
 	}
 
-	protected final String getPlayerTeam(String playerName) {
+	public String getPlayerTeam(String playerName) {
 		return team.get(playerName);
 	}
 
-	protected final void setPlayerTeam(String playerName, String newTeam) {
+	public void setPlayerTeam(String playerName, String newTeam) {
 		// remove player from their current team
 		String oldTeam = team.get(playerName);
 		if (oldTeam != null) {
@@ -33,8 +38,23 @@ public class TeamState {
 		}
 	}
 
-	protected final void clearTeams() {
+	public void clearTeams() {
 		teams = HashMultimap.create();
 		team = new HashMap<String, String>();
 	}
+
+	public String getSmallestTeam() {
+		int smallestSize = Integer.MAX_VALUE;
+		String smallestName = "Whaaa!";
+		for (String teamName : teamNames) {
+			int teamSize = teams.get(teamName).size();
+			if (teamSize < smallestSize) {
+				smallestSize = teamSize;
+				smallestName = teamName;
+			}
+		}
+		return smallestName;
+	}
 }
+
+
