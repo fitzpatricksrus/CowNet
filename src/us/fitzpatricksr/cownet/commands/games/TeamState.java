@@ -16,6 +16,10 @@ public class TeamState {
 		this.teamNames = teamNames;
 	}
 
+	public String[] getTeamNames() {
+		return teamNames;
+	}
+
 	public Collection<String> getPlayersForTeam(String teamName) {
 		return teams.get(teamName);
 	}

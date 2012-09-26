@@ -1,11 +1,18 @@
 package us.fitzpatricksr.cownet.commands;
 
+import org.bukkit.Location;
+import org.bukkit.Server;
+import org.bukkit.entity.Player;
+import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.commands.games.PhasedGame;
 import us.fitzpatricksr.cownet.commands.games.TeamState;
 
 import java.util.HashSet;
+import java.util.Random;
 
 public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
+	private final Random rand = new Random();
+
 	@Setting
 	private int minPlayers = 2;
 	@Setting
@@ -13,6 +20,12 @@ public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
 			"RED",
 			"BLUE"
 	};
+	@Setting
+	private String loungeWarpName = "teamLounge-";
+	@Setting
+	private String spawnWarpName = "teamSpawn-";
+	@Setting
+	private int spawnJiggle = 5;
 
 	private HashSet<String> gatheredPlayers;
 	private TeamState teams;
@@ -62,25 +75,53 @@ public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
 	@Override
 	protected void handleBeginLounging() {
 		// teleport everyone to the lounge
-		// broadcast results.
+		for (String playerName : gatheredPlayers) {
+			loungeAPlayer(playerName);
+		}
 	}
 
 	@Override
 	protected void handlePlayerEnteredLounge(String playerName) throws PlayerCantBeAddedException {
 		// allocate player to the team with the fewest people
+		String team = teams.getPlayerTeam(playerName);
+		if (team != null) {
+			// broadcast player joining
+			broadcastToAllOnlinePlayers("CTF: " + playerName + " has rejoined the " + team + " team.");
+		} else {
+			// broadcast player joining
+			team = teams.getSmallestTeam();
+			teams.setPlayerTeam(playerName, team);
+			broadcastToAllOnlinePlayers("CTF: " + playerName + " is on the " + team + " team.");
+		}
 		// teleport player to the lounge
-		// broadcast allocation
+		loungeAPlayer(playerName);
 	}
 
 	@Override
 	protected void handlePlayerLeftLounge(String playerName) {
-		// if teams are out of balance, broadcast message asking someone to change
+		// announce to players that someone left the game.
+		broadcastToAllOnlinePlayers("CTF: " + playerName + " has left the game.");
+		// remove that player to the pool of gathered players
+		gatheredPlayers.remove(playerName);
+		// TODO hey jf - if teams are way out of balance, what do we do?
 	}
 
 	@Override
 	protected void handleEndLounging() {
-		// if teams are balanced, broadcast final teams
 		// if teams are not balanced, rebalance them (or fail?)
+		// TODO hey jf - if teams are way out of balance, what do we do?
+		// if teams are balanced, broadcast final teams
+		for (String teamName : teams.getTeamNames()) {
+			StringBuilder msg = new StringBuilder();
+			msg.append("CTF:  The ");
+			msg.append(teamName);
+			msg.append(" team is: ");
+			for (String playerName : teams.getPlayersForTeam(teamName)) {
+				msg.append(playerName);
+				msg.append("  ");
+			}
+			broadcastToAllOnlinePlayers(msg.toString());
+		}
 	}
 
 	//-----------------------------------------------------------
@@ -116,4 +157,72 @@ public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
 		teams = null;
 	}
 
+	//-----------------------------------------------------------
+	// warp utilities
+	protected final void loungeAPlayer(String playerName) {
+		Location loc = getPlayerLoungePoint(playerName);
+		if (loc != null) {
+			Player player = getPlayer(playerName);
+			player.teleport(loc);
+		} else {
+			// hey jf - what happens if they aren't on a team.  How did they get here?
+			logInfo("OMG!  There's a player without a team trying to lounge.");
+		}
+	}
+
+	protected final void spawnAPlayer(String playerName) {
+		Location loc = getPlayerSpawnPoint(playerName);
+		if (loc != null) {
+			Player player = getPlayer(playerName);
+			player.teleport(loc);
+		} else {
+			// hey jf - what happens if they aren't on a team.  How did they get here?
+			logInfo("OMG!  There's a player without a team trying to spawn.");
+		}
+	}
+
+	protected final Location getTeamSpawnPoint(String team) {
+		return getWarpPoint(spawnWarpName + team, 0);
+	}
+
+	protected final Location getPlayerSpawnPoint(String playerName) {
+		String team = teams.getPlayerTeam(playerName);
+		Location loc = getTeamSpawnPoint(team);
+		return jigglePoint(loc, spawnJiggle);
+	}
+
+	protected final Location getTeamLoungePoint(String team) {
+		return getWarpPoint(loungeWarpName + team, 0);
+	}
+
+	protected final Location getPlayerLoungePoint(String playerName) {
+		Player player = getPlayer(playerName);
+		String team = teams.getPlayerTeam(playerName);
+		Location loc = getTeamLoungePoint(team);
+		return jigglePoint(loc, spawnJiggle);
+	}
+
+	protected final Location getWarpPoint(String warpName, int jiggle) {
+		CowNetMod plugin = (CowNetMod) getPlugin();
+		CowWarp warpThingy = (CowWarp) plugin.getThingy("cowwarp");
+		return jigglePoint(warpThingy.getWarpLocation(warpName), jiggle);
+	}
+
+	protected final Location jigglePoint(Location loc, int jiggle) {
+		if (loc != null) {
+			if (jiggle > 0) {
+				int dx = rand.nextInt(jiggle * 2 + 1) - jiggle - 1; // -5..5
+				int dz = rand.nextInt(jiggle * 2 + 1) - jiggle - 1; // -5..5
+				loc.add(dx, 0, dz);
+				loc = loc.getWorld().getHighestBlockAt(loc).getLocation();
+				loc.add(0, 1, 0);
+			}
+		}
+		return loc;
+	}
+
+	protected final Player getPlayer(String playerName) {
+		Server server = getPlugin().getServer();
+		return server.getPlayer(playerName);
+	}
 }
