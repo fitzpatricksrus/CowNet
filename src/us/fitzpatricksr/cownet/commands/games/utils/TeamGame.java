@@ -1,24 +1,17 @@
-package us.fitzpatricksr.cownet.commands;
+package us.fitzpatricksr.cownet.commands.games.utils;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import org.bukkit.DyeColor;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.material.Wool;
 import us.fitzpatricksr.cownet.CowNetMod;
+import us.fitzpatricksr.cownet.commands.CowWarp;
 import us.fitzpatricksr.cownet.commands.games.PhasedGame;
 import us.fitzpatricksr.cownet.commands.games.TeamState;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Random;
 
-public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
+public class TeamGame extends PhasedGame {
     private final Random rand = new Random();
 
     @Setting
@@ -36,16 +29,9 @@ public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
             "RED",
             "BLUE"
     };
-    private HashMap<String, ItemStack> flagBlockColors = new HashMap<String, ItemStack>();
-
-    {
-        flagBlockColors.put("RED", new ItemStack(Material.WOOL, 1, new Wool(DyeColor.RED).getData()));
-        flagBlockColors.put("BLUE", new ItemStack(Material.WOOL, 1, new Wool(DyeColor.BLUE).getData()));
-    }
 
     private HashSet<String> gatheredPlayers;
     private TeamState teams;
-    private BiMap<String, String> flagCarriers; // teamName -> playerName
 
     //-----------------------------------------------------------
     // Gathering events
@@ -145,8 +131,6 @@ public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
                 broadcastToAllOnlinePlayers(msg.toString());
             }
         }
-
-        initializeTeamFlags();
 
         // teleport everyone to their base
         for (String playerName : gatheredPlayers) {
@@ -274,54 +258,5 @@ public class Ctf extends PhasedGame implements org.bukkit.event.Listener {
     protected final Player getPlayer(String playerName) {
         Server server = getPlugin().getServer();
         return server.getPlayer(playerName);
-    }
-
-    //-----------------------------------------------------------
-    // flag management
-    // The flag is a block of colored wool that sits directly above the team spawn point.
-
-    protected void initializeTeamFlags() {
-        // reset flag carriers so nobody is carrying the flags
-        flagCarriers = HashBiMap.create();
-        //TODO put flag block at the team spawn point
-    }
-
-    protected String getFlagByPlayer(String playerName) {
-        return flagCarriers.inverse().get(playerName);
-    }
-
-    // Return the name of the player carrying the specified flag.  Null if that flag is home.
-    protected String getFlagCarrier(String teamName) {
-        return flagCarriers.get(teamName);
-    }
-
-    // Give the specified team flag to the designated player.  If player is null, return it home.
-    protected void setFlagCarrier(String teamName, String playerName) {
-        // remove flag from the current flag carrier
-        String oldCarrier = getFlagCarrier(teamName);
-        if (oldCarrier != null) {
-            // if the specified player is already the carrier then we're done.  Optimization.
-            if (oldCarrier.equals(playerName)) return;
-            Player player = getPlayer(getFlagCarrier(teamName));
-            PlayerInventory inv = player.getInventory();
-            inv.setHelmet(null);
-        }
-
-        // Give the flag to the new player
-        if (playerName == null) {
-            // we're sending the flag home
-            //TODO place the flag block at the team spawn position
-        } else {
-            // someone is now carrying the flag
-            Player player = getPlayer(playerName);
-            PlayerInventory inv = player.getInventory();
-            ItemStack helmet = inv.getArmorContents()[3]; // getHelmet() wouldn't give me non-helmet blocks
-            // if they already have a helmet, remove it and put it in their inventory
-            if (helmet != null && helmet.getType() != Material.AIR) {
-                inv.addItem(helmet);
-            }
-            inv.setHelmet(flagBlockColors.get(teamName));
-            //TODO remove the flag from the team spawn position
-        }
     }
 }

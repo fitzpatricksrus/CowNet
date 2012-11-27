@@ -6,11 +6,7 @@ import com.onarandombox.MultiverseCore.api.MVWorldManager;
 import com.onarandombox.MultiverseCore.api.SafeTTeleporter;
 import com.onarandombox.MultiverseCore.destination.DestinationFactory;
 import com.onarandombox.MultiverseCore.enums.TeleportResult;
-import org.bukkit.Difficulty;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.WorldType;
+import org.bukkit.*;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.MemorySection;
@@ -27,15 +23,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityTargetEvent;
-import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
-import org.bukkit.event.player.PlayerGameModeChangeEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerPickupItemEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleEntityCollisionEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
@@ -48,15 +36,7 @@ import us.fitzpatricksr.cownet.utils.StringUtils;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 /*
     The world is generated.  Player can visit and look all they want until they touch
@@ -72,796 +52,796 @@ import java.util.Set;
     when the savedState is touched.  It's a reaper process, not something that's active.
  */
 public class HardCore extends CowNetThingy implements Listener {
-	private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-	private static final int REAPER_FREQUENCY = 20 * 30; // 30 seconds
-	private HardCoreState savedState;
-	private HardCoreLog logFile;
-	private MultiverseCore mvPlugin;
-	@Setting(name = "worldname")
-	private String hardCoreWorldNames = "HardCore";
-	@Setting(name = "safedistance")
-	private int safeDistance = 10;
-	@Setting(name = "monsterBoost")
-	private double monsterBoost = 1.0d;
-	@Setting(name = "allowFly")
-	private boolean allowFly = false;
-	@Setting(name = "allowXRay")
-	private boolean allowXRay = false;
-	//manual setting because it's an enum
-	private Difficulty difficulty = Difficulty.HARD;
-
-	@Override
-	protected void onEnable() throws Exception {
-		getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
-			public void run() {
-				savedState.reapDeadPlayers();
-			}
-		}, REAPER_FREQUENCY, REAPER_FREQUENCY);
-	}
-
-	@Override
-	protected void onDisable() {
-		if (mvPlugin != null) mvPlugin.decrementPluginCount();
-		if (savedState != null) savedState.saveConfig();
-	}
-
-	@Override
-	protected void reloadManualSettings() throws Exception {
-		if (mvPlugin != null) mvPlugin.decrementPluginCount();
-		reloadAutoSettings(PlayerState.class);
-		difficulty = Difficulty.valueOf(getConfigValue("difficulty", difficulty.toString()));
-		savedState = new HardCoreState(getPlugin(), getTrigger() + ".yml");
-		savedState.loadConfig();
-		mvPlugin = (MultiverseCore) getPlugin().getServer().getPluginManager().getPlugin("Multiverse-Core");
-		if (mvPlugin == null) {
-			logInfo("Could not find Multiverse-Core plugin.  Disabling self");
-			throw new IllegalStateException("Could not find Multiverse-Core plugin.");
-		} else {
-			mvPlugin.incrementPluginCount();
-		}
-		logFile = new HardCoreLog(getPlugin(), "eventlog");
-	}
-
-	@Override
-	protected HashMap<String, String> getManualSettings() {
-		HashMap<String, String> result = getSettingValueMapFor(PlayerState.class);
-		result.put("difficulty", difficulty.toString());
-		return result;
-	}
-
-	@Override
-	protected boolean updateManualSetting(String settingName, String settingValue) {
-		if (!setAutoSettingValue(PlayerState.class, settingName, settingValue)) {
-			if (settingName.equalsIgnoreCase("difficulty")) {
-				difficulty = Difficulty.valueOf(settingValue);
-				updateConfigValue("difficulty", difficulty.toString());
-			} else {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	@Override
-	protected String[] getHelpText(CommandSender player) {
-		PlayerState ps = savedState.getPlayerState(player.getName());
-		long timeOut = (ps != null) ? ps.getSecondsTillTimeout() : PlayerState.deathDuration;
-		return new String[] {
-				"usage: hardcore (<worldname> | info | stats | revive <player> | regen | twiddle <params>)  ",
-				"HardCore is played with no mods.  You're on your own.  ",
-				"Type /HardCore (or /hc) to enter and exit HardCore world.  ",
-				"The leave, you must be close to the spawn point.  ",
-				"You're officially in the game once you interact with something.  ",
-				"Until then you are an observer.  After you die,  ",
-				"you are a ghost for a " + StringUtils.durationString(timeOut) + " and can only observer.  ",
-				"The time you are a ghost increases with each death.  ",
-				"If everyone is dead at the same time, the world regens.  If you don't ",
-				"play for " + StringUtils.durationString(timeOut) + ", you're no longer considered in the game."
-		};
-	}
-
-	//--------------------------------------------------
-	//  Command handlers
-	//
-
-	@CowCommand
-	protected boolean doHardcore(Player player) {
-		return doHardcore(player, null);
-	}
-
-	@CowCommand
-	protected boolean doHardcore(Player player, String worldName) {
-		if (worldName != null && !isHardCoreWorld(worldName)) {
-			player.sendMessage(worldName + " is not HARD CORE.");
-			return true;
-		}
-		if (isHardCoreWorld(player.getWorld()) && (worldName == null)) {
-			//Player is on HARD CORE world already and wants to leave.
-			//if they are close to spawn we will rescue them
-			World world = player.getWorld();
-			Location spawn = world.getSpawnLocation();
-			Location loc = player.getLocation();
-			double diff = spawn.distance(loc);
-			if ((diff < safeDistance) || savedState.isDead(player.getName()) || hasPermissions(player, "canalwaysescape")) {
-				World exitPlace = mvPlugin.getMVWorldManager().getSpawnWorld().getCBWorld();
-				SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
-				teleporter.safelyTeleport(null, player, exitPlace.getSpawnLocation(), true);
-				player.sendMessage("You must logoff and log into the server to reenable FlyMod.");
-			} else {
-				player.sendMessage("You need to make a HARD CORE effort to get closer to the spawn point.");
-			}
-		} else {
-			// player is in some other world and wants to go HARD CORE
-			if (worldName == null) worldName = getHardCoreWorldNames()[0];
-			MVWorldManager mgr = mvPlugin.getMVWorldManager();
-			if (!mgr.isMVWorld(worldName) && !savedState.generateNewWorld(worldName)) {
-				//this is an error.  Error message sent to console already.
-				player.sendMessage("Something is wrong with HARD CORE.  You can't be transported at the moment.");
-				return true;
-			}
-			String playerName = player.getName();
-			if (savedState.isDead(playerName)) {
-				player.sendMessage("You're dead, so you will roam the world as a ghost for the next " +
-						StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)) + ".");
-			}
-			SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
-			DestinationFactory destFactory = mvPlugin.getDestFactory();
-			MVDestination destination = destFactory.getDestination(worldName);
-			TeleportResult result = teleporter.safelyTeleport(player, player, destination);
-			switch (result) {
-				case FAIL_PERMISSION:
-					player.sendMessage("You don't have permissions to go to " + worldName);
-					break;
-				case FAIL_UNSAFE:
-					player.sendMessage("Can't find a safe spawn location for you.");
-					break;
-				case FAIL_TOO_POOR:
-					player.sendMessage("You don't have enough money.");
-					break;
-				case FAIL_INVALID:
-					player.sendMessage(worldName + " is temporarily out of service.");
-					break;
-				case SUCCESS:
-					player.sendMessage("Good luck.");
-					logFile.log(player.getName() + " became hardcore");
-					break;
-				case FAIL_OTHER:
-				default:
-					player.sendMessage("Something went wrong.  Something.  Stuff.");
-					break;
-			}
-		}
-		return true;
-	}
-
-	@CowCommand(permission = "info")
-	protected boolean doList(CommandSender player) {
-		return doInfo(player);
-	}
-
-	@CowCommand(permission = "info")
-	protected boolean doStats(CommandSender player) {
-		return doInfo(player);
-	}
-
-	@CowCommand(permission = "info")
-	protected boolean doInfo(CommandSender player) {
-		String playerName = player.getName();
-		String duration = StringUtils.durationString(savedState.getSecondsTillTimeout(playerName));
-		if (savedState.isDead(playerName)) {
-			player.sendMessage("You're dead for " + duration + ".  Not very HARD CORE.");
-		} else if (savedState.isLive(playerName)) {
-			player.sendMessage("You've been very HARD CORE up 'till now.");
-			player.sendMessage("You need to do something in " + duration + " to stay in the game.");
-		} else {
-			player.sendMessage("You are not in the HARD CORE game.  Type /hc and do something to enter.");
-		}
-		player.sendMessage("HARE CORE worlds: " + hardCoreWorldNames);
-		player.sendMessage("  --- HARD CORE Rankings ---");
-		player.sendMessage("  Name  - Deaths TimeOn Placed Broken Kills LastActive");
-		for (PlayerState p : savedState.getRankedPlayers()) {
-			player.sendMessage("    " + p.name + ((p.isLive) ? "" : "(dead)") + " -  D:" + p.deathCount + "  T:" + StringUtils.durationString(p.getSecondsInHardcore()) + "  P:" + p.blocksPlaced + "  B:" + p.blocksBroken + "  K:" + p.mobsKilled + "  L:" + StringUtils.durationString((System.currentTimeMillis() - p.lastActivity) / 1000));
-		}
-
-		return true;
-	}
-
-	@CowCommand(permission = "regen")
-	protected boolean doRegen(CommandSender player) {
-		savedState.generateNewWorlds();
-		player.sendMessage("The HARD CORE worlds have been regenerated HARDer and more CORE than ever.");
-		logFile.log(hardCoreWorldNames + " regenerated");
-		return true;
-	}
-
-	@CowCommand(permission = "revive")
-	protected boolean doRevive(CommandSender player, String arg) {
-		if (!savedState.isDead(arg)) {
-			player.sendMessage(arg + " is still going at it HARD CORE and isn't dead.");
-		} else {
-			savedState.markPlayerUndead(arg);
-			player.sendMessage(arg + " has been revived, be is still not as HARD CORE as you.");
-			logFile.log(arg + " revived by " + player.getName());
-		}
-		return true;
-	}
-
-	@CowCommand(permission = "twiddle")
-	protected boolean doTwiddle(CommandSender player, String playerName, String param) {
-		PlayerState ps = savedState.getPlayerState(playerName);
-		if (ps == null) {
-			player.sendMessage(playerName + " is not in the game.");
-		} else {
-			String option = param.substring(0, 2).toLowerCase();
-			long arg = Long.parseLong(param.substring(2).toLowerCase());
-			if ("d:".equals(option)) {
-				ps.deathCount = (int) arg;
-			} else if ("t:".equals(option)) {
-				ps.timeInGame = arg;
-			} else if ("p:".equals(option)) {
-				ps.blocksPlaced = arg;
-			} else if ("b:".equals(option)) {
-				ps.blocksBroken = arg;
-			} else if ("k:".equals(option)) {
-				ps.mobsKilled = arg;
-			} else if ("l:".equals(option)) {
-				ps.lastActivity = arg;
-			} else {
-				player.sendMessage("Could not set property " + option + " on player " + playerName);
-			}
-		}
-		return true;
-	}
-
-	// ---- Event handlers
-
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-	public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
-		debugInfo("onPlayerChangedWorld");
-		handleWorldChange(event.getPlayer(), event.getFrom());
-	}
-
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-	public void onPlayerTeleport(PlayerTeleportEvent event) {
-		handleWorldChange(event.getPlayer(), event.getFrom().getWorld());
-	}
-
-	private void handleWorldChange(Player player, World fromWorld) {
-		// set up the proper player settings for HARD CORE
-		if (isHardCoreWorld(player.getWorld())) {
-			// teleported to hardcore
-			savedState.setWasOp(player.getName(), player.isOp());
-			if (!hasPermissions(player, "keepop")) {
-				player.setOp(false);
-				player.setAllowFlight(false);
-				player.setGameMode(GameMode.SURVIVAL);
-				CowZombeControl.setAllowFly(player, allowFly);
-				CowZombeControl.setAllowMap(player, allowXRay);
-				CowZombeControl.setAllowXray(player, allowXRay);
-				CowZombeControl.setAllowNoClip(player, allowXRay);
-				CowZombeControl.setAllowCheat(player, allowXRay);
-			}
-			savedState.playerEnteredHardCore(player.getName());
-			logFile.log(player.getName() + " entered " + player.getWorld().getName() + "  op = " + player.isOp());
-		} else if (isHardCoreWorld(fromWorld)) {
-			// teleported from hardcore
-			player.setAllowFlight(true);
-			CowZombeControl.setAllowMods(player, true);
-			if (hasPermissions(player, "keepop")) {
-				player.setOp(true);
-			} else {
-				player.setOp(savedState.wasOp(player.getName()));
-			}
-			savedState.playerLeftHardCore(player.getName());
-			logFile.log(player.getName() + " left " + fromWorld);
-		}
-	}
-
-	@EventHandler(ignoreCancelled = true)
-	public void onPlayerInteract(PlayerInteractEvent event) {
-		// --- Stop Ghosts from doing things
-		if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
-		if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_AIR) {
-			return;
-		}
-		String playerName = event.getPlayer().getName();
-		if (savedState.isDead(playerName)) {
-			debugInfo("Ghost event");
-			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
-			event.setCancelled(true);
-		} else {
-			savedState.playerActivity(playerName);
-		}
-	}
-
-	@EventHandler(ignoreCancelled = true)
-	public void onBlockPlace(BlockPlaceEvent event) {
-		if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
-		String playerName = event.getPlayer().getName();
-		if (savedState.isDead(playerName)) {
-			debugInfo("Ghost event");
-			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
-			event.setCancelled(true);
-		} else {
-			savedState.accrueBlockPlaced(playerName);
-			savedState.playerActivity(playerName);
-		}
-	}
-
-	@EventHandler(ignoreCancelled = true)
-	public void onBlockBreak(BlockBreakEvent event) {
-		if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
-		String playerName = event.getPlayer().getName();
-		if (savedState.isDead(playerName)) {
-			debugInfo("Ghost event");
-			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
-			event.setCancelled(true);
-		} else {
-			savedState.accrueBlockBroken(playerName);
-			savedState.playerActivity(playerName);
-		}
-	}
-
-	@EventHandler(ignoreCancelled = true)
-	public void onPickupItem(PlayerPickupItemEvent event) {
-		if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
-		String playerName = event.getPlayer().getName();
-		if (savedState.isDead(playerName)) {
-			debugInfo("Ghost event");
-			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
-			event.setCancelled(true);
-		} else {
-			savedState.playerActivity(playerName);
-		}
-	}
-
-	@EventHandler(ignoreCancelled = true)
-	public void onPlayerDropItem(PlayerDropItemEvent event) {
-		if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
-		String playerName = event.getPlayer().getName();
-		if (savedState.isDead(playerName)) {
-			debugInfo("Ghost event");
-			event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
-			event.setCancelled(true);
-		} else {
-			savedState.playerActivity(playerName);
-		}
-	}
-
-	@EventHandler(ignoreCancelled = true)
-	public void onGameModeChange(PlayerGameModeChangeEvent event) {
-		World world = event.getPlayer().getWorld();
-		if (isHardCoreWorld(world)) {
-			event.setCancelled(true);
-			event.getPlayer().sendMessage("Can't change game modes.  " + world.getName() + " is HARD CORE.");
-		}
-	}
-
-	@EventHandler(ignoreCancelled = true)
-	public void onEntityDamage(EntityDamageEvent event) {
-		if (!isHardCoreWorld(event.getEntity().getWorld())) return;
-		Entity entity = event.getEntity();
-		if (entity instanceof Player) {
-			// ghosts can't be hurt
-			String playerName = ((Player) entity).getName();
-			if (savedState.isDead(playerName)) {
-				event.setCancelled(true);
-			}
-		}
-		if (event instanceof EntityDamageByEntityEvent) {
-			final EntityDamageByEntityEvent target = (EntityDamageByEntityEvent) event;
-			final Entity damager = target.getDamager();
-			if (damager instanceof Player) {
-				String playerName = ((Player) damager).getName();
-				if (savedState.isDead(playerName)) {
-					event.setCancelled(true);
-				}
-			}
-		}
-	}
-
-	@EventHandler(ignoreCancelled = true)
-	public void onPlayerDeath(EntityDeathEvent event) {
-		if (!isHardCoreWorld(event.getEntity().getWorld())) return;
-		Entity entity = event.getEntity();
-		if (entity instanceof Player) {
-			Player player = (Player) entity;
-			String playerName = player.getName();
-			savedState.markPlayerDead(playerName);
-			logFile.log(player.getName() + " died ");
-		} else {
-			// OK, something else was killed.  Not a player.
-			EntityDamageEvent lastDamageEvent = entity.getLastDamageCause();
-			if (lastDamageEvent != null && lastDamageEvent instanceof EntityDamageByEntityEvent) {
-				Entity damager = ((EntityDamageByEntityEvent) lastDamageEvent).getDamager();
-				Player killer = null;
-				if (damager instanceof Arrow) {
-					Arrow arrow = (Arrow) damager;
-					if (arrow.getShooter() instanceof Player) {
-						killer = (Player) arrow.getShooter();
-					}
-				} else if (damager instanceof Player) {
-					killer = (Player) damager;
-				}
-				if (killer != null) {
-					savedState.accrueMobKilled(killer.getName());
-				}
-			}
-		}
-	}
-
-	@EventHandler(ignoreCancelled = true)
-	public void onEntityTarget(EntityTargetEvent event) {
-		if (event.getTarget() == null) return;
-		if (!isHardCoreWorld(event.getTarget().getWorld())) return;
-		if (event.getTarget() instanceof Player) {
-			String playerName = ((Player) event.getTarget()).getName();
-			if (savedState.isDead(playerName)) {
-				event.setCancelled(true);
-			}
-		}
-	}
-
-	@EventHandler(ignoreCancelled = true)
-	public void onVehicleEntityCollision(VehicleEntityCollisionEvent event) {
-		if (!isHardCoreWorld(event.getEntity().getWorld())) return;
-		if (event.getEntity() instanceof Player) {
-			String playerName = ((Player) event.getEntity()).getName();
-			if (savedState.isDead(playerName)) {
-				event.setCancelled(true);
-			}
-		}
-	}
-
-	@EventHandler(ignoreCancelled = true)
-	public void onPlayerLogin(PlayerLoginEvent event) {
-	}
-
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-	public void onPlayerJoin(PlayerJoinEvent event) {
-		Player player = event.getPlayer();
-		debugInfo("onPlayerJoin: " + player.getName());
-		if (isHardCoreWorld(player.getWorld())) {
-			savedState.playerEnteredHardCore(player.getName());
-			debugInfo("  hardcore");
-		} else {
-			debugInfo("  softy (" + player.getWorld().getName() + ")");
-		}
-		// just dump the info through the command handler even though it's a hack
-		doInfo(player);
-	}
-
-	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-	public void onPlayerQuit(PlayerQuitEvent event) {
-		debugInfo("onPlayerQuit");
-		Player player = event.getPlayer();
-		if (isHardCoreWorld(player.getWorld())) {
-			savedState.playerLeftHardCore(player.getName());
-		}
-	}
-
-	private boolean isHardCoreWorld(World w) {
-		return isHardCoreWorld(w.getName());
-	}
-
-	private boolean isHardCoreWorld(String worldName) {
-		return hardCoreWorldNames.toLowerCase().contains(worldName.toLowerCase());
-	}
-
-	private String[] getHardCoreWorldNames() {
-		return hardCoreWorldNames.split(",");
-	}
-
-	//
-	// Persistent state methods (ex. live vs. dead)
-	//
-
-	/*
-		   Configuration looks like this:
-		   hardcorecow.creationDate: creationDate
-		   hardcorecow.liveplayers: player1,player2,player3
-		   hardcorecow.deadplayers: player1,player2,player3
-		*/
-	private class HardCoreState extends CowNetConfig {
-		private boolean regenIsAlreadyScheduled = false;
-		private Map<String, PlayerState> allPlayers = new HashMap<String, PlayerState>();
-		private String creationDate = "unknown";
-		private String name;
-
-		public HardCoreState(JavaPlugin plugin, String name) {
-			super(plugin);
-			this.name = name;
-		}
-
-		protected String getFileName() {
-			return name;
-		}
-
-		public void loadConfig() throws IOException, InvalidConfigurationException {
-			super.loadConfig();
-			creationDate = getConfigValue("creationdate", creationDate);
-
-			allPlayers.clear();
-
-			MemorySection section = (MemorySection) getConfigurationSection("players");
-			if (section != null && section instanceof MemorySection) {
-				for (String key : section.getKeys(false)) {
-					PlayerState ps = (PlayerState) section.get(key);
-					allPlayers.put(key.toLowerCase(), ps);
-				}
-			}
-		}
-
-		public void saveConfig() {
-			debugInfo("saveConfig()");
-			updateConfigValue("creationdate", creationDate);
-			updateConfigValue("players", allPlayers);
-			try {
-				super.saveConfig();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-
-		/*
-				Mark as player as dead and return true if that was the last
-				active player.
-				 */
-		public void markPlayerDead(String player) {
-			if (isLive(player)) {
-				// this player was live in the game, so mark them dead.
-				getPlayerState(player).setIsDead();
-				saveConfig();
-				debug("markPlayerDead " + player);
-				logFile.log(player + " died ");
-			}
-		}
-
-		/*
-				This method moves someone from the dead queue to the live
-				queue ONLY.  It doesn't add them to the live queue
-				if they are not already there.
-				 */
-		public void markPlayerUndead(String player) {
-			if (!isDead(player)) return;
-			getPlayerState(player).setIsLive();
-			saveConfig();
-			debug("markPlayerUndead " + player);
-			logFile.log(player + " revived ");
-		}
-
-		public boolean isDead(String player) {
-			PlayerState ps = getPlayerState(player);
-			return (ps != null) && !ps.isLive;
-		}
-
-		public boolean isLive(String player) {
-			PlayerState ps = getPlayerState(player);
-			return (ps != null) && ps.isLive;
-		}
-
-		public boolean isUnknown(String player) {
-			return getPlayerState(player) == null;
-		}
-
-		public boolean wasOp(String player) {
-			PlayerState state = getPlayerState(player);
-			return ((state != null) && state.wasOp);
-		}
-
-		public void setWasOp(String player, boolean isOp) {
-			if (wasOp(player) != isOp) {
-				getOrCreatePlayerState(player).setWasOp(isOp);
-				saveConfig();
-			}
-		}
-
-		/*
-				This is the primary way to put a player into the game and to
-				keep them there.
-				 */
-		public void playerActivity(String player) {
-			if (isDead(player)) return;
-			getOrCreatePlayerState(player).noteActivity();
-		}
-
-		private PlayerState getPlayerState(String name) {
-			return allPlayers.get(name.toLowerCase());
-		}
-
-		private PlayerState getOrCreatePlayerState(String name) {
-			PlayerState result = allPlayers.get(name.toLowerCase());
-			if (result == null) {
-				result = new PlayerState(name);
-				allPlayers.put(name.toLowerCase(), result);
-			}
-			return result;
-		}
-
-		public Set<PlayerState> getLivePlayers() {
-			Set<PlayerState> result = new HashSet<PlayerState>();
-			for (PlayerState player : allPlayers.values()) {
-				if (isLive(player.name)) {
-					result.add(player);
-				}
-			}
-			return result;
-		}
-
-		public Set<PlayerState> getDeadPlayers() {
-			Set<PlayerState> result = new HashSet<PlayerState>();
-			for (PlayerState player : allPlayers.values()) {
-				if (isDead(player.name)) {
-					result.add(player);
-				}
-			}
-			return result;
-		}
-
-		public List<PlayerState> getRankedPlayers() {
-			List<PlayerState> result = new LinkedList<PlayerState>(allPlayers.values());
-			Collections.sort(result);
-			return result;
-		}
-
-		public long getSecondsTillTimeout(String name) {
-			PlayerState ps = getPlayerState(name);
-			if (ps == null) return 0;
-			return ps.getSecondsTillTimeout();
-		}
-
-		public String getCreationDate() {
-			return creationDate;
-		}
-
-		public void resetWorldState() {
-			creationDate = dateFormat.format(new Date());
-			allPlayers.clear();
-			saveConfig();
-			debug("resetWorldState");
-		}
-
-		public void playerEnteredHardCore(String name) {
-			PlayerState ps = getOrCreatePlayerState(name);
-			ps.playerEnteredHardCore();
-			debugInfo("playerEnteredHardCore(" + name + ") -> " + ps.getSecondsInHardcore());
-		}
-
-		public void playerLeftHardCore(String name) {
-			PlayerState ps = getPlayerState(name);
-			if (ps != null) {
-				ps.playerLeftHardCore();
-				debugInfo("playerLeftHardCore(" + name + ") -> " + ps.getSecondsInHardcore());
-				saveConfig();
-			}
-		}
-
-		public void accrueBlockPlaced(String name) {
-			PlayerState ps = getPlayerState(name);
-			if (ps != null) ps.accrueBlockPlaced();
-		}
-
-		public void accrueBlockBroken(String name) {
-			PlayerState ps = getPlayerState(name);
-			if (ps != null) ps.accrueBlockBroken();
-		}
-
-		public void accrueMobKilled(String name) {
-			PlayerState ps = getPlayerState(name);
-			if (ps != null) ps.accrueMobKilled();
-		}
-
-		private void reapDeadPlayers() {
-			if (allPlayers.size() == 0) return;
-			LinkedList<String> playersToStomp = new LinkedList<String>();
-			for (PlayerState player : allPlayers.values()) {
-				if (player.getSecondsTillTimeout() == 0) {
-					// It's been so long since we've seen this player we don't
-					// count them as live anymore.
-					playersToStomp.add(player.name.toLowerCase());
-					debugInfo("Stomping on " + player);
-				} else {
-					debugInfo("Timeremaining: " + player.getSecondsTillTimeout() + "  " + player);
-				}
-			}
-			for (String playerName : playersToStomp) {
-				PlayerState ps = allPlayers.get(playerName);
-				if (ps.isLive) {
-					allPlayers.remove(playerName);
-					logFile.log(playerName + " removed because of inactivity");
-				} else {
-					ps.setIsLive();
-					logFile.log(playerName + " death penalty complete.  Now alive.");
-					Player player = getPlugin().getServer().getPlayer(ps.name);
-					if (player != null) {
-						player.sendMessage("You are now alive again in HARD CORE.  Got to it soldier!");
-					}
-				}
-			}
-			savedState.saveConfig();
-			debug("Reaping complete");
-			if (getLivePlayers().size() == 0) {
-				// if the last live player was removed, regen the world
-				getPlugin().getServer().getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
-					public void run() {
-						generateNewWorlds();
-						resetWorldState();
-						getPlugin().getServer().broadcastMessage("Seems like things were too HARD CORE.  " + "The HARD CORE worlds have been regenerated to be a bit more fluffy for you softies.");
-					}// end of run
-				}, 40);
-			}
-		}
-
-		private void generateNewWorlds() {
-			for (String worldName : getHardCoreWorldNames()) {
-				generateNewWorld(worldName);
-			}
-		}
-
-		private boolean generateNewWorld(String worldName) {
-			logInfo("generateNewWorld " + worldName);
-			if (regenIsAlreadyScheduled) {
-				logInfo("generateNewWorld " + worldName + " aborted.  Regen already in progress.");
-				return true;
-			}
-			try {
-				regenIsAlreadyScheduled = true;
-				MVWorldManager mgr = mvPlugin.getMVWorldManager();
-				if (mgr.isMVWorld(worldName)) {
-					mgr.removePlayersFromWorld(worldName);
-					if (!mgr.deleteWorld(worldName)) {
-						logInfo("Agh!  Can't regen " + worldName);
-						return false;
-					}
-				}
-				//TODO - can we create this world in another thread?
-				if (mgr.addWorld(worldName, World.Environment.NORMAL, "" + (new Random().nextLong()), WorldType.NORMAL, true, null, true)) {
-					savedState.resetWorldState();
-					World w = mgr.getMVWorld(worldName).getCBWorld();
-					w.setDifficulty(difficulty);
-					w.setTicksPerMonsterSpawns((int) (w.getTicksPerMonsterSpawns() * monsterBoost) + 1);
-					logInfo(worldName + " has been regenerated.");
-					return true;
-				} else {
-					logInfo("Oh No's! " + worldName + " don wurk.");
-					return false;
-				}
-			} finally {
-				regenIsAlreadyScheduled = false;
-			}
-		}
-
-		private void debug(String msg) {
-			debugInfo(msg);
-			debugInfo("  World: " + hardCoreWorldNames);
-			debugInfo("  Created: " + creationDate);
-			debugInfo("  Players: ");
-			for (String name : allPlayers.keySet()) {
-				PlayerState ps = allPlayers.get(name);
-				debugInfo("    " + ps.toString());
-			}
-		}
-	}
-
-
-	// --- Hachky test
-	public static void main(String[] args) {
-		PlayerState test = new PlayerState("Player1");
-		Map<String, Object> map = test.serialize();
-		for (String key : map.keySet()) {
-			System.out.println(key);
-			System.out.println("  " + map.get(key));
-		}
-		test = new PlayerState(map);
-		System.out.println(test);
-
-		test.setIsLive();
-		test.getSecondsTillTimeout();
-		test.noteActivity();
-		test.getSecondsTillTimeout();
-		test.setIsDead();
-		test.getSecondsTillTimeout();
-	}
+    private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private static final int REAPER_FREQUENCY = 20 * 30; // 30 seconds
+    private HardCoreState savedState;
+    private HardCoreLog logFile;
+    private MultiverseCore mvPlugin;
+    @Setting(name = "worldname")
+    private String hardCoreWorldNames = "HardCore";
+    @Setting(name = "safedistance")
+    private int safeDistance = 10;
+    @Setting(name = "monsterBoost")
+    private double monsterBoost = 1.0d;
+    @Setting(name = "allowFly")
+    private boolean allowFly = false;
+    @Setting(name = "allowXRay")
+    private boolean allowXRay = false;
+    //manual setting because it's an enum
+    private Difficulty difficulty = Difficulty.HARD;
+
+    @Override
+    protected void onEnable() throws Exception {
+        getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(getPlugin(), new Runnable() {
+            public void run() {
+                savedState.reapDeadPlayers();
+            }
+        }, REAPER_FREQUENCY, REAPER_FREQUENCY);
+    }
+
+    @Override
+    protected void onDisable() {
+        if (mvPlugin != null) mvPlugin.decrementPluginCount();
+        if (savedState != null) savedState.saveConfig();
+    }
+
+    @Override
+    protected void reloadManualSettings() throws Exception {
+        if (mvPlugin != null) mvPlugin.decrementPluginCount();
+        reloadAutoSettings(PlayerState.class);
+        difficulty = Difficulty.valueOf(getConfigValue("difficulty", difficulty.toString()));
+        savedState = new HardCoreState(getPlugin(), getTrigger() + ".yml");
+        savedState.loadConfig();
+        mvPlugin = (MultiverseCore) getPlugin().getServer().getPluginManager().getPlugin("Multiverse-Core");
+        if (mvPlugin == null) {
+            logInfo("Could not find Multiverse-Core plugin.  Disabling self");
+            throw new IllegalStateException("Could not find Multiverse-Core plugin.");
+        } else {
+            mvPlugin.incrementPluginCount();
+        }
+        logFile = new HardCoreLog(getPlugin(), "eventlog");
+    }
+
+    @Override
+    protected HashMap<String, String> getManualSettings() {
+        HashMap<String, String> result = getSettingValueMapFor(PlayerState.class);
+        result.put("difficulty", difficulty.toString());
+        return result;
+    }
+
+    @Override
+    protected boolean updateManualSetting(String settingName, String settingValue) {
+        if (!setAutoSettingValue(PlayerState.class, settingName, settingValue)) {
+            if (settingName.equalsIgnoreCase("difficulty")) {
+                difficulty = Difficulty.valueOf(settingValue);
+                updateConfigValue("difficulty", difficulty.toString());
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    protected String[] getHelpText(CommandSender player) {
+        PlayerState ps = savedState.getPlayerState(player.getName());
+        long timeOut = (ps != null) ? ps.getSecondsTillTimeout() : PlayerState.deathDuration;
+        return new String[]{
+                "usage: hardcore (<worldname> | info | stats | revive <player> | regen | twiddle <params>)  ",
+                "HardCore is played with no mods.  You're on your own.  ",
+                "Type /HardCore (or /hc) to enter and exit HardCore world.  ",
+                "The leave, you must be close to the spawn point.  ",
+                "You're officially in the game once you interact with something.  ",
+                "Until then you are an observer.  After you die,  ",
+                "you are a ghost for a " + StringUtils.durationString(timeOut) + " and can only observer.  ",
+                "The time you are a ghost increases with each death.  ",
+                "If everyone is dead at the same time, the world regens.  If you don't ",
+                "play for " + StringUtils.durationString(timeOut) + ", you're no longer considered in the game."
+        };
+    }
+
+    //--------------------------------------------------
+    //  Command handlers
+    //
+
+    @CowCommand
+    protected boolean doHardcore(Player player) {
+        return doHardcore(player, null);
+    }
+
+    @CowCommand
+    protected boolean doHardcore(Player player, String worldName) {
+        if (worldName != null && !isHardCoreWorld(worldName)) {
+            player.sendMessage(worldName + " is not HARD CORE.");
+            return true;
+        }
+        if (isHardCoreWorld(player.getWorld()) && (worldName == null)) {
+            //Player is on HARD CORE world already and wants to leave.
+            //if they are close to spawn we will rescue them
+            World world = player.getWorld();
+            Location spawn = world.getSpawnLocation();
+            Location loc = player.getLocation();
+            double diff = spawn.distance(loc);
+            if ((diff < safeDistance) || savedState.isDead(player.getName()) || hasPermissions(player, "canalwaysescape")) {
+                World exitPlace = mvPlugin.getMVWorldManager().getSpawnWorld().getCBWorld();
+                SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
+                teleporter.safelyTeleport(null, player, exitPlace.getSpawnLocation(), true);
+                player.sendMessage("You must logoff and log into the server to reenable FlyMod.");
+            } else {
+                player.sendMessage("You need to make a HARD CORE effort to get closer to the spawn point.");
+            }
+        } else {
+            // player is in some other world and wants to go HARD CORE
+            if (worldName == null) worldName = getHardCoreWorldNames()[0];
+            MVWorldManager mgr = mvPlugin.getMVWorldManager();
+            if (!mgr.isMVWorld(worldName) && !savedState.generateNewWorld(worldName)) {
+                //this is an error.  Error message sent to console already.
+                player.sendMessage("Something is wrong with HARD CORE.  You can't be transported at the moment.");
+                return true;
+            }
+            String playerName = player.getName();
+            if (savedState.isDead(playerName)) {
+                player.sendMessage("You're dead, so you will roam the world as a ghost for the next " +
+                        StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)) + ".");
+            }
+            SafeTTeleporter teleporter = mvPlugin.getSafeTTeleporter();
+            DestinationFactory destFactory = mvPlugin.getDestFactory();
+            MVDestination destination = destFactory.getDestination(worldName);
+            TeleportResult result = teleporter.safelyTeleport(player, player, destination);
+            switch (result) {
+                case FAIL_PERMISSION:
+                    player.sendMessage("You don't have permissions to go to " + worldName);
+                    break;
+                case FAIL_UNSAFE:
+                    player.sendMessage("Can't find a safe spawn location for you.");
+                    break;
+                case FAIL_TOO_POOR:
+                    player.sendMessage("You don't have enough money.");
+                    break;
+                case FAIL_INVALID:
+                    player.sendMessage(worldName + " is temporarily out of service.");
+                    break;
+                case SUCCESS:
+                    player.sendMessage("Good luck.");
+                    logFile.log(player.getName() + " became hardcore");
+                    break;
+                case FAIL_OTHER:
+                default:
+                    player.sendMessage("Something went wrong.  Something.  Stuff.");
+                    break;
+            }
+        }
+        return true;
+    }
+
+    @CowCommand(permission = "info")
+    protected boolean doList(CommandSender player) {
+        return doInfo(player);
+    }
+
+    @CowCommand(permission = "info")
+    protected boolean doStats(CommandSender player) {
+        return doInfo(player);
+    }
+
+    @CowCommand(permission = "info")
+    protected boolean doInfo(CommandSender player) {
+        String playerName = player.getName();
+        String duration = StringUtils.durationString(savedState.getSecondsTillTimeout(playerName));
+        if (savedState.isDead(playerName)) {
+            player.sendMessage("You're dead for " + duration + ".  Not very HARD CORE.");
+        } else if (savedState.isLive(playerName)) {
+            player.sendMessage("You've been very HARD CORE up 'till now.");
+            player.sendMessage("You need to do something in " + duration + " to stay in the game.");
+        } else {
+            player.sendMessage("You are not in the HARD CORE game.  Type /hc and do something to enter.");
+        }
+        player.sendMessage("HARE CORE worlds: " + hardCoreWorldNames);
+        player.sendMessage("  --- HARD CORE Rankings ---");
+        player.sendMessage("  Name  - Deaths TimeOn Placed Broken Kills LastActive");
+        for (PlayerState p : savedState.getRankedPlayers()) {
+            player.sendMessage("    " + p.name + ((p.isLive) ? "" : "(dead)") + " -  D:" + p.deathCount + "  T:" + StringUtils.durationString(p.getSecondsInHardcore()) + "  P:" + p.blocksPlaced + "  B:" + p.blocksBroken + "  K:" + p.mobsKilled + "  L:" + StringUtils.durationString((System.currentTimeMillis() - p.lastActivity) / 1000));
+        }
+
+        return true;
+    }
+
+    @CowCommand(permission = "regen")
+    protected boolean doRegen(CommandSender player) {
+        savedState.generateNewWorlds();
+        player.sendMessage("The HARD CORE worlds have been regenerated HARDer and more CORE than ever.");
+        logFile.log(hardCoreWorldNames + " regenerated");
+        return true;
+    }
+
+    @CowCommand(permission = "revive")
+    protected boolean doRevive(CommandSender player, String arg) {
+        if (!savedState.isDead(arg)) {
+            player.sendMessage(arg + " is still going at it HARD CORE and isn't dead.");
+        } else {
+            savedState.markPlayerUndead(arg);
+            player.sendMessage(arg + " has been revived, be is still not as HARD CORE as you.");
+            logFile.log(arg + " revived by " + player.getName());
+        }
+        return true;
+    }
+
+    @CowCommand(permission = "twiddle")
+    protected boolean doTwiddle(CommandSender player, String playerName, String param) {
+        PlayerState ps = savedState.getPlayerState(playerName);
+        if (ps == null) {
+            player.sendMessage(playerName + " is not in the game.");
+        } else {
+            String option = param.substring(0, 2).toLowerCase();
+            long arg = Long.parseLong(param.substring(2).toLowerCase());
+            if ("d:".equals(option)) {
+                ps.deathCount = (int) arg;
+            } else if ("t:".equals(option)) {
+                ps.timeInGame = arg;
+            } else if ("p:".equals(option)) {
+                ps.blocksPlaced = arg;
+            } else if ("b:".equals(option)) {
+                ps.blocksBroken = arg;
+            } else if ("k:".equals(option)) {
+                ps.mobsKilled = arg;
+            } else if ("l:".equals(option)) {
+                ps.lastActivity = arg;
+            } else {
+                player.sendMessage("Could not set property " + option + " on player " + playerName);
+            }
+        }
+        return true;
+    }
+
+    // ---- Event handlers
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
+        debugInfo("onPlayerChangedWorld");
+        handleWorldChange(event.getPlayer(), event.getFrom());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerTeleport(PlayerTeleportEvent event) {
+        handleWorldChange(event.getPlayer(), event.getFrom().getWorld());
+    }
+
+    private void handleWorldChange(Player player, World fromWorld) {
+        // set up the proper player settings for HARD CORE
+        if (isHardCoreWorld(player.getWorld())) {
+            // teleported to hardcore
+            savedState.setWasOp(player.getName(), player.isOp());
+            if (!hasPermissions(player, "keepop")) {
+                player.setOp(false);
+                player.setAllowFlight(false);
+                player.setGameMode(GameMode.SURVIVAL);
+                CowZombeControl.setAllowFly(player, allowFly);
+                CowZombeControl.setAllowMap(player, allowXRay);
+                CowZombeControl.setAllowXray(player, allowXRay);
+                CowZombeControl.setAllowNoClip(player, allowXRay);
+                CowZombeControl.setAllowCheat(player, allowXRay);
+            }
+            savedState.playerEnteredHardCore(player.getName());
+            logFile.log(player.getName() + " entered " + player.getWorld().getName() + "  op = " + player.isOp());
+        } else if (isHardCoreWorld(fromWorld)) {
+            // teleported from hardcore
+            player.setAllowFlight(true);
+            CowZombeControl.setAllowMods(player, true);
+            if (hasPermissions(player, "keepop")) {
+                player.setOp(true);
+            } else {
+                player.setOp(savedState.wasOp(player.getName()));
+            }
+            savedState.playerLeftHardCore(player.getName());
+            logFile.log(player.getName() + " left " + fromWorld);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        // --- Stop Ghosts from doing things
+        if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
+        if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_AIR) {
+            return;
+        }
+        String playerName = event.getPlayer().getName();
+        if (savedState.isDead(playerName)) {
+            debugInfo("Ghost event");
+            event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
+            event.setCancelled(true);
+        } else {
+            savedState.playerActivity(playerName);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
+        String playerName = event.getPlayer().getName();
+        if (savedState.isDead(playerName)) {
+            debugInfo("Ghost event");
+            event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
+            event.setCancelled(true);
+        } else {
+            savedState.accrueBlockPlaced(playerName);
+            savedState.playerActivity(playerName);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
+        String playerName = event.getPlayer().getName();
+        if (savedState.isDead(playerName)) {
+            debugInfo("Ghost event");
+            event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
+            event.setCancelled(true);
+        } else {
+            savedState.accrueBlockBroken(playerName);
+            savedState.playerActivity(playerName);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPickupItem(PlayerPickupItemEvent event) {
+        if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
+        String playerName = event.getPlayer().getName();
+        if (savedState.isDead(playerName)) {
+            debugInfo("Ghost event");
+            event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
+            event.setCancelled(true);
+        } else {
+            savedState.playerActivity(playerName);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerDropItem(PlayerDropItemEvent event) {
+        if (!isHardCoreWorld(event.getPlayer().getWorld())) return;
+        String playerName = event.getPlayer().getName();
+        if (savedState.isDead(playerName)) {
+            debugInfo("Ghost event");
+            event.getPlayer().sendMessage("You're dead for " + StringUtils.durationString(savedState.getSecondsTillTimeout(playerName)));
+            event.setCancelled(true);
+        } else {
+            savedState.playerActivity(playerName);
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onGameModeChange(PlayerGameModeChangeEvent event) {
+        World world = event.getPlayer().getWorld();
+        if (isHardCoreWorld(world)) {
+            event.setCancelled(true);
+            event.getPlayer().sendMessage("Can't change game modes.  " + world.getName() + " is HARD CORE.");
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onEntityDamage(EntityDamageEvent event) {
+        if (!isHardCoreWorld(event.getEntity().getWorld())) return;
+        Entity entity = event.getEntity();
+        if (entity instanceof Player) {
+            // ghosts can't be hurt
+            String playerName = ((Player) entity).getName();
+            if (savedState.isDead(playerName)) {
+                event.setCancelled(true);
+            }
+        }
+        if (event instanceof EntityDamageByEntityEvent) {
+            final EntityDamageByEntityEvent target = (EntityDamageByEntityEvent) event;
+            final Entity damager = target.getDamager();
+            if (damager instanceof Player) {
+                String playerName = ((Player) damager).getName();
+                if (savedState.isDead(playerName)) {
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerDeath(EntityDeathEvent event) {
+        if (!isHardCoreWorld(event.getEntity().getWorld())) return;
+        Entity entity = event.getEntity();
+        if (entity instanceof Player) {
+            Player player = (Player) entity;
+            String playerName = player.getName();
+            savedState.markPlayerDead(playerName);
+            logFile.log(player.getName() + " died ");
+        } else {
+            // OK, something else was killed.  Not a player.
+            EntityDamageEvent lastDamageEvent = entity.getLastDamageCause();
+            if (lastDamageEvent != null && lastDamageEvent instanceof EntityDamageByEntityEvent) {
+                Entity damager = ((EntityDamageByEntityEvent) lastDamageEvent).getDamager();
+                Player killer = null;
+                if (damager instanceof Arrow) {
+                    Arrow arrow = (Arrow) damager;
+                    if (arrow.getShooter() instanceof Player) {
+                        killer = (Player) arrow.getShooter();
+                    }
+                } else if (damager instanceof Player) {
+                    killer = (Player) damager;
+                }
+                if (killer != null) {
+                    savedState.accrueMobKilled(killer.getName());
+                }
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onEntityTarget(EntityTargetEvent event) {
+        if (event.getTarget() == null) return;
+        if (!isHardCoreWorld(event.getTarget().getWorld())) return;
+        if (event.getTarget() instanceof Player) {
+            String playerName = ((Player) event.getTarget()).getName();
+            if (savedState.isDead(playerName)) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onVehicleEntityCollision(VehicleEntityCollisionEvent event) {
+        if (!isHardCoreWorld(event.getEntity().getWorld())) return;
+        if (event.getEntity() instanceof Player) {
+            String playerName = ((Player) event.getEntity()).getName();
+            if (savedState.isDead(playerName)) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onPlayerLogin(PlayerLoginEvent event) {
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+        debugInfo("onPlayerJoin: " + player.getName());
+        if (isHardCoreWorld(player.getWorld())) {
+            savedState.playerEnteredHardCore(player.getName());
+            debugInfo("  hardcore");
+        } else {
+            debugInfo("  softy (" + player.getWorld().getName() + ")");
+        }
+        // just dump the info through the command handler even though it's a hack
+        doInfo(player);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        debugInfo("onPlayerQuit");
+        Player player = event.getPlayer();
+        if (isHardCoreWorld(player.getWorld())) {
+            savedState.playerLeftHardCore(player.getName());
+        }
+    }
+
+    private boolean isHardCoreWorld(World w) {
+        return isHardCoreWorld(w.getName());
+    }
+
+    private boolean isHardCoreWorld(String worldName) {
+        return hardCoreWorldNames.toLowerCase().contains(worldName.toLowerCase());
+    }
+
+    private String[] getHardCoreWorldNames() {
+        return hardCoreWorldNames.split(",");
+    }
+
+    //
+    // Persistent state methods (ex. live vs. dead)
+    //
+
+    /*
+            Configuration looks like this:
+            hardcorecow.creationDate: creationDate
+            hardcorecow.liveplayers: player1,player2,player3
+            hardcorecow.deadplayers: player1,player2,player3
+         */
+    private class HardCoreState extends CowNetConfig {
+        private boolean regenIsAlreadyScheduled = false;
+        private Map<String, PlayerState> allPlayers = new HashMap<String, PlayerState>();
+        private String creationDate = "unknown";
+        private String name;
+
+        public HardCoreState(JavaPlugin plugin, String name) {
+            super(plugin);
+            this.name = name;
+        }
+
+        protected String getFileName() {
+            return name;
+        }
+
+        public void loadConfig() throws IOException, InvalidConfigurationException {
+            super.loadConfig();
+            creationDate = getConfigValue("creationdate", creationDate);
+
+            allPlayers.clear();
+
+            MemorySection section = (MemorySection) getConfigurationSection("players");
+            if (section != null) {
+                for (String key : section.getKeys(false)) {
+                    PlayerState ps = (PlayerState) section.get(key);
+                    allPlayers.put(key.toLowerCase(), ps);
+                }
+            }
+        }
+
+        public void saveConfig() {
+            debugInfo("saveConfig()");
+            updateConfigValue("creationdate", creationDate);
+            updateConfigValue("players", allPlayers);
+            try {
+                super.saveConfig();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        /*
+                  Mark as player as dead and return true if that was the last
+                  active player.
+                   */
+        public void markPlayerDead(String player) {
+            if (isLive(player)) {
+                // this player was live in the game, so mark them dead.
+                getPlayerState(player).setIsDead();
+                saveConfig();
+                debug("markPlayerDead " + player);
+                logFile.log(player + " died ");
+            }
+        }
+
+        /*
+                  This method moves someone from the dead queue to the live
+                  queue ONLY.  It doesn't add them to the live queue
+                  if they are not already there.
+                   */
+        public void markPlayerUndead(String player) {
+            if (!isDead(player)) return;
+            getPlayerState(player).setIsLive();
+            saveConfig();
+            debug("markPlayerUndead " + player);
+            logFile.log(player + " revived ");
+        }
+
+        public boolean isDead(String player) {
+            PlayerState ps = getPlayerState(player);
+            return (ps != null) && !ps.isLive;
+        }
+
+        public boolean isLive(String player) {
+            PlayerState ps = getPlayerState(player);
+            return (ps != null) && ps.isLive;
+        }
+
+        public boolean isUnknown(String player) {
+            return getPlayerState(player) == null;
+        }
+
+        public boolean wasOp(String player) {
+            PlayerState state = getPlayerState(player);
+            return ((state != null) && state.wasOp);
+        }
+
+        public void setWasOp(String player, boolean isOp) {
+            if (wasOp(player) != isOp) {
+                getOrCreatePlayerState(player).setWasOp(isOp);
+                saveConfig();
+            }
+        }
+
+        /*
+                  This is the primary way to put a player into the game and to
+                  keep them there.
+                   */
+        public void playerActivity(String player) {
+            if (isDead(player)) return;
+            getOrCreatePlayerState(player).noteActivity();
+        }
+
+        private PlayerState getPlayerState(String name) {
+            return allPlayers.get(name.toLowerCase());
+        }
+
+        private PlayerState getOrCreatePlayerState(String name) {
+            PlayerState result = allPlayers.get(name.toLowerCase());
+            if (result == null) {
+                result = new PlayerState(name);
+                allPlayers.put(name.toLowerCase(), result);
+            }
+            return result;
+        }
+
+        public Set<PlayerState> getLivePlayers() {
+            Set<PlayerState> result = new HashSet<PlayerState>();
+            for (PlayerState player : allPlayers.values()) {
+                if (isLive(player.name)) {
+                    result.add(player);
+                }
+            }
+            return result;
+        }
+
+        public Set<PlayerState> getDeadPlayers() {
+            Set<PlayerState> result = new HashSet<PlayerState>();
+            for (PlayerState player : allPlayers.values()) {
+                if (isDead(player.name)) {
+                    result.add(player);
+                }
+            }
+            return result;
+        }
+
+        public List<PlayerState> getRankedPlayers() {
+            List<PlayerState> result = new LinkedList<PlayerState>(allPlayers.values());
+            Collections.sort(result);
+            return result;
+        }
+
+        public long getSecondsTillTimeout(String name) {
+            PlayerState ps = getPlayerState(name);
+            if (ps == null) return 0;
+            return ps.getSecondsTillTimeout();
+        }
+
+        public String getCreationDate() {
+            return creationDate;
+        }
+
+        public void resetWorldState() {
+            creationDate = dateFormat.format(new Date());
+            allPlayers.clear();
+            saveConfig();
+            debug("resetWorldState");
+        }
+
+        public void playerEnteredHardCore(String name) {
+            PlayerState ps = getOrCreatePlayerState(name);
+            ps.playerEnteredHardCore();
+            debugInfo("playerEnteredHardCore(" + name + ") -> " + ps.getSecondsInHardcore());
+        }
+
+        public void playerLeftHardCore(String name) {
+            PlayerState ps = getPlayerState(name);
+            if (ps != null) {
+                ps.playerLeftHardCore();
+                debugInfo("playerLeftHardCore(" + name + ") -> " + ps.getSecondsInHardcore());
+                saveConfig();
+            }
+        }
+
+        public void accrueBlockPlaced(String name) {
+            PlayerState ps = getPlayerState(name);
+            if (ps != null) ps.accrueBlockPlaced();
+        }
+
+        public void accrueBlockBroken(String name) {
+            PlayerState ps = getPlayerState(name);
+            if (ps != null) ps.accrueBlockBroken();
+        }
+
+        public void accrueMobKilled(String name) {
+            PlayerState ps = getPlayerState(name);
+            if (ps != null) ps.accrueMobKilled();
+        }
+
+        private void reapDeadPlayers() {
+            if (allPlayers.size() == 0) return;
+            LinkedList<String> playersToStomp = new LinkedList<String>();
+            for (PlayerState player : allPlayers.values()) {
+                if (player.getSecondsTillTimeout() == 0) {
+                    // It's been so long since we've seen this player we don't
+                    // count them as live anymore.
+                    playersToStomp.add(player.name.toLowerCase());
+                    debugInfo("Stomping on " + player);
+                } else {
+                    debugInfo("Timeremaining: " + player.getSecondsTillTimeout() + "  " + player);
+                }
+            }
+            for (String playerName : playersToStomp) {
+                PlayerState ps = allPlayers.get(playerName);
+                if (ps.isLive) {
+                    allPlayers.remove(playerName);
+                    logFile.log(playerName + " removed because of inactivity");
+                } else {
+                    ps.setIsLive();
+                    logFile.log(playerName + " death penalty complete.  Now alive.");
+                    Player player = getPlugin().getServer().getPlayer(ps.name);
+                    if (player != null) {
+                        player.sendMessage("You are now alive again in HARD CORE.  Got to it soldier!");
+                    }
+                }
+            }
+            savedState.saveConfig();
+            debug("Reaping complete");
+            if (getLivePlayers().size() == 0) {
+                // if the last live player was removed, regen the world
+                getPlugin().getServer().getScheduler().scheduleSyncDelayedTask(getPlugin(), new Runnable() {
+                    public void run() {
+                        generateNewWorlds();
+                        resetWorldState();
+                        getPlugin().getServer().broadcastMessage("Seems like things were too HARD CORE.  " + "The HARD CORE worlds have been regenerated to be a bit more fluffy for you softies.");
+                    }// end of run
+                }, 40);
+            }
+        }
+
+        private void generateNewWorlds() {
+            for (String worldName : getHardCoreWorldNames()) {
+                generateNewWorld(worldName);
+            }
+        }
+
+        private boolean generateNewWorld(String worldName) {
+            logInfo("generateNewWorld " + worldName);
+            if (regenIsAlreadyScheduled) {
+                logInfo("generateNewWorld " + worldName + " aborted.  Regen already in progress.");
+                return true;
+            }
+            try {
+                regenIsAlreadyScheduled = true;
+                MVWorldManager mgr = mvPlugin.getMVWorldManager();
+                if (mgr.isMVWorld(worldName)) {
+                    mgr.removePlayersFromWorld(worldName);
+                    if (!mgr.deleteWorld(worldName)) {
+                        logInfo("Agh!  Can't regen " + worldName);
+                        return false;
+                    }
+                }
+                //TODO - can we create this world in another thread?
+                if (mgr.addWorld(worldName, World.Environment.NORMAL, "" + (new Random().nextLong()), WorldType.NORMAL, true, null, true)) {
+                    savedState.resetWorldState();
+                    World w = mgr.getMVWorld(worldName).getCBWorld();
+                    w.setDifficulty(difficulty);
+                    w.setTicksPerMonsterSpawns((int) (w.getTicksPerMonsterSpawns() * monsterBoost) + 1);
+                    logInfo(worldName + " has been regenerated.");
+                    return true;
+                } else {
+                    logInfo("Oh No's! " + worldName + " don wurk.");
+                    return false;
+                }
+            } finally {
+                regenIsAlreadyScheduled = false;
+            }
+        }
+
+        private void debug(String msg) {
+            debugInfo(msg);
+            debugInfo("  World: " + hardCoreWorldNames);
+            debugInfo("  Created: " + creationDate);
+            debugInfo("  Players: ");
+            for (String name : allPlayers.keySet()) {
+                PlayerState ps = allPlayers.get(name);
+                debugInfo("    " + ps.toString());
+            }
+        }
+    }
+
+
+    // --- Hachky test
+    public static void main(String[] args) {
+        PlayerState test = new PlayerState("Player1");
+        Map<String, Object> map = test.serialize();
+        for (String key : map.keySet()) {
+            System.out.println(key);
+            System.out.println("  " + map.get(key));
+        }
+        test = new PlayerState(map);
+        System.out.println(test);
+
+        test.setIsLive();
+        test.getSecondsTillTimeout();
+        test.noteActivity();
+        test.getSecondsTillTimeout();
+        test.setIsDead();
+        test.getSecondsTillTimeout();
+    }
 }
 
 
