@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -56,10 +57,12 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
         spawnUtils = new SpawnAndLoungeUtils(context.getCowNet(), getName(), spawnJiggle);
         placements = new HashMap<String, LinkedList<BombPlacement>>();
         gameTaskId = 0;
+        context.getCowNet().getServer().getPluginManager().registerEvents(this, context.getCowNet());
     }
 
     @Override
     public void shutdown(GameContext context) {
+        HandlerList.unregisterAll(this);
         this.context = null;
         spawnUtils = null;
     }

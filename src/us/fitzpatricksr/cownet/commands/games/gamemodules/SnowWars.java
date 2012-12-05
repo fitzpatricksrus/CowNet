@@ -8,6 +8,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -44,10 +45,12 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     public void startup(GameContext context) {
         this.context = context;
         spawnUtils = new SpawnAndLoungeUtils(context.getCowNet(), getName(), spawnJiggle);
+        context.getCowNet().getServer().getPluginManager().registerEvents(this, context.getCowNet());
     }
 
     @Override
     public void shutdown(GameContext context) {
+        HandlerList.unregisterAll(this);
         this.context = null;
         spawnUtils = null;
     }
@@ -184,7 +187,6 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
             gameTaskId = 0;
         }
     }
-
 
     private void giveSnow(String playerName) {
         //give everyone snow in hand

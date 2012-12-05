@@ -144,13 +144,15 @@ public class SimpleGameController implements GameContext {
             } else {
                 players.put(playerName, rand.nextBoolean() ? Team.RED : Team.BLUE);
             }
+            playerEntered(playerName);
         }
-        playerEntered(playerName);
     }
 
     public void removePlayer(String playerName) {
-        players.remove(playerName);
-        playerLeft(playerName);
+        if (players.containsKey(playerName)) {
+            players.remove(playerName);
+            playerLeft(playerName);
+        }
     }
 
     private void playerEntered(String playerName) {
