@@ -6,12 +6,13 @@ public class Scratch {
     tnt wars
     snow wars
     prison
-    hunger games
     mob arena
-    economy/trading game
+    trash the other teams city / blocks
+    minesweeper
     ctf
     spy vs. spy
-    trash the other teams city / blocks
+    economy/trading game
+    hunger games
 
 
 

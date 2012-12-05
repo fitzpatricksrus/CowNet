@@ -11,12 +11,15 @@ public interface GameContext {
         BLUE
     }
 
-
     public CowNetMod getCowNet();
 
     public boolean isLounging();
 
+    public void endLounging();
+
     public boolean isGaming();
+
+    public void endGame();
 
     public Collection<String> getPlayers();
 

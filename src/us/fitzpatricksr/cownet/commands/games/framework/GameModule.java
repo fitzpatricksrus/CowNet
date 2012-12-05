@@ -1,5 +1,11 @@
 package us.fitzpatricksr.cownet.commands.games.framework;
 
+/*
+
+Player list is available when loungeStarted and gameStarted are called.  Additional players that enter or
+exist the game are signaled through playerEntered and playerLeft methods.
+
+ */
 public interface GameModule {
     public String getName();
 
