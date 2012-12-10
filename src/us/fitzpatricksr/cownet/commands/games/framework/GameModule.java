@@ -9,6 +9,10 @@ exist the game are signaled through playerEntered and playerLeft methods.
 public interface GameModule {
     public String getName();
 
+    public int getLoungeDuration();
+
+    public int getGameDuration();
+
     public void startup(GameContext context);
 
     public void loungeStarted();

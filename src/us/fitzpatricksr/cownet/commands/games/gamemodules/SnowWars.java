@@ -37,10 +37,24 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     private static int refillRate = 60;    // how often a player's supply is topped off
     @CowNetThingy.Setting
     private static int refillSize = 5;     // how many we give them per minute
+    @CowNetThingy.Setting
+    private static int loungeDuration = 30; // 30 second loung
+    @CowNetThingy.Setting
+    private static int gameDuration = 60 * 3; // 3 minutes max game length
 
     @Override
     public String getName() {
         return "SnowWars";
+    }
+
+    @Override
+    public int getLoungeDuration() {
+        return loungeDuration;
+    }
+
+    @Override
+    public int getGameDuration() {
+        return gameDuration;
     }
 
     @Override
@@ -114,7 +128,7 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
 
     @EventHandler(ignoreCancelled = true)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        if (!context.isGaming()) return;
+        if (!context.isLounging()) return;
         context.debugInfo("onEntityDamagedByEntity");
 
         if (event.getDamager() instanceof Snowball) {

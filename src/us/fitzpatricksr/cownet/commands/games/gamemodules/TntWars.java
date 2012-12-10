@@ -44,12 +44,26 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     private static int spawnJiggle = 5;
     @CowNetThingy.Setting
     private static int refillRate = 60;    // how often a player's supply is topped off
+    @CowNetThingy.Setting
+    private static int loungeDuration = 30; // 30 second loung
+    @CowNetThingy.Setting
+    private static int gameDuration = 60 * 3; // 3 minutes max game length
     // manual setting
     private static Material explosiveBlockType = Material.TNT;
 
     @Override
     public String getName() {
         return "TntWars";
+    }
+
+    @Override
+    public int getLoungeDuration() {
+        return loungeDuration;
+    }
+
+    @Override
+    public int getGameDuration() {
+        return gameDuration;
     }
 
     @Override
@@ -125,7 +139,7 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (!context.isGaming()) return;
+        if (!context.isLounging()) return;
         context.debugInfo("BlockPlaceEvent");
         // if it's an explosive block, update state
         Player player = event.getPlayer();

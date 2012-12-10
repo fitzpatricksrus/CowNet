@@ -1,6 +1,7 @@
 package us.fitzpatricksr.cownet.commands.games.framework;
 
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.Collection;
@@ -16,31 +17,35 @@ public class SimpleGameController implements GameContext {
     private Logger logger = Logger.getLogger("Minecraft");
     private Random rand = new Random();
     private CowNetThingy mod;
-    private boolean isGaming;
+    private boolean isLounging;
     private HashMap<String, Team> players;
     private int currentModule;
     private GameModule[] modules;
+    private int gameTimerTaskId;
 
     @CowNetThingy.Setting
     private static boolean isDebug = false;
 
     public SimpleGameController(CowNetThingy mod, GameModule[] modules) {
         this.mod = mod;
-        this.isGaming = false;   // lounging
+        this.isLounging = true;   // lounging
         this.players = new HashMap<String, Team>();
         this.modules = modules;
         this.currentModule = 0;
+        this.gameTimerTaskId = 0;
     }
 
     public void startup() {
         this.modules[currentModule].startup(this);
         this.modules[currentModule].loungeStarted();
+        startTimerTask();
     }
 
     public void shutdown() {
+        stopTimerTask();
         endLounging();
         modules[currentModule].gameEnded();
-        isGaming = false;
+        isLounging = true;
         modules[currentModule].shutdown(this);
     }
 
@@ -54,15 +59,19 @@ public class SimpleGameController implements GameContext {
 
     @Override
     public boolean isLounging() {
-        return !isGaming;
+        return isLounging;
     }
 
     @Override
     public void endLounging() {
-        if (isLounging()) {
+        debugInfo("endLounging");
+        if (isLounging) {
+            stopTimerTask();
             modules[currentModule].loungeEnded();
-            isGaming = true;
+            isLounging = false;
+            balanceTeams();
             modules[currentModule].gameStarted();
+            startTimerTask();
         } else {
             // lounging already over, so nothing to do
         }
@@ -70,25 +79,50 @@ public class SimpleGameController implements GameContext {
 
     @Override
     public boolean isGaming() {
-        return isGaming;
+        return !isLounging;
     }
 
     @Override
     public void endGame() {
-        if (isLounging()) {
+        debugInfo("endGame");
+        if (isLounging) {
             // to end the game, we must cleanly end the lounge first
             endLounging();
         }
+        stopTimerTask();    //stop game timer
         modules[currentModule].gameEnded();
-        isGaming = false;
         modules[currentModule].shutdown(this);
-
-        // TODO: hey jf - teams should be rebalanced here
-
+        isLounging = true;
         currentModule = (currentModule + 1) % modules.length;
         modules[currentModule].startup(this);
         modules[currentModule].loungeStarted();
+        startTimerTask();   //start lounge timer
     }
+
+    private void stopTimerTask() {
+        if (gameTimerTaskId != 0) {
+            debugInfo("stopTimerTask");
+            getCowNet().getPlugin().getServer().getScheduler().cancelTask(gameTimerTaskId);
+            gameTimerTaskId = 0;
+        }
+    }
+
+    private void startTimerTask() {
+        stopTimerTask();
+        long maxTime = isLounging ? modules[currentModule].getLoungeDuration() * 20 : modules[currentModule].getGameDuration() * 20;
+        if (maxTime > 0) {
+            debugInfo("startTimerTask");
+            JavaPlugin plugin = getCowNet().getPlugin();
+            gameTimerTaskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                public void run() {
+                    endGame();
+                }
+            }, maxTime);
+        }
+    }
+
+    //---------------------------------------------------------------------
+    // Team and player management
 
     @Override
     public Collection<String> getPlayers() {
@@ -114,26 +148,6 @@ public class SimpleGameController implements GameContext {
     public Team getPlayerTeam(String playerName) {
         return players.get(playerName);
     }
-
-    @Override
-    public void addWin(String playerName) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void addLoss(String playerName) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void debugInfo(String message) {
-        if (isDebug) {
-            logger.info(message);
-        }
-    }
-
-    //---------------------------------------------------------------------
-    //
 
     public void addPlayer(String playerName) {
         if (!players.containsKey(playerName)) {
@@ -228,6 +242,23 @@ public class SimpleGameController implements GameContext {
                     }
                 }
             }
+        }
+    }
+
+    @Override
+    public void addWin(String playerName) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void addLoss(String playerName) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void debugInfo(String message) {
+        if (isDebug) {
+            logger.info(message);
         }
     }
 }
