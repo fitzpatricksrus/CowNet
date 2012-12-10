@@ -1,7 +1,6 @@
 package us.fitzpatricksr.cownet.commands.games.framework;
 
 import org.bukkit.entity.Player;
-import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.Collection;
@@ -16,7 +15,7 @@ lounge, then game.
 public class SimpleGameController implements GameContext {
     private Logger logger = Logger.getLogger("Minecraft");
     private Random rand = new Random();
-    private CowNetMod mod;
+    private CowNetThingy mod;
     private boolean isGaming;
     private HashMap<String, Team> players;
     private int currentModule;
@@ -25,7 +24,7 @@ public class SimpleGameController implements GameContext {
     @CowNetThingy.Setting
     private static boolean isDebug = false;
 
-    public SimpleGameController(CowNetMod mod, GameModule[] modules) {
+    public SimpleGameController(CowNetThingy mod, GameModule[] modules) {
         this.mod = mod;
         this.isGaming = false;   // lounging
         this.players = new HashMap<String, Team>();
@@ -49,7 +48,7 @@ public class SimpleGameController implements GameContext {
     // GameContext interface
 
     @Override
-    public CowNetMod getCowNet() {
+    public CowNetThingy getCowNet() {
         return mod;
     }
 
@@ -83,6 +82,9 @@ public class SimpleGameController implements GameContext {
         modules[currentModule].gameEnded();
         isGaming = false;
         modules[currentModule].shutdown(this);
+
+        // TODO: hey jf - teams should be rebalanced here
+
         currentModule = (currentModule + 1) % modules.length;
         modules[currentModule].startup(this);
         modules[currentModule].loungeStarted();
@@ -105,7 +107,7 @@ public class SimpleGameController implements GameContext {
 
     @Override
     public Player getPlayer(String playerName) {
-        return mod.getServer().getPlayer(playerName);
+        return mod.getPlugin().getServer().getPlayer(playerName);
     }
 
     @Override
@@ -197,6 +199,35 @@ public class SimpleGameController implements GameContext {
             players.put(playerName, team);
             playerEntered(playerName);
             return true;
+        }
+    }
+
+    public void balanceTeams() {
+        // remove players that have left the server or the game world
+        for (String playerName : players.keySet()) {
+            if (getPlayer(playerName) == null) {
+                // player has left the server.  remove them from their team
+                players.remove(playerName);
+            }
+        }
+
+        // make sure teams are balanced
+        int red = Collections.frequency(players.values(), Team.RED);
+        int blue = Collections.frequency(players.values(), Team.BLUE);
+        while (Math.abs(red - blue) > 1) {
+            for (String playerName : players.keySet()) {
+                if (red > blue) {
+                    if (players.get(playerName) == Team.RED) {
+                        players.put(playerName, Team.BLUE);
+                        break;
+                    }
+                } else {
+                    if (players.get(playerName) == Team.BLUE) {
+                        players.put(playerName, Team.RED);
+                        break;
+                    }
+                }
+            }
         }
     }
 }

@@ -5,7 +5,6 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.utils.PersistentState;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
@@ -33,7 +32,7 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
     }
 
     private Logger logger = Logger.getLogger("Minecraft");
-    private JavaPlugin plugin;
+    private CowNetMod plugin;
     private String permissionNode = "";
 
     @Setting
@@ -48,7 +47,7 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
     protected void onDisable() {
     }
 
-    final void setPlugin(JavaPlugin plugin) {
+    final void setPlugin(CowNetMod plugin) {
         this.plugin = plugin;
     }
 
@@ -98,7 +97,7 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
         }
     }
 
-    public final JavaPlugin getPlugin() {
+    public final CowNetMod getPlugin() {
         return plugin;
     }
 

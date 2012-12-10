@@ -14,6 +14,8 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
+import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
@@ -44,8 +46,9 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     @Override
     public void startup(GameContext context) {
         this.context = context;
-        spawnUtils = new SpawnAndLoungeUtils(context.getCowNet(), getName(), spawnJiggle);
-        context.getCowNet().getServer().getPluginManager().registerEvents(this, context.getCowNet());
+        CowNetMod plugin = context.getCowNet().getPlugin();
+        spawnUtils = new SpawnAndLoungeUtils(plugin, getName(), spawnJiggle);
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     @Override
@@ -170,7 +173,8 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     private void startRefillTask() {
         if (gameTaskId == 0) {
             context.debugInfo("startRefillTask");
-            gameTaskId = context.getCowNet().getServer().getScheduler().scheduleSyncRepeatingTask(context.getCowNet(), new Runnable() {
+            JavaPlugin plugin = context.getCowNet().getPlugin();
+            gameTaskId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
                 public void run() {
                     for (String playerName : context.getPlayers()) {
                         giveSnow(playerName);
@@ -183,7 +187,7 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     private void stopRefillTask() {
         if (gameTaskId != 0) {
             context.debugInfo("stopRefillTask");
-            context.getCowNet().getServer().getScheduler().cancelTask(gameTaskId);
+            context.getCowNet().getPlugin().getServer().getScheduler().cancelTask(gameTaskId);
             gameTaskId = 0;
         }
     }

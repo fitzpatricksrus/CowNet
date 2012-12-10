@@ -12,6 +12,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
@@ -54,10 +55,11 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     @Override
     public void startup(GameContext context) {
         this.context = context;
-        spawnUtils = new SpawnAndLoungeUtils(context.getCowNet(), getName(), spawnJiggle);
+        spawnUtils = new SpawnAndLoungeUtils(context.getCowNet().getPlugin(), getName(), spawnJiggle);
         placements = new HashMap<String, LinkedList<BombPlacement>>();
         gameTaskId = 0;
-        context.getCowNet().getServer().getPluginManager().registerEvents(this, context.getCowNet());
+        JavaPlugin plugin = context.getCowNet().getPlugin();
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     @Override
@@ -178,7 +180,8 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     private void startRefillTask() {
         if (gameTaskId == 0) {
             context.debugInfo("startRefillTask");
-            gameTaskId = context.getCowNet().getServer().getScheduler().scheduleSyncRepeatingTask(context.getCowNet(), new Runnable() {
+            gameTaskId = context.getCowNet().getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(
+                    context.getCowNet().getPlugin(), new Runnable() {
                 public void run() {
                     for (String playerName : context.getPlayers()) {
                         giveTnt(playerName);
@@ -191,7 +194,7 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     private void stopRefillTask() {
         if (gameTaskId != 0) {
             context.debugInfo("stopRefillTask");
-            context.getCowNet().getServer().getScheduler().cancelTask(gameTaskId);
+            context.getCowNet().getPlugin().getServer().getScheduler().cancelTask(gameTaskId);
             gameTaskId = 0;
         }
     }
@@ -268,7 +271,7 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
         public void doExplosion() {
             placer.sendMessage("Boom!");
             location.getWorld().createExplosion(location, explosivePower);
-            Server server = context.getCowNet().getServer();
+            Server server = context.getCowNet().getPlugin().getServer();
             long radiusSquared = explosionRadius * explosionRadius;
             for (String playerName : context.getPlayers()) {
                 Player player = server.getPlayer(playerName);
@@ -301,7 +304,8 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     private void startBombWatcher() {
         if (gameTaskId == 0) {
             context.debugInfo("startBombWatcher");
-            gameTaskId = context.getCowNet().getServer().getScheduler().scheduleSyncRepeatingTask(context.getCowNet(), new Runnable() {
+            gameTaskId = context.getCowNet().getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(
+                    context.getCowNet().getPlugin(), new Runnable() {
                 public void run() {
                     bombWatcher();
                 }
@@ -312,7 +316,7 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     private void stopBombWatcher() {
         if (gameTaskId != 0) {
             context.debugInfo("stopBombWatcher");
-            context.getCowNet().getServer().getScheduler().cancelTask(gameTaskId);
+            context.getCowNet().getPlugin().getServer().getScheduler().cancelTask(gameTaskId);
             gameTaskId = 0;
         }
     }

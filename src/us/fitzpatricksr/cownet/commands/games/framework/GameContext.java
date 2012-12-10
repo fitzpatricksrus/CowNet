@@ -1,17 +1,25 @@
 package us.fitzpatricksr.cownet.commands.games.framework;
 
 import org.bukkit.entity.Player;
-import us.fitzpatricksr.cownet.CowNetMod;
+import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.Collection;
 
 public interface GameContext {
     public enum Team {
         RED,
-        BLUE
+        BLUE;
+
+        public Team otherTeam() {
+            if (this == RED) {
+                return BLUE;
+            } else {
+                return RED;
+            }
+        }
     }
 
-    public CowNetMod getCowNet();
+    public CowNetThingy getCowNet();
 
     public boolean isLounging();
 
