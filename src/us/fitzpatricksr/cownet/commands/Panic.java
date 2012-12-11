@@ -46,7 +46,7 @@ public class Panic extends CowNetThingy implements Listener {
     @Override
     protected String[] getHelpText(CommandSender player) {
         return new String[]{
-                "usage: panic"
+                "usage: panic [battle | team | changeteam]"
         };
     }
 

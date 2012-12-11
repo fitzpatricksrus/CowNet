@@ -68,12 +68,16 @@ public class SimpleGameController implements GameContext {
     public void endLounging() {
         debugInfo("endLounging");
         if (isLounging) {
-            stopTimerTask();
-            modules[currentModule].loungeEnded();
-            isLounging = false;
-            balanceTeams();
-            modules[currentModule].gameStarted();
-            startTimerTask();
+            if (getPlayers().size() >= minPlayers) {
+                stopTimerTask();
+                modules[currentModule].loungeEnded();
+                isLounging = false;
+                balanceTeams();
+                modules[currentModule].gameStarted();
+                startTimerTask();
+            } else {
+                // not enough players.  continue to lounge
+            }
         } else {
             // lounging already over, so nothing to do
         }
@@ -87,11 +91,13 @@ public class SimpleGameController implements GameContext {
     @Override
     public void endGame() {
         debugInfo("endGame");
+        stopTimerTask();
         if (isLounging) {
             // to end the game, we must cleanly end the lounge first
-            endLounging();
+            modules[currentModule].loungeEnded();
+            isLounging = false;
+            modules[currentModule].gameStarted();
         }
-        stopTimerTask();    //stop game timer
         modules[currentModule].gameEnded();
         modules[currentModule].shutdown(this);
         isLounging = true;

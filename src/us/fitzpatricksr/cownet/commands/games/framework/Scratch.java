@@ -8,6 +8,7 @@ public class Scratch {
     prison
     mob arena
     trash the other teams city / blocks
+    tower defense
     minesweeper
     ctf
     spy vs. spy
