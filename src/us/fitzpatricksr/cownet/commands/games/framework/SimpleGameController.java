@@ -24,7 +24,9 @@ public class SimpleGameController implements GameContext {
     private int gameTimerTaskId;
 
     @CowNetThingy.Setting
-    private static boolean isDebug = false;
+    private int minPlayers = 2;
+    @CowNetThingy.Setting
+    private boolean isDebug = false;
 
     public SimpleGameController(CowNetThingy mod, GameModule[] modules) {
         this.mod = mod;

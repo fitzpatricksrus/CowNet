@@ -132,3 +132,7 @@ ctf:
   minPlayers: 2
   timeToGather: 60000
   timeToAcclimate: 10000
+
+panic:
+  enable: true
+  debug: false

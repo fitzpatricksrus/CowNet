@@ -33,23 +33,23 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     private HashMap<String, LinkedList<BombPlacement>> placements;
 
     @CowNetThingy.Setting
-    private static int maxBlockPlacements = 1;
+    private int maxBlockPlacements = 1;
     @CowNetThingy.Setting
-    private static long explosionDelay = 5 * 1000; // 3 seconds
+    private long explosionDelay = 5 * 1000; // 3 seconds
     @CowNetThingy.Setting
-    private static int explosionRadius = 6;
+    private int explosionRadius = 6;
     @CowNetThingy.Setting
-    private static int explosivePower = 0;
+    private int explosivePower = 0;
     @CowNetThingy.Setting
-    private static int spawnJiggle = 5;
+    private int spawnJiggle = 5;
     @CowNetThingy.Setting
-    private static int refillRate = 60;    // how often a player's supply is topped off
+    private int refillRate = 60;    // how often a player's supply is topped off
     @CowNetThingy.Setting
-    private static int loungeDuration = 30; // 30 second loung
+    private int loungeDuration = 30; // 30 second loung
     @CowNetThingy.Setting
-    private static int gameDuration = 60 * 3; // 3 minutes max game length
+    private int gameDuration = 60 * 3; // 3 minutes max game length
     // manual setting
-    private static Material explosiveBlockType = Material.TNT;
+    private Material explosiveBlockType = Material.TNT;
 
     @Override
     public String getName() {

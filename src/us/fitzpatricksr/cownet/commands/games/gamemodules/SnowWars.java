@@ -32,15 +32,15 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     private int gameTaskId = 0;
 
     @CowNetThingy.Setting
-    private static int spawnJiggle = 5;
+    private int spawnJiggle = 5;
     @CowNetThingy.Setting
-    private static int refillRate = 60;    // how often a player's supply is topped off
+    private int refillRate = 60;    // how often a player's supply is topped off
     @CowNetThingy.Setting
-    private static int refillSize = 5;     // how many we give them per minute
+    private int refillSize = 5;     // how many we give them per minute
     @CowNetThingy.Setting
-    private static int loungeDuration = 30; // 30 second loung
+    private int loungeDuration = 30; // 30 second loung
     @CowNetThingy.Setting
-    private static int gameDuration = 60 * 3; // 3 minutes max game length
+    private int gameDuration = 60 * 3; // 3 minutes max game length
 
     @Override
     public String getName() {

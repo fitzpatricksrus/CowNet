@@ -13,23 +13,27 @@ import us.fitzpatricksr.cownet.commands.games.framework.SimpleGameController;
 import us.fitzpatricksr.cownet.commands.games.gamemodules.SnowWars;
 import us.fitzpatricksr.cownet.commands.games.gamemodules.TntWars;
 
+import java.util.HashMap;
+
 /*
     battle
     battle join
     battle team
  */
-public class EndlessGames extends CowNetThingy implements Listener {
+public class Panic extends CowNetThingy implements Listener {
 
     private SimpleGameController controller;
+    private GameModule[] modules = new GameModule[]{
+            new SnowWars(),
+            new TntWars()
+    };
+
+    public Panic() {
+    }
 
     @Override
     protected void onEnable() throws Exception {
-        controller = new SimpleGameController(this,
-                new GameModule[]{
-                        new SnowWars(),
-                        new TntWars()
-                }
-        );
+        controller = new SimpleGameController(this, modules);
         controller.startup();
     }
 
@@ -42,8 +46,34 @@ public class EndlessGames extends CowNetThingy implements Listener {
     @Override
     protected String[] getHelpText(CommandSender player) {
         return new String[]{
-                "usage: battle"
+                "usage: panic"
         };
+    }
+
+    @Override
+    protected void reloadManualSettings() throws Exception {
+        reloadAutoSettings(controller);
+        for (GameModule module : modules) {
+            reloadAutoSettings(module);
+        }
+    }
+
+    @Override
+    protected HashMap<String, String> getManualSettings() {
+        HashMap<String, String> result = getSettingValueMapFor(controller);
+        for (GameModule module : modules) {
+            result.putAll(getSettingValueMapFor(module));
+        }
+        return result;
+    }
+
+    @Override
+    protected boolean updateManualSetting(String settingName, String settingValue) {
+        boolean result = setAutoSettingValue(controller, settingName, settingValue);
+        for (GameModule module : modules) {
+            result = setAutoSettingValue(module, settingName, settingValue) || result;
+        }
+        return result;
     }
 
     //--------------------------------------------------

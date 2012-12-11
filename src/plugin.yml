@@ -78,6 +78,10 @@ commands:
       alias: [ capturetheflaf ]
       description: Capture the flag.
       usage: Use "/ctf help"
+  panic:
+      alias: [ panicgames ]
+      description: When in danger, when in doubt, run in circles scream and shout!
+      usage: Use "/panic help"
 
 permissions:
     cownet.starve:
@@ -184,6 +188,9 @@ permissions:
         default: true
     cownet.ctf:
         description: Permission to participate in ctf.
+        default: true
+    cownet.panic:
+        description: Permission to participate in panic.
         default: true
 
 
