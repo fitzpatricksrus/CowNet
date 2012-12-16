@@ -1,5 +1,8 @@
 package us.fitzpatricksr.cownet.commands;
 
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -10,8 +13,7 @@ import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
 import us.fitzpatricksr.cownet.commands.games.framework.SimpleGameController;
-import us.fitzpatricksr.cownet.commands.games.gamemodules.SnowWars;
-import us.fitzpatricksr.cownet.commands.games.gamemodules.TntWars;
+import us.fitzpatricksr.cownet.commands.games.gamemodules.TestModule;
 
 import java.util.HashMap;
 
@@ -19,28 +21,38 @@ import java.util.HashMap;
     battle
     battle join
     battle team
+
+    You leave the game when you leave the server or when
+    you teleport out of the game world.  We could preserve
+    the players team across these events but it mucks up
+    the works and doesn't seem worth the trouble.
  */
 public class Panic extends CowNetThingy implements Listener {
 
+    @Setting
+    private String panicWorldName = "PanicLand";
+
     private SimpleGameController controller;
     private GameModule[] modules = new GameModule[]{
-            new SnowWars(),
-            new TntWars()
+            new TestModule("TestModule1"),
+            new TestModule("TestModule2"),
+            new TestModule("TestModule3"),
+//            new SnowWars(),
+//            new TntWars()
     };
 
     public Panic() {
+        controller = new SimpleGameController(this, modules);
     }
 
     @Override
     protected void onEnable() throws Exception {
-        controller = new SimpleGameController(this, modules);
         controller.startup();
     }
 
     @Override
     protected void onDisable() {
         controller.shutdown();
-        controller = null;
     }
 
     @Override
@@ -130,27 +142,61 @@ public class Panic extends CowNetThingy implements Listener {
         // this is how you officially leave the game
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         debugInfo("onPlayerTeleport");
+        String toWorld = event.getTo().getWorld().getName();
+        String fromWorld = event.getFrom().getWorld().getName();
+        if (!toWorld.equalsIgnoreCase(fromWorld)) {
+            Player player = event.getPlayer();
+            if (toWorld.equalsIgnoreCase(panicWorldName)) {
+                controller.addPlayer(player.getName());
+            } else if (fromWorld.equalsIgnoreCase(panicWorldName)) {
+                if (controller.isGaming()) {
+                    // you can't leave in the middle of a game
+                    event.setCancelled(true);
+                } else {
+                    controller.removePlayer(player.getName());
+                }
+            }
+        }
         // this is how you officially leave the game
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onGameModeChange(PlayerGameModeChangeEvent event) {
         // don't let players in the game do this
+        if (event.getNewGameMode() == GameMode.CREATIVE) {
+            Player player = event.getPlayer();
+            if (controller.getPlayers().contains(player.getName())) {
+                event.setCancelled(true);
+            }
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent event) {
         // if player is not in the game, make sure they are not
-        // teleported to the game world.  Else, let the games figure it out
+        // teleported to the game world.
         debugInfo("onPlayerJoin");
+        Player player = event.getPlayer();
+        if (controller.playerIsInGame(player.getName())) {
+            controller.addPlayer(player.getName());
+        } else {
+            // OK, so they were in a game a long time ago and left before the game
+            // ended but bukkit still thinks they are in the game world.  We
+            // want to put them in a better spot.
+            World safeWorld = getPlugin().getServer().getWorlds().get(0);
+            Location location = safeWorld.getSpawnLocation();
+            player.teleport(location);
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
         debugInfo("onPlayerQuit");
+        // You know what?  We're going to ignore this and just let them
+        // be removed when teams are cleaned at the end of the game
     }
 }
 

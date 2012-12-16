@@ -24,9 +24,7 @@ public class SimpleGameController implements GameContext {
     private int gameTimerTaskId;
 
     @CowNetThingy.Setting
-    private int minPlayers = 2;
-    @CowNetThingy.Setting
-    private boolean isDebug = false;
+    private int minPlayers = 1;
 
     public SimpleGameController(CowNetThingy mod, GameModule[] modules) {
         this.mod = mod;
@@ -38,17 +36,95 @@ public class SimpleGameController implements GameContext {
     }
 
     public void startup() {
-        this.modules[currentModule].startup(this);
-        this.modules[currentModule].loungeStarted();
+        GameModule module = this.modules[currentModule];
+        module.startup(newDebugWrapper(this, module.getName()));
+        module.loungeStarted();
         startTimerTask();
     }
 
     public void shutdown() {
+        GameModule module = this.modules[currentModule];
         stopTimerTask();
         endLounging();
-        modules[currentModule].gameEnded();
-        isLounging = true;
-        modules[currentModule].shutdown(this);
+        module.gameEnded();
+        setLounging(true);
+        module.shutdown();
+    }
+
+    private static GameContext newDebugWrapper(final GameContext context, final String tag) {
+        return new GameContext() {
+
+            @Override
+            public CowNetThingy getCowNet() {
+//                debugInfo("getCowNet");
+                return context.getCowNet();
+            }
+
+            @Override
+            public boolean isLounging() {
+//                debugInfo("isLounging");
+                return context.isLounging();
+            }
+
+            @Override
+            public void endLounging() {
+//                debugInfo("endLounging");
+                context.endLounging();
+            }
+
+            @Override
+            public boolean isGaming() {
+//                debugInfo("isGaming");
+                return context.isGaming();
+            }
+
+            @Override
+            public void endGame() {
+//                debugInfo("endGame");
+                context.endGame();
+            }
+
+            @Override
+            public Collection<String> getPlayers() {
+//                debugInfo("getPlayers");
+                return context.getPlayers();
+            }
+
+            @Override
+            public void broadcastToAllPlayers(String message) {
+//                debugInfo("broadcastToAllPlayers");
+                context.broadcastToAllPlayers(message);
+            }
+
+            @Override
+            public Player getPlayer(String playerName) {
+//                debugInfo("getPlayer");
+                return context.getPlayer(playerName);
+            }
+
+            @Override
+            public Team getPlayerTeam(String playerName) {
+//                debugInfo("getPlayerTeam");
+                return context.getPlayerTeam(playerName);
+            }
+
+            @Override
+            public void addWin(String playerName) {
+//                debugInfo("addWin");
+                context.addWin(playerName);
+            }
+
+            @Override
+            public void addLoss(String playerName) {
+//                debugInfo("addLoss");
+                context.addLoss(playerName);
+            }
+
+            @Override
+            public void debugInfo(String message) {
+                context.debugInfo(tag + ": " + message);
+            }
+        };
     }
 
     //---------------------------------------------------------------------
@@ -66,19 +142,21 @@ public class SimpleGameController implements GameContext {
 
     @Override
     public void endLounging() {
-        debugInfo("endLounging");
+        dumpDebugInfo("endLounging");
         if (isLounging) {
             if (getPlayers().size() >= minPlayers) {
                 stopTimerTask();
                 modules[currentModule].loungeEnded();
-                isLounging = false;
+                setLounging(false);
                 balanceTeams();
                 modules[currentModule].gameStarted();
                 startTimerTask();
             } else {
+                dumpDebugInfo("  - not enough players.  continue lounging");
                 // not enough players.  continue to lounge
             }
         } else {
+            dumpDebugInfo("  - Hmm....not lounging");
             // lounging already over, so nothing to do
         }
     }
@@ -88,28 +166,41 @@ public class SimpleGameController implements GameContext {
         return !isLounging;
     }
 
+    private void setLounging(boolean isLounging) {
+        dumpDebugInfo("lounging: " + isLounging);
+        this.isLounging = isLounging;
+    }
+
     @Override
     public void endGame() {
-        debugInfo("endGame");
+        dumpDebugInfo("endGame");
         stopTimerTask();
         if (isLounging) {
-            // to end the game, we must cleanly end the lounge first
-            modules[currentModule].loungeEnded();
-            isLounging = false;
-            modules[currentModule].gameStarted();
+            if (getPlayers().size() < minPlayers) {
+                // OK, we're lounging and still don't have enough people
+                // to have a real game.  No point in stopping lounging.
+                dumpDebugInfo("  - not enough players to start a new game.");
+                startTimerTask();   //start lounge timer
+                return;
+            } else {
+                // to end the game, we must cleanly end the lounge first
+                modules[currentModule].loungeEnded();
+                setLounging(false);
+                modules[currentModule].gameStarted();
+            }
         }
         modules[currentModule].gameEnded();
-        modules[currentModule].shutdown(this);
-        isLounging = true;
+        modules[currentModule].shutdown();
+        setLounging(true);
         currentModule = (currentModule + 1) % modules.length;
-        modules[currentModule].startup(this);
+        modules[currentModule].startup(newDebugWrapper(this, modules[currentModule].getName()));
         modules[currentModule].loungeStarted();
         startTimerTask();   //start lounge timer
     }
 
     private void stopTimerTask() {
         if (gameTimerTaskId != 0) {
-            debugInfo("stopTimerTask");
+            dumpDebugInfo("stopTimerTask");
             getCowNet().getPlugin().getServer().getScheduler().cancelTask(gameTimerTaskId);
             gameTimerTaskId = 0;
         }
@@ -119,13 +210,21 @@ public class SimpleGameController implements GameContext {
         stopTimerTask();
         long maxTime = isLounging ? modules[currentModule].getLoungeDuration() * 20 : modules[currentModule].getGameDuration() * 20;
         if (maxTime > 0) {
-            debugInfo("startTimerTask");
+            debugInfo("startTimerTask: " + maxTime);
             JavaPlugin plugin = getCowNet().getPlugin();
-            gameTimerTaskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-                public void run() {
-                    endGame();
-                }
-            }, maxTime);
+            if (isLounging) {
+                gameTimerTaskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                    public void run() {
+                        endLounging();
+                    }
+                }, maxTime);
+            } else {
+                gameTimerTaskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                    public void run() {
+                        endGame();
+                    }
+                }, maxTime);
+            }
         }
     }
 
@@ -168,12 +267,16 @@ public class SimpleGameController implements GameContext {
             } else {
                 players.put(playerName, rand.nextBoolean() ? Team.RED : Team.BLUE);
             }
-            playerEntered(playerName);
+            dumpDebugInfo("addPlayer(" + playerName + ") : " + players.get(playerName));
         }
+        playerEntered(playerName);
     }
 
     public void removePlayer(String playerName) {
+        // NOTE: this method is rarely needed since players are automatically
+        // removed from the game when they leave the server
         if (players.containsKey(playerName)) {
+            dumpDebugInfo("removePlayer(" + playerName + ")");
             players.remove(playerName);
             playerLeft(playerName);
         }
@@ -181,18 +284,26 @@ public class SimpleGameController implements GameContext {
 
     private void playerEntered(String playerName) {
         if (isLounging()) {
+            dumpDebugInfo("playerEntered(" + playerName + ") lounge");
             modules[currentModule].playerEnteredLounge(playerName);
         } else {
+            dumpDebugInfo("playerEntered(" + playerName + ") game");
             modules[currentModule].playerEnteredGame(playerName);
         }
     }
 
     private void playerLeft(String playerName) {
         if (isLounging()) {
+            dumpDebugInfo("playerLeft(" + playerName + ") lounge");
             modules[currentModule].playerLeftLounge(playerName);
         } else {
+            dumpDebugInfo("playerLeft(" + playerName + ") game");
             modules[currentModule].playerLeftGame(playerName);
         }
+    }
+
+    public boolean playerIsInGame(String playerName) {
+        return getPlayerTeam(playerName) != null;
     }
 
     public boolean changePlayerTeam(String playerName, Team team) {
@@ -228,7 +339,7 @@ public class SimpleGameController implements GameContext {
         // remove players that have left the server or the game world
         for (String playerName : players.keySet()) {
             if (getPlayer(playerName) == null) {
-                // player has left the server.  remove them from their team
+                // player has left the server.  remove them from their team and the game
                 players.remove(playerName);
             }
         }
@@ -255,18 +366,21 @@ public class SimpleGameController implements GameContext {
 
     @Override
     public void addWin(String playerName) {
-        //To change body of implemented methods use File | Settings | File Templates.
+
     }
 
     @Override
     public void addLoss(String playerName) {
-        //To change body of implemented methods use File | Settings | File Templates.
+
+    }
+
+    public void dumpDebugInfo(String message) {
+//        debugInfo(message);
+//        debugInfo(" - module:" + modules[currentModule].getName());
     }
 
     @Override
     public void debugInfo(String message) {
-        if (isDebug) {
-            logger.info(message);
-        }
+        getCowNet().debugInfo(message);
     }
 }

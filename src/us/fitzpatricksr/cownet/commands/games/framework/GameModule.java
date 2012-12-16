@@ -31,5 +31,5 @@ public interface GameModule {
 
     public void gameEnded();
 
-    public void shutdown(GameContext context);
+    public void shutdown();
 }

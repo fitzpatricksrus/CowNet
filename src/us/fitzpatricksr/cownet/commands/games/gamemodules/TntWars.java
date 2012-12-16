@@ -77,7 +77,7 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     }
 
     @Override
-    public void shutdown(GameContext context) {
+    public void shutdown() {
         HandlerList.unregisterAll(this);
         this.context = null;
         spawnUtils = null;

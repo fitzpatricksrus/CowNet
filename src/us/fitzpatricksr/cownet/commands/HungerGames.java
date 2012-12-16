@@ -683,8 +683,9 @@ public class HungerGames extends CowNetThingy implements Listener {
         debugInfo("Removed all players from arena");
         World w = getPlugin().getServer().getWorld(worldName);
         World safeWorld = getPlugin().getServer().getWorlds().get(0);
+        Location location = safeWorld.getSpawnLocation();
         for (Player p : w.getPlayers()) {
-            p.teleport(safeWorld.getSpawnLocation(), null);
+            p.teleport(location, null);
         }
     }
 

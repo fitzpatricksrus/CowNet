@@ -116,7 +116,7 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
         }
     }
 
-    protected final void debugInfo(String msg) {
+    public final void debugInfo(String msg) {
         if (debug) {
             logger.info("[" + permissionNode + "]: " + msg);
         }
