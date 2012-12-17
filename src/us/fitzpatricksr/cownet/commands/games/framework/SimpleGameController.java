@@ -8,13 +8,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Random;
-import java.util.logging.Logger;
 
 /*
 lounge, then game.
 */
 public class SimpleGameController implements GameContext {
-    private Logger logger = Logger.getLogger("Minecraft");
     private Random rand = new Random();
     private CowNetThingy mod;
     private boolean isLounging;
@@ -143,14 +141,13 @@ public class SimpleGameController implements GameContext {
     @Override
     public void endLounging() {
         dumpDebugInfo("endLounging");
+        stopTimerTask();
         if (isLounging) {
             if (getPlayers().size() >= minPlayers) {
-                stopTimerTask();
                 modules[currentModule].loungeEnded();
                 setLounging(false);
                 balanceTeams();
                 modules[currentModule].gameStarted();
-                startTimerTask();
             } else {
                 dumpDebugInfo("  - not enough players.  continue lounging");
                 // not enough players.  continue to lounge
@@ -159,6 +156,7 @@ public class SimpleGameController implements GameContext {
             dumpDebugInfo("  - Hmm....not lounging");
             // lounging already over, so nothing to do
         }
+        startTimerTask();
     }
 
     @Override
@@ -375,8 +373,8 @@ public class SimpleGameController implements GameContext {
     }
 
     public void dumpDebugInfo(String message) {
-//        debugInfo(message);
-//        debugInfo(" - module:" + modules[currentModule].getName());
+        debugInfo(message);
+        debugInfo(" - module:" + modules[currentModule].getName());
     }
 
     @Override

@@ -5,6 +5,12 @@ package us.fitzpatricksr.cownet.commands.games.framework;
 Player list is available when loungeStarted and gameStarted are called.  Additional players that enter or
 exist the game are signaled through playerEntered and playerLeft methods.
 
+Game methods are called in sequence.
+
+startup - called once when the game is started.  The context may already contain players
+loungeStarted
+
+
  */
 public interface GameModule {
     public String getName();

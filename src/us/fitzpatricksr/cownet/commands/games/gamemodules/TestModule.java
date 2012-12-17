@@ -8,9 +8,9 @@ import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
  */
 public class TestModule implements GameModule {
     @CowNetThingy.Setting
-    private int loungeDuration = 30; // 30 second loung
+    private int loungeDuration = 29; // 30 second loung
     @CowNetThingy.Setting
-    private int gameDuration = 60 * 3; // 3 minutes max game length
+    private int gameDuration = 31; // 3 minutes max game length
     private GameContext context;
     private String name;
 

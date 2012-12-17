@@ -147,6 +147,7 @@ public class Panic extends CowNetThingy implements Listener {
         debugInfo("onPlayerTeleport");
         String toWorld = event.getTo().getWorld().getName();
         String fromWorld = event.getFrom().getWorld().getName();
+        if (toWorld.equalsIgnoreCase(fromWorld)) return;
         if (!toWorld.equalsIgnoreCase(fromWorld)) {
             Player player = event.getPlayer();
             if (toWorld.equalsIgnoreCase(panicWorldName)) {
@@ -195,8 +196,13 @@ public class Panic extends CowNetThingy implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent event) {
         debugInfo("onPlayerQuit");
-        // You know what?  We're going to ignore this and just let them
-        // be removed when teams are cleaned at the end of the game
+        controller.removePlayer(event.getPlayer().getName());
+        // As an alternative we could just let the end of game logic
+        // remove this player from the team so that if they rejoined they
+        // would be on the same team.  However, we'd then have to decide
+        // how this affected new players entering mid-game, so we just
+        // punt on it all and assume people wont quit unless they have
+        // to and aren't trying to game the system.
     }
 }
 
