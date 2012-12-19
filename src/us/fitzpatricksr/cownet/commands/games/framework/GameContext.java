@@ -4,6 +4,7 @@ import org.bukkit.entity.Player;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface GameContext {
     public enum Team {
@@ -36,6 +37,8 @@ public interface GameContext {
     public Player getPlayer(String playerName);
 
     public Team getPlayerTeam(String playerName);
+
+    public Set<String> getPlayersOnTeam(Team team);
 
     public void addWin(String playerName);
 

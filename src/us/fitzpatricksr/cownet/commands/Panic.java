@@ -13,6 +13,7 @@ import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
 import us.fitzpatricksr.cownet.commands.games.framework.SimpleGameController;
+import us.fitzpatricksr.cownet.commands.games.gamemodules.SnowWars;
 import us.fitzpatricksr.cownet.commands.games.gamemodules.TestModule;
 
 import java.util.HashMap;
@@ -35,6 +36,7 @@ public class Panic extends CowNetThingy implements Listener {
     private SimpleGameController controller;
     private GameModule[] modules = new GameModule[]{
             new TestModule("TestModule1"),
+            new SnowWars(),
             new TestModule("TestModule2"),
             new TestModule("TestModule3"),
 //            new SnowWars(),
@@ -139,6 +141,7 @@ public class Panic extends CowNetThingy implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
         debugInfo("onPlayerChangedWorld");
+        // since you can't cancel this event, we user teleport events instead.
         // this is how you officially leave the game
     }
 

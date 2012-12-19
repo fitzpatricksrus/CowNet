@@ -4,10 +4,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
 
 /*
 lounge, then game.
@@ -104,6 +101,11 @@ public class SimpleGameController implements GameContext {
             public Team getPlayerTeam(String playerName) {
 //                debugInfo("getPlayerTeam");
                 return context.getPlayerTeam(playerName);
+            }
+
+            @Override
+            public Set<String> getPlayersOnTeam(Team team) {
+                return context.getPlayersOnTeam(team);
             }
 
             @Override
@@ -254,6 +256,17 @@ public class SimpleGameController implements GameContext {
         return players.get(playerName);
     }
 
+    @Override
+    public Set<String> getPlayersOnTeam(Team team) {
+        HashSet<String> result = new HashSet<String>();
+        for (String playerName : players.keySet()) {
+            if (team == getPlayerTeam(playerName)) {
+                result.add(playerName);
+            }
+        }
+        return result;
+    }
+
     public void addPlayer(String playerName) {
         if (!players.containsKey(playerName)) {
             int red = Collections.frequency(players.values(), Team.RED);
@@ -338,6 +351,7 @@ public class SimpleGameController implements GameContext {
         for (String playerName : players.keySet()) {
             if (getPlayer(playerName) == null) {
                 // player has left the server.  remove them from their team and the game
+                debugInfo("Player no longer on server: " + playerName);
                 players.remove(playerName);
             }
         }

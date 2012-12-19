@@ -14,6 +14,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.CowNetThingy;
@@ -74,6 +75,7 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void loungeStarted() {
+        context.broadcastToAllPlayers("A game of SnowWars is gathering.");
         for (String playerName : context.getPlayers()) {
             playerEnteredLounge(playerName);
         }
@@ -84,10 +86,12 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
         Location lounge = spawnUtils.getPlayerLoungePoint();
         Player player = context.getPlayer(playerName);
         player.teleport(lounge);
+        context.broadcastToAllPlayers(playerName + " is on the " + context.getPlayerTeam(playerName) + " team.");
     }
 
     @Override
     public void playerLeftLounge(String playerName) {
+        context.broadcastToAllPlayers(playerName + " left the game.");
     }
 
     @Override
@@ -96,6 +100,7 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void gameStarted() {
+        context.broadcastToAllPlayers("SnowWars has begun.");
         for (String player : context.getPlayers()) {
             playerEnteredGame(player);
         }
@@ -108,15 +113,18 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
         Player player = context.getPlayer(playerName);
         player.teleport(spawn);
         giveSnow(playerName);
+        context.broadcastToAllPlayers(playerName + " is on the " + context.getPlayerTeam(playerName) + " team.");
     }
 
     @Override
     public void playerLeftGame(String playerName) {
         removeSnow(playerName);
+        context.broadcastToAllPlayers(playerName + " has left the game.");
     }
 
     @Override
     public void gameEnded() {
+        context.broadcastToAllPlayers("SnowWars has eneded.");
         stopRefillTask();
         for (String player : context.getPlayers()) {
             removeSnow(player);
@@ -209,10 +217,13 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     private void giveSnow(String playerName) {
         //give everyone snow in hand
         Player player = context.getPlayer(playerName);
-        ItemStack oldItemInHand = player.getItemInHand();
+        PlayerInventory inventory = player.getInventory();
+        ItemStack oldItem = inventory.getItem(0);
         ItemStack itemInHand = new ItemStack(Material.SNOW_BALL, refillSize);
-        player.setItemInHand(itemInHand);
-        player.getInventory().addItem(oldItemInHand);
+        inventory.setItem(0, itemInHand);
+        if (oldItem != null && oldItem.getType() != Material.SNOW_BALL) {
+            inventory.addItem(oldItem);
+        }
         player.updateInventory();
     }
 
@@ -220,10 +231,12 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
         Player player = context.getPlayer(playerName);
         Inventory inventory = player.getInventory();
         int slot = inventory.first(Material.SNOW_BALL);
-        ItemStack stack = inventory.getItem(slot);
-        stack.setAmount(stack.getAmount() - 1);
-        inventory.setItem(slot, stack);
-        player.updateInventory();
+        if (slot >= 0) {
+            ItemStack stack = inventory.getItem(slot);
+            stack.setAmount(stack.getAmount() - 1);
+            inventory.setItem(slot, stack);
+            player.updateInventory();
+        }
     }
 
     private void smokeScreenEffect(Location location) {
