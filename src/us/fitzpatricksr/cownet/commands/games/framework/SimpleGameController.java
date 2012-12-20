@@ -3,6 +3,8 @@ package us.fitzpatricksr.cownet.commands.games.framework;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.StatusBoard;
+import us.fitzpatricksr.cownet.utils.StringUtils;
 
 import java.util.*;
 
@@ -17,6 +19,7 @@ public class SimpleGameController implements GameContext {
     private int currentModule;
     private GameModule[] modules;
     private int gameTimerTaskId;
+    private StatusBoard status;
 
     @CowNetThingy.Setting
     private int minPlayers = 1;
@@ -28,6 +31,11 @@ public class SimpleGameController implements GameContext {
         this.modules = modules;
         this.currentModule = 0;
         this.gameTimerTaskId = 0;
+        this.status = new StatusBoard(4,
+                "Game: %10s %11s Team: %4s",
+                "Score: %d",
+                "Blue Team: %s",
+                " Red Team: %s");
     }
 
     public void startup() {
@@ -238,12 +246,27 @@ public class SimpleGameController implements GameContext {
 
     @Override
     public void broadcastToAllPlayers(String message) {
+        // Game: gameName   Team: team name   Score: ##
+        // Red:
+        // Blue:
+        // messages
+
+        String gameName = modules[currentModule].getName();
         for (String playerName : players.keySet()) {
             Player player = getPlayer(playerName);
             if (player != null) {
-                player.sendMessage(message);
+                Team team = players.get(playerName);
+                player.sendMessage(String.format("Game: %10s Team: %4s Score: %d", gameName, team, 0));
+                player.sendMessage(String.format("Red:  %s", StringUtils.flatten(getPlayersOnTeam(Team.RED))));
+                player.sendMessage(String.format("Blue: %s", (StringUtils.flatten(getPlayersOnTeam(Team.BLUE)))));
+                player.sendMessage("> " + message);
             }
         }
+    }
+
+    public void broadcastChat(String playerName, String message) {
+
+
     }
 
     @Override
