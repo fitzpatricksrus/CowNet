@@ -32,8 +32,7 @@ public class SimpleGameController implements GameContext {
         this.currentModule = 0;
         this.gameTimerTaskId = 0;
         this.status = new StatusBoard(4,
-                "Game: %10s %11s Team: %4s",
-                "Score: %d",
+                "Game: %10s Team: %4s Score: %d",
                 "Blue Team: %s",
                 " Red Team: %s");
     }
@@ -252,21 +251,25 @@ public class SimpleGameController implements GameContext {
         // messages
 
         String gameName = modules[currentModule].getName();
+        if (message != null) {
+            status.chat(message);
+        }
+        status.format(1, StringUtils.flatten(getPlayersOnTeam(Team.RED)));
+        status.format(2, StringUtils.flatten(getPlayersOnTeam(Team.BLUE)));
         for (String playerName : players.keySet()) {
             Player player = getPlayer(playerName);
             if (player != null) {
                 Team team = players.get(playerName);
-                player.sendMessage(String.format("Game: %10s Team: %4s Score: %d", gameName, team, 0));
-                player.sendMessage(String.format("Red:  %s", StringUtils.flatten(getPlayersOnTeam(Team.RED))));
-                player.sendMessage(String.format("Blue: %s", (StringUtils.flatten(getPlayersOnTeam(Team.BLUE)))));
-                player.sendMessage("> " + message);
+                status.format(0, gameName, team, 0);
+            }
+            for (String line : status.getStatusLines()) {
+                player.sendMessage(line);
             }
         }
     }
 
     public void broadcastChat(String playerName, String message) {
-
-
+        broadcastToAllPlayers(playerName + ": " + message);
     }
 
     @Override

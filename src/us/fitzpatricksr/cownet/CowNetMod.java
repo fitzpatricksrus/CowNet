@@ -27,11 +27,8 @@ public class CowNetMod extends JavaPlugin {
                 new Timber(),
                 new HardCore(),
                 new HungerGames(),
-                // new Nickname(),
-                // new FlingPortal(, "flingportal");
                 new Hide(),
                 // new Snapshot(),
-                // new Jail(),
                 cowPerms,
                 new CowRank(cowPerms),
                 new CowWarp(),

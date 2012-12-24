@@ -208,6 +208,18 @@ public class Panic extends CowNetThingy implements Listener {
         // to and aren't trying to game the system.
     }
 
+    //
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    public void onPlayerChat(AsyncPlayerChatEvent event) {
+        Player player = event.getPlayer();
+        if (controller.getPlayers().contains(player.getName())) {
+            controller.broadcastChat(player.getName(), event.getMessage());
+            event.setCancelled(true);
+        } else {
+            // just let the chat go through
+        }
+    }
 
 }
 
