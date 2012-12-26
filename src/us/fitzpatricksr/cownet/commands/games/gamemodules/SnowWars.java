@@ -42,6 +42,8 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     private int loungeDuration = 30; // 30 second loung
     @CowNetThingy.Setting
     private int gameDuration = 60 * 3; // 3 minutes max game length
+    @CowNetThingy.Setting
+    private int fireTicks = 10;  // 1/2 second when you get hit
 
     @Override
     public String getName() {
@@ -152,6 +154,7 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
                             // OK, someone got plastered.  Accumulate stats.  Play effect.
                             event.setDamage(0);
                             smokeScreenEffect(victim.getLocation());
+                            victim.setFireTicks(fireTicks);
                             context.addWin(shooter.getName());
                             context.addLoss(victim.getName());
                         }
