@@ -61,6 +61,10 @@ public class SpawnAndLoungeUtils {
         return jigglePoint(warpThingy.getWarpLocation(warpName), jiggle);
     }
 
+    public final Location jigglePoint(Location loc) {
+        return jigglePoint(loc, spawnJiggle);
+    }
+
     protected final Location jigglePoint(Location loc, int jiggle) {
         if (loc != null) {
             if (jiggle > 0) {
