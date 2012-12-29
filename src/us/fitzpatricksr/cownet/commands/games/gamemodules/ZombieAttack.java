@@ -23,18 +23,7 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
     private GameContext context;
     private SpawnAndLoungeUtils spawnUtils;
     private int gameTaskId = 0;
-
-    @CowNetThingy.Setting
-    private int spawnJiggle = 5;
-    @CowNetThingy.Setting
-    private int loungeDuration = 30; // 30 second loung
-    @CowNetThingy.Setting
-    private int gameDuration = 60 * 3; // 3 minutes max game length
-    @CowNetThingy.Setting
-    private int waveRate = 60;    // how often a player's supply is topped off
-
     private int nextEntityCount = 0;    // how many mobs to spawn the next time around.
-
     private EntityType[] mobs = new EntityType[]{
             EntityType.CREEPER,
             EntityType.SKELETON,
@@ -55,6 +44,15 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
             EntityType.SNOWMAN,
     };
 
+    @CowNetThingy.Setting
+    private int zombieAttackSpawnJiggle = 5;
+    @CowNetThingy.Setting
+    private int zombieAttackLoungeDuration = 30; // 30 second loung
+    @CowNetThingy.Setting
+    private int zombieAttackGameDuration = 60 * 3; // 3 minutes max game length
+    @CowNetThingy.Setting
+    private int zombieAttackWaveRate = 60;    // how often a player's supply is topped off
+
     @Override
     public String getName() {
         return "ZombieAttack";
@@ -62,19 +60,19 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public int getLoungeDuration() {
-        return loungeDuration;
+        return zombieAttackLoungeDuration;
     }
 
     @Override
     public int getGameDuration() {
-        return gameDuration;
+        return zombieAttackGameDuration;
     }
 
     @Override
     public void startup(GameContext context) {
         this.context = context;
         CowNetMod plugin = context.getCowNet().getPlugin();
-        spawnUtils = new SpawnAndLoungeUtils(plugin, getName(), spawnJiggle);
+        spawnUtils = new SpawnAndLoungeUtils(plugin, getName(), zombieAttackSpawnJiggle);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -225,7 +223,7 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
                     }
                     nextEntityCount++;
                 }
-            }, waveRate, waveRate);
+            }, zombieAttackWaveRate, zombieAttackWaveRate);
         }
     }
 

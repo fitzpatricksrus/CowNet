@@ -14,6 +14,7 @@ public class Scratch {
     spy vs. spy
     economy/trading game
     hunger games
+    the hidden
 
 
 

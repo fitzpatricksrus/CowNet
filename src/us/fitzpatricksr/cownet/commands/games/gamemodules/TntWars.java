@@ -33,21 +33,21 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     private HashMap<String, LinkedList<BombPlacement>> placements;
 
     @CowNetThingy.Setting
-    private int maxBlockPlacements = 1;
+    private int tntWarsMaxBlockPlacements = 1;
     @CowNetThingy.Setting
-    private long explosionDelay = 5 * 1000; // 3 seconds
+    private long tntWarsExplosionDelay = 5 * 1000; // 3 seconds
     @CowNetThingy.Setting
-    private int explosionRadius = 6;
+    private int tntWarsExplosionRadius = 6;
     @CowNetThingy.Setting
-    private int explosivePower = 0;
+    private int tntWarsExplosivePower = 0;
     @CowNetThingy.Setting
-    private int spawnJiggle = 5;
+    private int tntWarsSpawnJiggle = 5;
     @CowNetThingy.Setting
-    private int refillRate = 60;    // how often a player's supply is topped off
+    private int tntWarsRefillRate = 60;    // how often a player's supply is topped off
     @CowNetThingy.Setting
-    private int loungeDuration = 30; // 30 second loung
+    private int tntWarsLoungeDuration = 30; // 30 second loung
     @CowNetThingy.Setting
-    private int gameDuration = 60 * 3; // 3 minutes max game length
+    private int tntWarsGameDuration = 60 * 3; // 3 minutes max game length
     // manual setting
     private Material explosiveBlockType = Material.TNT;
 
@@ -58,18 +58,18 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public int getLoungeDuration() {
-        return loungeDuration;
+        return tntWarsLoungeDuration;
     }
 
     @Override
     public int getGameDuration() {
-        return gameDuration;
+        return tntWarsGameDuration;
     }
 
     @Override
     public void startup(GameContext context) {
         this.context = context;
-        spawnUtils = new SpawnAndLoungeUtils(context.getCowNet().getPlugin(), getName(), spawnJiggle);
+        spawnUtils = new SpawnAndLoungeUtils(context.getCowNet().getPlugin(), getName(), tntWarsSpawnJiggle);
         placements = new HashMap<String, LinkedList<BombPlacement>>();
         gameTaskId = 0;
         JavaPlugin plugin = context.getCowNet().getPlugin();
@@ -201,7 +201,7 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
                         giveTnt(playerName);
                     }
                 }
-            }, refillRate, refillRate);
+            }, tntWarsRefillRate, tntWarsRefillRate);
         }
     }
 
@@ -241,7 +241,7 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
         String playerName = player.getName();
         // check to see if they've already placed the maximum number of blocks.
         LinkedList<BombPlacement> placementList = placements.get(playerName);
-        if (placementList.size() < maxBlockPlacements) {
+        if (placementList.size() < tntWarsMaxBlockPlacements) {
             // place a bomb
             placementList.addLast(new BombPlacement(player, loc));
             startBombWatcher();
@@ -279,14 +279,14 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
         }
 
         public boolean shouldExplode() {
-            return System.currentTimeMillis() - blockPlacedTime > explosionDelay;
+            return System.currentTimeMillis() - blockPlacedTime > tntWarsExplosionDelay;
         }
 
         public void doExplosion() {
             placer.sendMessage("Boom!");
-            location.getWorld().createExplosion(location, explosivePower);
+            location.getWorld().createExplosion(location, tntWarsExplosivePower);
             Server server = context.getCowNet().getPlugin().getServer();
-            long radiusSquared = explosionRadius * explosionRadius;
+            long radiusSquared = tntWarsExplosionRadius * tntWarsExplosionRadius;
             for (String playerName : context.getPlayers()) {
                 Player player = server.getPlayer(playerName);
                 if (player != null) {

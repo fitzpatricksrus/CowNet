@@ -85,8 +85,10 @@ public class Panic extends CowNetThingy implements Listener {
     @Override
     protected boolean updateManualSetting(String settingName, String settingValue) {
         boolean result = setAutoSettingValue(controller, settingName, settingValue);
-        for (GameModule module : modules) {
-            result = setAutoSettingValue(module, settingName, settingValue) || result;
+        if (!result) {
+            for (GameModule module : modules) {
+                result = setAutoSettingValue(module, settingName, settingValue) || result;
+            }
         }
         return result;
     }

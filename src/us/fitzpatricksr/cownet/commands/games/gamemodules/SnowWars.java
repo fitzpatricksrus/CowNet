@@ -33,17 +33,17 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     private int gameTaskId = 0;
 
     @CowNetThingy.Setting
-    private int spawnJiggle = 5;
+    private int snowWarsSpawnJiggle = 5;
     @CowNetThingy.Setting
-    private int refillRate = 60;    // how often a player's supply is topped off
+    private int snowWarsRefillRate = 60;    // how often a player's supply is topped off
     @CowNetThingy.Setting
-    private int refillSize = 5;     // how many we give them per minute
+    private int snowWarsRefillSize = 5;     // how many we give them per minute
     @CowNetThingy.Setting
-    private int loungeDuration = 30; // 30 second loung
+    private int snowWarsLoungeDuration = 30; // 30 second loung
     @CowNetThingy.Setting
-    private int gameDuration = 60 * 3; // 3 minutes max game length
+    private int snowWarsGameDuration = 60 * 3; // 3 minutes max game length
     @CowNetThingy.Setting
-    private int fireTicks = 10;  // 1/2 second when you get hit
+    private int snowWarsFireTicks = 10;  // 1/2 second when you get hit
 
     @Override
     public String getName() {
@@ -52,19 +52,19 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public int getLoungeDuration() {
-        return loungeDuration;
+        return snowWarsLoungeDuration;
     }
 
     @Override
     public int getGameDuration() {
-        return gameDuration;
+        return snowWarsGameDuration;
     }
 
     @Override
     public void startup(GameContext context) {
         this.context = context;
         CowNetMod plugin = context.getCowNet().getPlugin();
-        spawnUtils = new SpawnAndLoungeUtils(plugin, getName(), spawnJiggle);
+        spawnUtils = new SpawnAndLoungeUtils(plugin, getName(), snowWarsSpawnJiggle);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -154,7 +154,7 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
                             // OK, someone got plastered.  Accumulate stats.  Play effect.
                             event.setDamage(0);
                             smokeScreenEffect(victim.getLocation());
-                            victim.setFireTicks(fireTicks);
+                            victim.setFireTicks(snowWarsFireTicks);
                             context.addWin(shooter.getName());
                             context.addLoss(victim.getName());
                         }
@@ -205,7 +205,7 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
                         giveSnow(playerName);
                     }
                 }
-            }, refillRate, refillRate);
+            }, snowWarsRefillRate, snowWarsRefillRate);
         }
     }
 
@@ -222,7 +222,7 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
         Player player = context.getPlayer(playerName);
         PlayerInventory inventory = player.getInventory();
         ItemStack oldItem = inventory.getItem(0);
-        ItemStack itemInHand = new ItemStack(Material.SNOW_BALL, refillSize);
+        ItemStack itemInHand = new ItemStack(Material.SNOW_BALL, snowWarsRefillSize);
         inventory.setItem(0, itemInHand);
         if (oldItem != null && oldItem.getType() != Material.SNOW_BALL) {
             inventory.addItem(oldItem);
