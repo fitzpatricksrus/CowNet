@@ -10,7 +10,7 @@ public class Scratch {
     trash the other teams city / blocks
     tower defense
     minesweeper
-    ctf
+    ctf / ringTheBell
     spy vs. spy
     economy/trading game
     hunger games
