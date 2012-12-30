@@ -34,6 +34,11 @@ public class TestModule implements GameModule {
     }
 
     @Override
+    public boolean isTeamGame() {
+        return true;
+    }
+
+    @Override
     public void startup(GameContext context) {
         this.context = context;
         dumpContext("startup");

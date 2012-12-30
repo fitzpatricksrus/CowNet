@@ -61,6 +61,11 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     }
 
     @Override
+    public boolean isTeamGame() {
+        return true;
+    }
+
+    @Override
     public void startup(GameContext context) {
         this.context = context;
         CowNetMod plugin = context.getCowNet().getPlugin();

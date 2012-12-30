@@ -67,6 +67,11 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     }
 
     @Override
+    public boolean isTeamGame() {
+        return true;
+    }
+
+    @Override
     public void startup(GameContext context) {
         this.context = context;
         spawnUtils = new SpawnAndLoungeUtils(context.getCowNet().getPlugin(), getName(), tntWarsSpawnJiggle);
@@ -297,7 +302,8 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
 //                        accumulatStats(playerName, DEATHS_KEY, 1);
                         if (!playerName.equals(placer.getName())) {
 //                            //you only get a kill if you don't kill yourself
-//                            accumulatStats(placer.getName(), KILLS_KEY, 1);
+                            context.addWin(placer.getName());
+                            context.addLoss(player.getName());
                         }
                         Location dest = spawnUtils.getPlayerSpawnPoint();
                         player.teleport(dest);

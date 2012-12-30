@@ -19,6 +19,8 @@ public interface GameModule {
 
     public int getGameDuration();
 
+    public boolean isTeamGame();
+
     public void startup(GameContext context);
 
     public void loungeStarted();

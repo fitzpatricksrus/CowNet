@@ -1,6 +1,9 @@
 package us.fitzpatricksr.cownet.commands.games.framework;
 
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.utils.StatusBoard;
@@ -327,6 +330,9 @@ public class SimpleGameController implements GameContext {
             dumpDebugInfo("playerEntered(" + playerName + ") game");
             modules[currentModule].playerEnteredGame(playerName);
         }
+
+        // add a hat
+        fixTeamSuits();
     }
 
     private void playerLeft(String playerName) {
@@ -337,6 +343,10 @@ public class SimpleGameController implements GameContext {
             dumpDebugInfo("playerLeft(" + playerName + ") game");
             modules[currentModule].playerLeftGame(playerName);
         }
+
+        // remove the hat.
+        PlayerInventory inv = getPlayer(playerName).getInventory();
+        inv.setHelmet(null);
     }
 
     public boolean playerIsInGame(String playerName) {
@@ -368,6 +378,7 @@ public class SimpleGameController implements GameContext {
             playerLeft(playerName);
             players.put(playerName, team);
             playerEntered(playerName);
+            fixTeamSuits();
             return true;
         }
     }
@@ -400,16 +411,32 @@ public class SimpleGameController implements GameContext {
                 }
             }
         }
+        fixTeamSuits();
+    }
+
+    private void fixTeamSuits() {
+        if (modules[currentModule].isTeamGame()) {
+            for (String playerName : players.keySet()) {
+                // someone is now carrying the flag
+                Player player = getPlayer(playerName);
+                PlayerInventory inv = player.getInventory();
+                ItemStack helmet = inv.getArmorContents()[3]; // getHelmet() wouldn't give me non-helmet blocks
+                // if they already have a helmet, remove it and put it in their inventory
+                if (helmet != null && helmet.getType() != Material.AIR) {
+                    inv.addItem(helmet);
+                }
+                Team team = getPlayerTeam(player.getName());
+                inv.setHelmet(team.getWool());
+            }
+        }
     }
 
     @Override
     public void addWin(String playerName) {
-
     }
 
     @Override
     public void addLoss(String playerName) {
-
     }
 
     public void dumpDebugInfo(String message) {

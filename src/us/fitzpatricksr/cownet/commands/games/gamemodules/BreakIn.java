@@ -56,6 +56,11 @@ public class BreakIn implements Listener, GameModule {
     }
 
     @Override
+    public boolean isTeamGame() {
+        return true;
+    }
+
+    @Override
     public void startup(GameContext context) {
         this.context = context;
         CowNetMod plugin = context.getCowNet().getPlugin();
