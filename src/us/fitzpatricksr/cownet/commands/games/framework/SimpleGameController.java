@@ -264,9 +264,9 @@ public class SimpleGameController implements GameContext {
             if (player != null) {
                 Team team = players.get(playerName);
                 status.format(0, gameName, team, 0);
-            }
-            for (String line : status.getStatusLines()) {
-                player.sendMessage(line);
+                for (String line : status.getStatusLines()) {
+                    player.sendMessage(line);
+                }
             }
         }
     }

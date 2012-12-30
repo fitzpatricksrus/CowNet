@@ -162,7 +162,7 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
                 if (Class.forName("org.bukkit.entity.Golem").isAssignableFrom(ent.getClass())) {
                     continue;
                 }
-            } catch (ClassNotFoundException e) {
+            } catch (ClassNotFoundException ignored) {
             }
 
             try {
@@ -170,7 +170,7 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
                 if (Class.forName("org.bukkit.entity.NPC").isAssignableFrom(ent.getClass())) {
                     continue;
                 }
-            } catch (ClassNotFoundException e) {
+            } catch (ClassNotFoundException ignored) {
             }
 
             ent.remove();
