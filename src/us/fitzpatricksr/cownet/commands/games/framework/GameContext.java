@@ -1,6 +1,10 @@
 package us.fitzpatricksr.cownet.commands.games.framework;
 
+import org.bukkit.DyeColor;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.material.Wool;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.Collection;
@@ -16,6 +20,22 @@ public interface GameContext {
                 return BLUE;
             } else {
                 return RED;
+            }
+        }
+
+        public Material getMaterial() {
+            if (this == RED) {
+                return Material.LAPIS_BLOCK;
+            } else {
+                return Material.REDSTONE;
+            }
+        }
+
+        public ItemStack getWool() {
+            if (this == RED) {
+                return new ItemStack(Material.WOOL, 1, new Wool(DyeColor.RED).getData());
+            } else {
+                return new ItemStack(Material.WOOL, 1, new Wool(DyeColor.BLUE).getData());
             }
         }
     }
