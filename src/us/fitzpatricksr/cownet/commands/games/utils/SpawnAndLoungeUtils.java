@@ -23,57 +23,44 @@ public class SpawnAndLoungeUtils {
     //-----------------------------------------------------------
     // warp utilities
 
-    // point-module
-    // point
     public final Location getTeamSpawnPoint() {
-        Location result = getWarpPoint("spawn-" + moduleName, 0);
-        if (result == null) {
-            result = getWarpPoint("spawn", 0);
-        }
-        return result;
+        return getPoint("spawn", 0);
     }
 
-    // point-module-team
-    // point-team
-    // point-module
-    // point
     public final Location getTeamSpawnPoint(String team) {
-        Location result = getWarpPoint("spawn-" + moduleName + "-" + team, 0);
-        if (result == null) {
-            result = getWarpPoint("spawn-" + team, 0);
-        }
-        if (result == null) {
-            result = getTeamSpawnPoint();
-        }
-        return result;
+        return getPoint("spawn", team, 0);
     }
 
     public final Location getPlayerSpawnPoint() {
-        Location result = getWarpPoint("spawn-" + moduleName, spawnJiggle);
-        if (result == null) {
-            result = getWarpPoint("spawn", spawnJiggle);
-        }
-        return result;
+        return getPoint("spawn", spawnJiggle);
     }
 
     public final Location getPlayerSpawnPoint(String team) {
-        Location result = getWarpPoint("spawn-" + moduleName + "-" + team, spawnJiggle);
-        if (result == null) {
-            result = getWarpPoint("spawn-" + team, spawnJiggle);
-        }
-        if (result == null) {
-            result = getTeamSpawnPoint();
-        }
-        return result;
+        return getPoint("spawn", team, spawnJiggle);
     }
 
+    public final Location getTeamLoungePoint() {
+        return getPoint("lounge", 0);
+    }
+
+    public final Location getTeamLoungePoint(String team) {
+        return getPoint("lounge", team, 0);
+    }
+
+    public final Location getPlayerLoungePoint() {
+        return getPoint("lounge", spawnJiggle);
+    }
+
+    public final Location getPlayerLoungePoint(String team) {
+        return getPoint("lounge", team, spawnJiggle);
+    }
 
     // point-module
     // point
-    public final Location getTeamLoungePoint() {
-        Location result = getWarpPoint("lounge-" + moduleName, 0);
+    private final Location getPoint(String point, int jiggle) {
+        Location result = getWarpPoint(point + "-" + moduleName, jiggle);
         if (result == null) {
-            result = getWarpPoint("lounge", 0);
+            result = getWarpPoint(point, jiggle);
         }
         return result;
     }
@@ -82,32 +69,13 @@ public class SpawnAndLoungeUtils {
     // point-team
     // point-module
     // point
-    public final Location getTeamLoungePoint(String team) {
-        Location result = getWarpPoint("lounge-" + moduleName + "-" + team, 0);
+    private final Location getPoint(String point, String team, int jiggle) {
+        Location result = getWarpPoint(point + "-" + moduleName + "-" + team, jiggle);
         if (result == null) {
-            result = getWarpPoint("lounge-" + team, 0);
+            result = getWarpPoint(point + "-" + team, jiggle);
         }
         if (result == null) {
             result = getTeamLoungePoint();
-        }
-        return result;
-    }
-
-    public final Location getPlayerLoungePoint() {
-        Location result = getWarpPoint("lounge-" + moduleName, spawnJiggle);
-        if (result == null) {
-            result = getWarpPoint("lounge", spawnJiggle);
-        }
-        return result;
-    }
-
-    public final Location getPlayerLoungePoint(String team) {
-        Location result = getWarpPoint("lounge-" + moduleName + "-" + team, spawnJiggle);
-        if (result == null) {
-            result = getWarpPoint("lounge-" + team, spawnJiggle);
-        }
-        if (result == null) {
-            result = getPlayerLoungePoint();
         }
         return result;
     }
