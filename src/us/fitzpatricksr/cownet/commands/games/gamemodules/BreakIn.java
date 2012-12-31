@@ -86,8 +86,12 @@ public class BreakIn implements Listener, GameModule {
     @Override
     public void playerEnteredLounge(String playerName) {
         Location lounge = spawnUtils.getPlayerLoungePoint();
-        Player player = context.getPlayer(playerName);
-        player.teleport(lounge);
+        if (lounge != null) {
+            Player player = context.getPlayer(playerName);
+            player.teleport(lounge);
+        } else {
+            context.debugInfo("Could not find lounge");
+        }
         context.broadcastToAllPlayers(playerName + " is on the " + context.getPlayerTeam(playerName) + " team.");
     }
 
@@ -112,8 +116,12 @@ public class BreakIn implements Listener, GameModule {
     @Override
     public void playerEnteredGame(String playerName) {
         Location spawn = spawnUtils.getPlayerSpawnPoint();
-        Player player = context.getPlayer(playerName);
-        player.teleport(spawn);
+        if (spawn != null) {
+            Player player = context.getPlayer(playerName);
+            player.teleport(spawn);
+        } else {
+            context.debugInfo("Could not find spawn");
+        }
         context.broadcastToAllPlayers(playerName + " is on the " + context.getPlayerTeam(playerName) + " team.");
     }
 

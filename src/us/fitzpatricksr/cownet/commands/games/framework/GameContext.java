@@ -54,6 +54,8 @@ public interface GameContext {
 
     public void broadcastToAllPlayers(String message);
 
+    public void sendToPlayer(String playerName, String message);
+
     public Player getPlayer(String playerName);
 
     public Team getPlayerTeam(String playerName);

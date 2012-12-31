@@ -102,6 +102,11 @@ public class SimpleGameController implements GameContext {
             }
 
             @Override
+            public void sendToPlayer(String playerName, String message) {
+                context.sendToPlayer(playerName, message);
+            }
+
+            @Override
             public Player getPlayer(String playerName) {
 //                debugInfo("getPlayer");
                 return context.getPlayer(playerName);
@@ -251,28 +256,39 @@ public class SimpleGameController implements GameContext {
         // Game: gameName   Team: team name   Score: ##
         // Red:
         // Blue:
-        // messages
+        // chat
+        // personal message
 
-        String gameName = modules[currentModule].getName();
-        if (message != null) {
-            status.chat(message);
-        }
-        status.format(1, StringUtils.flatten(getPlayersOnTeam(Team.RED)));
-        status.format(2, StringUtils.flatten(getPlayersOnTeam(Team.BLUE)));
-        for (String playerName : players.keySet()) {
-            Player player = getPlayer(playerName);
-            if (player != null) {
-                Team team = players.get(playerName);
-                status.format(0, gameName, team, 0);
-                for (String line : status.getStatusLines()) {
-                    player.sendMessage(line);
-                }
-            }
-        }
+        status.chat(message);
+        updatePlayerStatusDisplay();
+    }
+
+    @Override
+    public void sendToPlayer(String playerName, String message) {
+        status.message(playerName, message);
+        updatePlayerStatusDisplay(playerName);
     }
 
     public void broadcastChat(String playerName, String message) {
         broadcastToAllPlayers(playerName + ": " + message);
+    }
+
+    private void updatePlayerStatusDisplay(String playerName) {
+        Team team = players.get(playerName);
+        Player player = getPlayer(playerName);
+        String gameName = modules[currentModule].getName();
+        status.format(0, gameName, team, 0);
+        for (String line : status.getStatusLines(playerName)) {
+            if (line != null) {
+                player.sendMessage(line);
+            }
+        }
+    }
+
+    private void updatePlayerStatusDisplay() {
+        for (String playerName : players.keySet()) {
+            updatePlayerStatusDisplay(playerName);
+        }
     }
 
     @Override
@@ -379,6 +395,9 @@ public class SimpleGameController implements GameContext {
             players.put(playerName, team);
             playerEntered(playerName);
             fixTeamSuits();
+            status.format(1, StringUtils.flatten(getPlayersOnTeam(Team.RED)));
+            status.format(2, StringUtils.flatten(getPlayersOnTeam(Team.BLUE)));
+            updatePlayerStatusDisplay();
             return true;
         }
     }
@@ -412,6 +431,9 @@ public class SimpleGameController implements GameContext {
             }
         }
         fixTeamSuits();
+        status.format(1, StringUtils.flatten(getPlayersOnTeam(Team.RED)));
+        status.format(2, StringUtils.flatten(getPlayersOnTeam(Team.BLUE)));
+        updatePlayerStatusDisplay();
     }
 
     private void fixTeamSuits() {

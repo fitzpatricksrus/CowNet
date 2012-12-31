@@ -163,6 +163,7 @@ public class Panic extends CowNetThingy implements Listener {
             } else if (fromWorld.equalsIgnoreCase(panicWorldName)) {
                 if (controller.isGaming()) {
                     // you can't leave in the middle of a game
+                    player.sendMessage("You can't leave a game in progress.");
                     event.setCancelled(true);
                 } else {
                     controller.removePlayer(player.getName());
