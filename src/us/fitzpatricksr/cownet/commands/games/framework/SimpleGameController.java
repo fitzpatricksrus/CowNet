@@ -35,9 +35,9 @@ public class SimpleGameController implements GameContext {
         this.currentModule = 0;
         this.gameTimerTaskId = 0;
         this.status = new StatusBoard(4,
-                "Game: %10s Team: %4s Score: %d",
+                "Game: %-10s   Team: %-4s   Score: %d",
                 "Blue Team: %s",
-                " Red Team: %s");
+                "Red  Team: %s");
     }
 
     public void startup() {

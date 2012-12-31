@@ -13,10 +13,7 @@ import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
 import us.fitzpatricksr.cownet.commands.games.framework.SimpleGameController;
-import us.fitzpatricksr.cownet.commands.games.gamemodules.BreakIn;
-import us.fitzpatricksr.cownet.commands.games.gamemodules.SnowWars;
-import us.fitzpatricksr.cownet.commands.games.gamemodules.TntWars;
-import us.fitzpatricksr.cownet.commands.games.gamemodules.ZombieAttack;
+import us.fitzpatricksr.cownet.commands.games.gamemodules.TestModule;
 
 import java.util.HashMap;
 
@@ -37,11 +34,11 @@ public class Panic extends CowNetThingy implements Listener {
 
     private SimpleGameController controller;
     private GameModule[] modules = new GameModule[]{
-//            new TestModule("TestModule1"),
-            new SnowWars(),
-            new ZombieAttack(),
-            new TntWars(),
-            new BreakIn(),
+            new TestModule("TestModule1"),
+            new us.fitzpatricksr.cownet.commands.games.gamemodules.SnowWars(),
+//            new ZombieAttack(),
+//            new TntWars(),
+//            new BreakIn(),
 //            new TestModule("TestModule2"),
 //            new TestModule("TestModule3"),
     };

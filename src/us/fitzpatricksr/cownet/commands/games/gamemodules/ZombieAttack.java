@@ -47,11 +47,11 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
     @CowNetThingy.Setting
     private int zombieAttackSpawnJiggle = 5;
     @CowNetThingy.Setting
-    private int zombieAttackLoungeDuration = 30; // 30 second loung
+    private int zombieAttackLoungeDuration = 30; // 30 second lounge
     @CowNetThingy.Setting
     private int zombieAttackGameDuration = 60 * 3; // 3 minutes max game length
     @CowNetThingy.Setting
-    private int zombieAttackWaveRate = 60;    // how often a player's supply is topped off
+    private int zombieAttackWaveRate = 15 * 20;    // how often they spawn
 
     @Override
     public String getName() {
