@@ -10,11 +10,13 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
 import us.fitzpatricksr.cownet.CowNetThingy;
+import us.fitzpatricksr.cownet.commands.games.GameStatsFile;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
 import us.fitzpatricksr.cownet.commands.games.framework.SimpleGameController;
 import us.fitzpatricksr.cownet.commands.games.gamemodules.TestModule;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 /*
@@ -42,6 +44,7 @@ public class Panic extends CowNetThingy implements Listener {
 //            new TestModule("TestModule2"),
 //            new TestModule("TestModule3"),
     };
+    private GameStatsFile gameStats;
 
     public Panic() {
         controller = new SimpleGameController(this, modules);
@@ -49,12 +52,19 @@ public class Panic extends CowNetThingy implements Listener {
 
     @Override
     protected void onEnable() throws Exception {
-        controller.startup();
+        gameStats = new GameStatsFile(getPlugin(), "PanicStats.txt");
+        gameStats.loadConfig();
+        controller.startup(gameStats);
     }
 
     @Override
     protected void onDisable() {
         controller.shutdown();
+        try {
+            gameStats.saveConfig();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -120,12 +130,12 @@ public class Panic extends CowNetThingy implements Listener {
     }
 
     @CowCommand
-    protected boolean doChangeteam(CommandSender sender, String playerName) {
+    protected boolean doChangeteam(Player sender, String playerName) {
         GameContext.Team team = controller.getPlayerTeam(playerName).otherTeam();
         if (controller.changePlayerTeam(playerName, team)) {
-            broadcastToAllOnlinePlayers(playerName + " is now on the " + team + " team.");
+            controller.broadcastToAllPlayers(playerName + " is now on the " + team + " team.");
         } else {
-            sender.sendMessage("Sorry.  Changing teams would make the teams unbalanced.");
+            controller.sendToPlayer(sender.getName(), "Sorry.  Changing teams would make the teams unbalanced.");
         }
         return true;
     }
@@ -133,7 +143,12 @@ public class Panic extends CowNetThingy implements Listener {
     @CowCommand(permission = "info")
     protected boolean doInfo(CommandSender player) {
         for (String playerName : controller.getPlayers()) {
-            player.sendMessage(playerName + ": " + controller.getPlayerTeam(playerName));
+            String msg = playerName + ": " + controller.getPlayerTeam(playerName);
+            if (player instanceof Player) {
+                controller.sendToPlayer(player.getName(), msg);
+            } else {
+                player.sendMessage(msg);
+            }
         }
         return true;
     }
@@ -160,7 +175,7 @@ public class Panic extends CowNetThingy implements Listener {
             } else if (fromWorld.equalsIgnoreCase(panicWorldName)) {
                 if (controller.isGaming()) {
                     // you can't leave in the middle of a game
-                    player.sendMessage("You can't leave a game in progress.");
+                    controller.sendToPlayer(player.getName(), "You can't leave a game in progress.");
                     event.setCancelled(true);
                 } else {
                     controller.removePlayer(player.getName());

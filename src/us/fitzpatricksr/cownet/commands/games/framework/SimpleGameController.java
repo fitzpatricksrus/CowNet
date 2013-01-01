@@ -6,9 +6,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
+import us.fitzpatricksr.cownet.commands.games.GameStatsFile;
 import us.fitzpatricksr.cownet.utils.StatusBoard;
 import us.fitzpatricksr.cownet.utils.StringUtils;
 
+import java.io.IOException;
 import java.util.*;
 
 /*
@@ -23,6 +25,8 @@ public class SimpleGameController implements GameContext {
     private GameModule[] modules;
     private int gameTimerTaskId;
     private StatusBoard status;
+    private GameStatsFile statsFile;
+    private HashMap<String, Integer> wins;
 
     @CowNetThingy.Setting
     private int minPlayers = 1;
@@ -35,12 +39,13 @@ public class SimpleGameController implements GameContext {
         this.currentModule = 0;
         this.gameTimerTaskId = 0;
         this.status = new StatusBoard(4,
-                "Game: %-10s   Team: %-4s   Score: %d",
+                "%s:   Team: %-4s   Score: %d",
                 "Blue Team: %s",
                 "Red  Team: %s");
     }
 
-    public void startup() {
+    public void startup(GameStatsFile statsFile) {
+        this.statsFile = statsFile;
         GameModule module = this.modules[currentModule];
         module.startup(newDebugWrapper(this, module.getName()));
         module.loungeStarted();
@@ -166,13 +171,14 @@ public class SimpleGameController implements GameContext {
                 balanceTeams();
                 modules[currentModule].gameStarted();
             } else {
-                dumpDebugInfo("  - not enough players.  continue lounging");
+                dumpDebugInfo("  - not enough players.  continue lounging. (1)");
                 // not enough players.  continue to lounge
             }
         } else {
             dumpDebugInfo("  - Hmm....not lounging");
             // lounging already over, so nothing to do
         }
+        clearScores();
         startTimerTask();
     }
 
@@ -192,9 +198,11 @@ public class SimpleGameController implements GameContext {
         stopTimerTask();
         if (isLounging) {
             if (getPlayers().size() < minPlayers) {
+                // hey jf - Do we care about this case?  Why not just let it cycle
+                // through games?
                 // OK, we're lounging and still don't have enough people
                 // to have a real game.  No point in stopping lounging.
-                dumpDebugInfo("  - not enough players to start a new game.");
+                dumpDebugInfo("  - not enough players to start a new game. (2)");
                 startTimerTask();   //start lounge timer
                 return;
             } else {
@@ -277,7 +285,7 @@ public class SimpleGameController implements GameContext {
         Team team = players.get(playerName);
         Player player = getPlayer(playerName);
         String gameName = modules[currentModule].getName();
-        status.format(0, gameName, team, 0);
+        status.format(0, isGaming() ? "Playing " + gameName : "Gathering " + gameName, team, getPlayerScore(playerName));
         for (String line : status.getStatusLines(playerName)) {
             if (line != null) {
                 player.sendMessage(line);
@@ -453,12 +461,67 @@ public class SimpleGameController implements GameContext {
         }
     }
 
+    private void clearScores() {
+        wins = new HashMap<String, Integer>();
+    }
+
+    private int getPlayerScore(String playerName) {
+        return wins.containsKey(playerName) ? wins.get(playerName) : 0;
+    }
+
     @Override
     public void addWin(String playerName) {
+        wins.put(playerName, wins.containsKey(playerName) ? wins.get(playerName) + 1 : 1);
+        updatePlayerStatusDisplay(playerName);
     }
 
     @Override
     public void addLoss(String playerName) {
+        wins.put(playerName, wins.containsKey(playerName) ? Math.max(wins.get(playerName) - 1, 0) : 0);
+        updatePlayerStatusDisplay(playerName);
+    }
+
+    private void awardPoints() {
+        // we award a player point for the player with the most wins-losses
+        // we award a team point to each player
+        int redTotal = 0;
+        int blueTotal = 0;
+        String winnerName = "DUMMY";
+        int winnerTotal = Integer.MIN_VALUE;
+
+        for (String playerName : players.keySet()) {
+            int playerWins = getPlayerScore(playerName);
+            if (playerWins > winnerTotal || (playerWins == winnerTotal && rand.nextBoolean())) {
+                winnerName = playerName;
+                winnerTotal = playerWins;
+            }
+
+            Team team = players.get(playerName);
+            if (team == Team.RED) {
+                redTotal += playerWins;
+            } else {
+                blueTotal += playerWins;
+            }
+        }
+        Team winningTeam = (redTotal > blueTotal) ? Team.RED : Team.BLUE;
+
+        // OK, now we have the winning player and the winning team.
+        // Award a win to the winning player
+        // and a team win to all players on the winning team
+        statsFile.accumulate(winnerName, "wins", 1);
+        for (String playerName : players.keySet()) {
+            if (winningTeam == players.get(playerName)) {
+                statsFile.accumulate(playerName, "teamWins", 1);
+            }
+        }
+
+        broadcastToAllPlayers(winnerName + " was the winning player.");
+        broadcastToAllPlayers(winningTeam + " was the winning team.");
+        try {
+            statsFile.saveConfig();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void dumpDebugInfo(String message) {
