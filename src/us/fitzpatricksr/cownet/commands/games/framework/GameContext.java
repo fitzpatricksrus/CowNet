@@ -2,8 +2,8 @@ package us.fitzpatricksr.cownet.commands.games.framework;
 
 import org.bukkit.entity.Player;
 import us.fitzpatricksr.cownet.CowNetThingy;
-import us.fitzpatricksr.cownet.utils.StatusBoard;
-import us.fitzpatricksr.cownet.utils.StatusBoard.Team;
+import us.fitzpatricksr.cownet.commands.games.utils.StatusBoard;
+import us.fitzpatricksr.cownet.commands.games.utils.StatusBoard.Team;
 
 import java.util.Collection;
 import java.util.Set;

@@ -8,8 +8,8 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.GameStatsFile;
-import us.fitzpatricksr.cownet.utils.StatusBoard;
-import us.fitzpatricksr.cownet.utils.StatusBoard.Team;
+import us.fitzpatricksr.cownet.commands.games.utils.StatusBoard;
+import us.fitzpatricksr.cownet.commands.games.utils.StatusBoard.Team;
 
 import java.io.IOException;
 import java.util.*;
@@ -108,7 +108,7 @@ public class SimpleGameController implements GameContext {
 
             @Override
             public void broadcastToAllPlayers(String message) {
-//                debugInfo("broadcastToAllPlayers");
+//                debugInfo("sendMessageToAll");
                 context.broadcastToAllPlayers(message);
             }
 
@@ -231,6 +231,7 @@ public class SimpleGameController implements GameContext {
         }
         modules[currentModule].gameEnded();
         modules[currentModule].shutdown();
+        awardPoints();
         setLounging(true);
         currentModule = (currentModule + 1) % modules.length;
         modules[currentModule].startup(newDebugWrapper(this, modules[currentModule].getName()));
@@ -273,16 +274,18 @@ public class SimpleGameController implements GameContext {
 
     @Override
     public void broadcastToAllPlayers(String message) {
-        status.broadcastToAllPlayers(message);
+        status.sendMessageToAll(message);
     }
 
     @Override
     public void sendToPlayer(String playerName, String message) {
-        status.sendMessage(playerName, message);
+        status.sendMessageToPlayer(playerName, message);
     }
 
     public void broadcastChat(String playerName, String message) {
-        status.broadcastChat(playerName, message);
+        Team team = getPlayerTeam(playerName);
+        status.sendMessageToTeam(getPlayerTeam(playerName),
+                team.getChatColor() + playerName + ": " + ChatColor.RESET + message);
     }
 
     //---------------------------------------------------------------------

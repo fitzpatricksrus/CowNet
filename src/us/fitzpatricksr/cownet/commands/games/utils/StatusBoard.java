@@ -1,5 +1,6 @@
-package us.fitzpatricksr.cownet.utils;
+package us.fitzpatricksr.cownet.commands.games.utils;
 
+import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -7,10 +8,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.Wool;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.StringUtils;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Set;
+import java.util.*;
 
 public class StatusBoard {
     public enum Team {
@@ -40,6 +40,14 @@ public class StatusBoard {
                 return new ItemStack(Material.WOOL, 1, new Wool(DyeColor.BLUE).getData());
             }
         }
+
+        public ChatColor getChatColor() {
+            if (this == RED) {
+                return ChatColor.RED;
+            } else {
+                return ChatColor.BLUE;
+            }
+        }
     }
 
     public interface StatusSource {
@@ -65,8 +73,8 @@ public class StatusBoard {
     private static final int numChatLines = 6;
     private StatusSource context;
     private HashMap<String, String> playerMessages;
-    private String[] blueChatLines;
-    private String[] redChatLines;
+    private Queue<String> blueChatLines;
+    private Queue<String> redChatLines;
     private String redTeam;
     private String blueTeam;
     private int gameStatusTaskId;
@@ -88,12 +96,8 @@ public class StatusBoard {
 
     public void enable() {
         playerMessages = new HashMap<String, String>();
-        redChatLines = new String[numChatLines];
-        blueChatLines = new String[numChatLines];
-        for (int i = 0; i < redChatLines.length; i++) {
-            redChatLines[i] = "";
-            blueChatLines[i] = "";
-        }
+        redChatLines = new LinkedList<String>();
+        blueChatLines = new LinkedList<String>();
         redTeam = "";
         blueTeam = "";
         gameStatusTaskId = 0;
@@ -104,24 +108,30 @@ public class StatusBoard {
         stopStatusTask();
     }
 
-    public void broadcastToAllPlayers(String message) {
-        // Game: gameName   Team: team name   Score: ##
-        // Red:
-        // Blue:
-        // chat
-        // personal message
-
-        chatLines
+    public void sendMessageToAll(String message) {
+        appendToChat(Team.RED, message);
+        appendToChat(Team.BLUE, message);
         updateForAll();
     }
 
-    public void sendMessage(String playerName, String message) {
-        message(playerName, message);
+    public void sendMessageToPlayer(String playerName, String message) {
+        playerMessages.put(playerName, message);
         updateFor(playerName);
     }
 
-    public void broadcastChat(String playerName, String message) {
-        broadcastToAllPlayers(playerName + ": " + message);
+    public void sendMessageToTeam(Team team, String message) {
+        if (Team.RED == team) {
+            appendToChat(Team.RED, message);
+        } else {
+            appendToChat(Team.BLUE, message);
+        }
+        updateFor(team);
+    }
+
+    public void updateFor(Team team) {
+        for (String playerName : context.getPlayersOnTeam(team)) {
+            updateFor(playerName);
+        }
     }
 
     public void updateFor(String playerName) {
@@ -136,7 +146,9 @@ public class StatusBoard {
         player.sendMessage(line1);
         player.sendMessage(redTeam);
         player.sendMessage(blueTeam);
-        player.sendMessage(">-------" + getPlayerMessage(playerName) + "-------------------------------------------".substring(40));
+        String playerMessage = playerMessages.get(playerName);
+        playerMessage = (playerMessage != null) ? playerMessage : "";
+        player.sendMessage(">-------" + playerMessage + "-------------------------------------------".substring(40));
         if (Team.RED == context.getPlayerTeam(playerName)) {
             for (String line : redChatLines) {
                 player.sendMessage(line);
@@ -156,13 +168,12 @@ public class StatusBoard {
         }
     }
 
-    private void message(String playerName, String msg) {
-        playerMessages.put(playerName, msg);
-    }
-
-    private String getPlayerMessage(String playerName) {
-        String s = playerMessages.get(playerName);
-        return (s != null) ? s : "";
+    private void appendToChat(Team team, String message) {
+        Queue<String> queue = (Team.RED == team) ? redChatLines : blueChatLines;
+        queue.offer(message);
+        if (queue.size() > numChatLines) {
+            queue.remove();
+        }
     }
 
     private void stopStatusTask() {

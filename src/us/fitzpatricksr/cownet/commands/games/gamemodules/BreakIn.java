@@ -13,6 +13,7 @@ import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
 import us.fitzpatricksr.cownet.commands.games.utils.SpawnAndLoungeUtils;
+import us.fitzpatricksr.cownet.commands.games.utils.StatusBoard.Team;
 
 import java.util.Random;
 
@@ -160,8 +161,8 @@ public class BreakIn implements Listener, GameModule {
         if (!context.isLounging()) return;
         Location loc = event.getBlock().getLocation();
         Player player = event.getPlayer();
-        GameContext.Team team = context.getPlayerTeam(player.getName());
-        GameContext.Team base = getLocationTeam(loc);
+        Team team = context.getPlayerTeam(player.getName());
+        Team base = getLocationTeam(loc);
 
         if (base != null) {
             if (team != base) {
@@ -186,25 +187,25 @@ public class BreakIn implements Listener, GameModule {
     // ---- Event handlers
 
     private void buildBases() {
-        buildBase(GameContext.Team.BLUE);
-        buildBase(GameContext.Team.RED);
+        buildBase(Team.BLUE);
+        buildBase(Team.RED);
     }
 
-    private void buildBase(GameContext.Team team) {
+    private void buildBase(Team team) {
         getBaseLocation(team).getBlock().setType(team.getMaterial());
     }
 
-    private GameContext.Team getLocationTeam(Location loc) {
-        if (loc.equals(getBaseLocation(GameContext.Team.RED))) {
-            return GameContext.Team.RED;
-        } else if (loc.equals(getBaseLocation(GameContext.Team.BLUE))) {
-            return GameContext.Team.BLUE;
+    private Team getLocationTeam(Location loc) {
+        if (loc.equals(getBaseLocation(Team.RED))) {
+            return Team.RED;
+        } else if (loc.equals(getBaseLocation(Team.BLUE))) {
+            return Team.BLUE;
         } else {
             return null;
         }
     }
 
-    private Location getBaseLocation(GameContext.Team team) {
+    private Location getBaseLocation(Team team) {
         Location baseLocation = spawnUtils.getTeamSpawnPoint(team.toString());
         baseLocation.add(0, 1, 0);
         return baseLocation;

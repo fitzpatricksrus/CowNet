@@ -11,10 +11,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.GameStatsFile;
-import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
 import us.fitzpatricksr.cownet.commands.games.framework.SimpleGameController;
 import us.fitzpatricksr.cownet.commands.games.gamemodules.TestModule;
+import us.fitzpatricksr.cownet.commands.games.utils.StatusBoard.Team;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -119,7 +119,7 @@ public class Panic extends CowNetThingy implements Listener {
 
     @CowCommand
     protected boolean doTeam(CommandSender sender, String playerName) {
-        GameContext.Team team = controller.getPlayerTeam(playerName);
+        Team team = controller.getPlayerTeam(playerName);
         sender.sendMessage(playerName + " is on the " + team + " team.");
         return true;
     }
@@ -131,7 +131,7 @@ public class Panic extends CowNetThingy implements Listener {
 
     @CowCommand
     protected boolean doChangeteam(Player sender, String playerName) {
-        GameContext.Team team = controller.getPlayerTeam(playerName).otherTeam();
+        Team team = controller.getPlayerTeam(playerName).otherTeam();
         if (controller.changePlayerTeam(playerName, team)) {
             controller.broadcastToAllPlayers(playerName + " is now on the " + team + " team.");
         } else {
@@ -232,6 +232,7 @@ public class Panic extends CowNetThingy implements Listener {
     public void onPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         if (controller.getPlayers().contains(player.getName())) {
+            // chats coming from people in the game only go to people in the game.
             controller.broadcastChat(player.getName(), event.getMessage());
             event.setCancelled(true);
         } else {
