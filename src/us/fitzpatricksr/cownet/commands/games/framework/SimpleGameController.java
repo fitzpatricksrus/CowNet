@@ -1,5 +1,6 @@
 package us.fitzpatricksr.cownet.commands.games.framework;
 
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -8,7 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.GameStatsFile;
 import us.fitzpatricksr.cownet.utils.StatusBoard;
-import us.fitzpatricksr.cownet.utils.StringUtils;
+import us.fitzpatricksr.cownet.utils.StatusBoard.Team;
 
 import java.io.IOException;
 import java.util.*;
@@ -38,10 +39,7 @@ public class SimpleGameController implements GameContext {
         this.modules = modules;
         this.currentModule = 0;
         this.gameTimerTaskId = 0;
-        this.status = new StatusBoard(4,
-                "%s:   Team: %-4s   Score: %d",
-                "Blue Team: %s",
-                "Red  Team: %s");
+        this.status = new StatusBoard(this);
     }
 
     public void startup(GameStatsFile statsFile) {
@@ -49,12 +47,14 @@ public class SimpleGameController implements GameContext {
         GameModule module = this.modules[currentModule];
         module.startup(newDebugWrapper(this, module.getName()));
         module.loungeStarted();
+        status.enable();
         startTimerTask();
     }
 
     public void shutdown() {
         GameModule module = this.modules[currentModule];
         stopTimerTask();
+        status.disable();
         endLounging();
         module.gameEnded();
         setLounging(true);
@@ -71,6 +71,12 @@ public class SimpleGameController implements GameContext {
             }
 
             @Override
+            public String getGameName() {
+//                debugInfo("getGameName");
+                return context.getGameName();
+            }
+
+            @Override
             public boolean isLounging() {
 //                debugInfo("isLounging");
                 return context.isLounging();
@@ -78,7 +84,7 @@ public class SimpleGameController implements GameContext {
 
             @Override
             public void endLounging() {
-//                debugInfo("endLounging");
+                debugInfo("endLounging");
                 context.endLounging();
             }
 
@@ -90,7 +96,7 @@ public class SimpleGameController implements GameContext {
 
             @Override
             public void endGame() {
-//                debugInfo("endGame");
+                debugInfo("endGame");
                 context.endGame();
             }
 
@@ -129,6 +135,12 @@ public class SimpleGameController implements GameContext {
             }
 
             @Override
+            public int getScore(String playerName) {
+//                debugInfo("getScore");
+                return context.getScore(playerName);
+            }
+
+            @Override
             public void addWin(String playerName) {
 //                debugInfo("addWin");
                 context.addWin(playerName);
@@ -153,6 +165,11 @@ public class SimpleGameController implements GameContext {
     @Override
     public CowNetThingy getCowNet() {
         return mod;
+    }
+
+    @Override
+    public String getGameName() {
+        return modules[currentModule].getName();
     }
 
     @Override
@@ -252,51 +269,28 @@ public class SimpleGameController implements GameContext {
     }
 
     //---------------------------------------------------------------------
+    // status display
+
+    @Override
+    public void broadcastToAllPlayers(String message) {
+        status.broadcastToAllPlayers(message);
+    }
+
+    @Override
+    public void sendToPlayer(String playerName, String message) {
+        status.sendMessage(playerName, message);
+    }
+
+    public void broadcastChat(String playerName, String message) {
+        status.broadcastChat(playerName, message);
+    }
+
+    //---------------------------------------------------------------------
     // Team and player management
 
     @Override
     public Collection<String> getPlayers() {
         return players.keySet();
-    }
-
-    @Override
-    public void broadcastToAllPlayers(String message) {
-        // Game: gameName   Team: team name   Score: ##
-        // Red:
-        // Blue:
-        // chat
-        // personal message
-
-        status.chat(message);
-        updatePlayerStatusDisplay();
-    }
-
-    @Override
-    public void sendToPlayer(String playerName, String message) {
-        status.message(playerName, message);
-        updatePlayerStatusDisplay(playerName);
-    }
-
-    public void broadcastChat(String playerName, String message) {
-        broadcastToAllPlayers(playerName + ": " + message);
-    }
-
-    private void updatePlayerStatusDisplay(String playerName) {
-        Team team = players.get(playerName);
-        Player player = getPlayer(playerName);
-        String gameName = modules[currentModule].getName();
-        status.format(0, isGaming() ? "Playing " + gameName : "Gathering " + gameName, team, getPlayerScore(playerName));
-        for (String line : status.getStatusLines(playerName)) {
-            if (line != null) {
-                player.sendMessage(line);
-            }
-        }
-    }
-
-    private void updatePlayerStatusDisplay() {
-        for (String playerName : players.keySet()) {
-            updatePlayerStatusDisplay(playerName);
-        }
     }
 
     @Override
@@ -403,9 +397,7 @@ public class SimpleGameController implements GameContext {
             players.put(playerName, team);
             playerEntered(playerName);
             fixTeamSuits();
-            status.format(1, StringUtils.flatten(getPlayersOnTeam(Team.RED)));
-            status.format(2, StringUtils.flatten(getPlayersOnTeam(Team.BLUE)));
-            updatePlayerStatusDisplay();
+            status.updateForAll();
             return true;
         }
     }
@@ -439,9 +431,7 @@ public class SimpleGameController implements GameContext {
             }
         }
         fixTeamSuits();
-        status.format(1, StringUtils.flatten(getPlayersOnTeam(Team.RED)));
-        status.format(2, StringUtils.flatten(getPlayersOnTeam(Team.BLUE)));
-        updatePlayerStatusDisplay();
+        status.updateForAll();
     }
 
     private void fixTeamSuits() {
@@ -450,16 +440,21 @@ public class SimpleGameController implements GameContext {
                 // someone is now carrying the flag
                 Player player = getPlayer(playerName);
                 PlayerInventory inv = player.getInventory();
-                ItemStack helmet = inv.getArmorContents()[3]; // getHelmet() wouldn't give me non-helmet blocks
+                ItemStack helmet = inv.getArmorContents()[2]; // getHelmet() wouldn't give me non-helmet blocks
                 // if they already have a helmet, remove it and put it in their inventory
                 if (helmet != null && helmet.getType() != Material.AIR) {
                     inv.addItem(helmet);
                 }
                 Team team = getPlayerTeam(player.getName());
-                inv.setHelmet(team.getWool());
+                inv.setChestplate(team.getWool());
+                player.setDisplayName(
+                        (team == Team.BLUE ? ChatColor.BLUE : ChatColor.RED) + playerName);
             }
         }
     }
+
+    //---------------------------------------------------------------------
+    // Scoring
 
     private void clearScores() {
         wins = new HashMap<String, Integer>();
@@ -470,15 +465,20 @@ public class SimpleGameController implements GameContext {
     }
 
     @Override
+    public int getScore(String playerName) {
+        return wins.containsKey(playerName) ? wins.get(playerName) : 0;
+    }
+
+    @Override
     public void addWin(String playerName) {
-        wins.put(playerName, wins.containsKey(playerName) ? wins.get(playerName) + 1 : 1);
-        updatePlayerStatusDisplay(playerName);
+        wins.put(playerName, getScore(playerName) + 1);
+        status.updateFor(playerName);
     }
 
     @Override
     public void addLoss(String playerName) {
-        wins.put(playerName, wins.containsKey(playerName) ? Math.max(wins.get(playerName) - 1, 0) : 0);
-        updatePlayerStatusDisplay(playerName);
+        wins.put(playerName, getScore(playerName) - 1);
+        status.updateFor(playerName);
     }
 
     private void awardPoints() {
@@ -523,6 +523,9 @@ public class SimpleGameController implements GameContext {
             e.printStackTrace();
         }
     }
+
+    //---------------------------------------------------------------------
+    // utilities
 
     public void dumpDebugInfo(String message) {
         debugInfo(message);

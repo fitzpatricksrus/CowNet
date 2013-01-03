@@ -1,70 +1,53 @@
 package us.fitzpatricksr.cownet.commands.games.framework;
 
-import org.bukkit.DyeColor;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.Wool;
 import us.fitzpatricksr.cownet.CowNetThingy;
+import us.fitzpatricksr.cownet.utils.StatusBoard;
+import us.fitzpatricksr.cownet.utils.StatusBoard.Team;
 
 import java.util.Collection;
 import java.util.Set;
 
-public interface GameContext {
-    public enum Team {
-        RED,
-        BLUE;
+public interface GameContext extends StatusBoard.StatusSource {
 
-        public Team otherTeam() {
-            if (this == RED) {
-                return BLUE;
-            } else {
-                return RED;
-            }
-        }
-
-        public Material getMaterial() {
-            if (this == RED) {
-                return Material.LAPIS_BLOCK;
-            } else {
-                return Material.REDSTONE;
-            }
-        }
-
-        public ItemStack getWool() {
-            if (this == RED) {
-                return new ItemStack(Material.WOOL, 1, new Wool(DyeColor.RED).getData());
-            } else {
-                return new ItemStack(Material.WOOL, 1, new Wool(DyeColor.BLUE).getData());
-            }
-        }
-    }
-
+    @Override
     public CowNetThingy getCowNet();
+
+    @Override
+    public String getGameName();
 
     public boolean isLounging();
 
     public void endLounging();
 
+    @Override
     public boolean isGaming();
 
     public void endGame();
 
+    @Override
     public Collection<String> getPlayers();
 
     public void broadcastToAllPlayers(String message);
 
     public void sendToPlayer(String playerName, String message);
 
+    @Override
     public Player getPlayer(String playerName);
 
+    @Override
     public Team getPlayerTeam(String playerName);
 
+    @Override
     public Set<String> getPlayersOnTeam(Team team);
+
+    @Override
+    public int getScore(String playerName);
 
     public void addWin(String playerName);
 
     public void addLoss(String playerName);
 
+    @Override
     public void debugInfo(String message);
 }
