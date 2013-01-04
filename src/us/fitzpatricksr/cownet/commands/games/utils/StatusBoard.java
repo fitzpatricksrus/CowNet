@@ -30,6 +30,7 @@ public class StatusBoard {
     }
 
     private static final int numChatLines = 6;
+    private Random rand = new Random();
     private StatusSource context;
     private HashMap<String, String> playerMessages;
     private Queue<String> blueChatLines;
@@ -117,6 +118,37 @@ public class StatusBoard {
         for (String playerName : context.getPlayers()) {
             updateFor(playerName);
         }
+    }
+
+    public String getWinningPlayer() {
+        String winnerName = null;
+        int winnerTotal = Integer.MIN_VALUE;
+
+        for (String playerName : context.getPlayers()) {
+            int playerWins = context.getScore(playerName);
+            if (playerWins > winnerTotal || (playerWins == winnerTotal && rand.nextBoolean())) {
+                winnerName = playerName;
+                winnerTotal = playerWins;
+            }
+        }
+        return winnerName;
+    }
+
+    public Team getWinningTeam() {
+        // we award a player point for the player with the most wins-losses
+        // we award a team point to each player
+        int redTotal = 0;
+        int blueTotal = 0;
+
+        for (String playerName : context.getPlayers()) {
+            Team team = context.getPlayerTeam(playerName);
+            if (team == Team.RED) {
+                redTotal += context.getScore(playerName);
+            } else {
+                blueTotal += context.getScore(playerName);
+            }
+        }
+        return (redTotal > blueTotal) ? Team.RED : Team.BLUE;
     }
 
     private void appendToChat(Team team, String message) {

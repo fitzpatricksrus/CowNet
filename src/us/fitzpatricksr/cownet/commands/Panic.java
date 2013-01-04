@@ -11,8 +11,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.GameStatsFile;
+import us.fitzpatricksr.cownet.commands.games.framework.BasicGameController;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
-import us.fitzpatricksr.cownet.commands.games.framework.SimpleGameController;
 import us.fitzpatricksr.cownet.commands.games.gamemodules.TestModule;
 import us.fitzpatricksr.cownet.commands.games.utils.Team;
 
@@ -34,7 +34,7 @@ public class Panic extends CowNetThingy implements Listener {
     @Setting
     private String panicWorldName = "panic";
 
-    private SimpleGameController controller;
+    private BasicGameController controller;
     private GameModule[] modules = new GameModule[]{
             new TestModule("TestModule1"),
             new us.fitzpatricksr.cownet.commands.games.gamemodules.SnowWars(),
@@ -47,7 +47,7 @@ public class Panic extends CowNetThingy implements Listener {
     private GameStatsFile gameStats;
 
     public Panic() {
-        controller = new SimpleGameController(this, modules);
+        controller = new BasicGameController(this, modules);
     }
 
     @Override

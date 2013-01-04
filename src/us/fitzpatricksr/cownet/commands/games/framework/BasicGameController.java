@@ -15,29 +15,26 @@ import java.io.IOException;
 import java.util.*;
 
 /*
-lounge, then game.
+Gather players until we have at least one game that can be started, then start it.
 */
-public class SimpleGameController implements GameContext {
+public class BasicGameController implements GameContext {
     private Random rand = new Random();
     private CowNetThingy mod;
     private boolean isLounging;
     private HashMap<String, Team> players;
-    private int currentModule;
+    private GameModule currentModule;
     private GameModule[] modules;
     private int gameTimerTaskId;
     private StatusBoard status;
     private GameStatsFile statsFile;
     private HashMap<String, Integer> wins;
 
-    @CowNetThingy.Setting
-    private int minPlayers = 1;
-
-    public SimpleGameController(CowNetThingy mod, GameModule[] modules) {
+    public BasicGameController(CowNetThingy mod, GameModule[] modules) {
         this.mod = mod;
         this.isLounging = true;   // lounging
         this.players = new HashMap<String, Team>();
         this.modules = modules;
-        this.currentModule = 0;
+        this.currentModule = null;
         this.gameTimerTaskId = 0;
         this.status = new StatusBoard(this);
     }
@@ -201,10 +198,10 @@ public class SimpleGameController implements GameContext {
             if (players.size() < module.getMinPlayers()) {
                 // leave it lounging. go to the next game and lounge again.
                 dumpDebugInfo("  - Not enough players.  Moving to next game.");
-                moveToNextGame();
+                selectNewCurrentGameModule();
             } else {
                 setLounging(false);
-                clearScores();
+                clearScores();  // clear scores from previous game.
                 balanceTeams();
                 getCurrentModule().gameStarted();
             }
@@ -226,19 +223,34 @@ public class SimpleGameController implements GameContext {
             awardPoints();
             setLounging(true);
         }
-        moveToNextGame();
+        selectNewCurrentGameModule();
         getCurrentModule().loungeStarted();
         startTimerTask();   //start lounge timer
     }
 
-    private void moveToNextGame() {
+    private void selectNewCurrentGameModule() {
         getCurrentModule().shutdown();
-        currentModule = (currentModule + 1) % modules.length;
+        currentModule = null; //force to select a new module
         getCurrentModule().startup(newDebugWrapper(this, getCurrentModule().getName()));
     }
 
     private GameModule getCurrentModule() {
-        return modules[currentModule];
+        if (currentModule == null) {
+            // nothing is running right now, select a module.
+            int base = rand.nextInt(modules.length);
+            for (int i = 0; i < modules.length; i++) {
+                int ndx = (base + i) % modules.length;
+                currentModule = modules[ndx];
+                if (players.size() >= modules[ndx].getMinPlayers()) {
+                    return currentModule;
+                }
+            }
+            // we didn't find a runnable module.  So, return the GatheringModule
+            currentModule = new GatheringModule();
+            return currentModule;
+        } else {
+            return currentModule;
+        }
     }
 
     private void stopTimerTask() {
@@ -251,27 +263,28 @@ public class SimpleGameController implements GameContext {
 
     private void startTimerTask() {
         stopTimerTask();
-        long maxTime = isLounging ? getCurrentModule().getLoungeDuration() * 20 : getCurrentModule().getGameDuration() * 20;
-
-        debugInfo("startTimerTask: " + maxTime);
         JavaPlugin plugin = getCowNet().getPlugin();
         if (isLounging) {
-            if (maxTime > 0) {
+            int maxLoungeDuration = getCurrentModule().getLoungeDuration() * 20;
+            debugInfo("startTimerTask: " + maxLoungeDuration);
+            if (maxLoungeDuration > 0) {
                 gameTimerTaskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                     public void run() {
                         endLounging();
                     }
-                }, maxTime);
+                }, maxLoungeDuration);
             } else {
                 endLounging();
             }
         } else {
-            if (maxTime > 0) {
+            int maxGameDuration = getCurrentModule().getLoungeDuration() * 20;
+            debugInfo("startTimerTask: " + maxGameDuration);
+            if (maxGameDuration > 0) {
                 gameTimerTaskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                     public void run() {
                         endGame();
                     }
-                }, maxTime);
+                }, maxGameDuration);
             } else {
                 endGame();
             }
@@ -329,6 +342,7 @@ public class SimpleGameController implements GameContext {
 
     public void addPlayer(String playerName) {
         if (!players.containsKey(playerName)) {
+            // if this is the first player, start the timer
             int red = Collections.frequency(players.values(), Team.RED);
             int blue = Collections.frequency(players.values(), Team.BLUE);
             if (red < blue) {
@@ -344,8 +358,6 @@ public class SimpleGameController implements GameContext {
     }
 
     public void removePlayer(String playerName) {
-        // NOTE: this method is rarely needed since players are automatically
-        // removed from the game when they leave the server
         if (players.containsKey(playerName)) {
             dumpDebugInfo("removePlayer(" + playerName + ")");
             players.remove(playerName);
@@ -491,40 +503,14 @@ public class SimpleGameController implements GameContext {
     }
 
     private void awardPoints() {
-        // we award a player point for the player with the most wins-losses
-        // we award a team point to each player
-        int redTotal = 0;
-        int blueTotal = 0;
-        String winnerName = "DUMMY";
-        int winnerTotal = Integer.MIN_VALUE;
-
-        for (String playerName : players.keySet()) {
-            int playerWins = getScore(playerName);
-            if (playerWins > winnerTotal || (playerWins == winnerTotal && rand.nextBoolean())) {
-                winnerName = playerName;
-                winnerTotal = playerWins;
-            }
-
-            Team team = players.get(playerName);
-            if (team == Team.RED) {
-                redTotal += playerWins;
-            } else {
-                blueTotal += playerWins;
-            }
-        }
-        Team winningTeam = (redTotal > blueTotal) ? Team.RED : Team.BLUE;
-
-        // OK, now we have the winning player and the winning team.
-        // Award a win to the winning player
-        // and a team win to all players on the winning team
-        statsFile.accumulate(winnerName, "wins", 1);
-        for (String playerName : players.keySet()) {
-            if (winningTeam == players.get(playerName)) {
-                statsFile.accumulate(playerName, "teamWins", 1);
-            }
+        Team winningTeam = status.getWinningTeam();
+        String winningPlayer = status.getWinningPlayer();
+        statsFile.accumulate(winningPlayer, "wins", 1);
+        for (String playerName : getPlayersOnTeam(winningTeam)) {
+            statsFile.accumulate(playerName, "teamWins", 1);
         }
 
-        broadcastToAllPlayers(winnerName + " was the winning player.");
+        broadcastToAllPlayers(winningPlayer + " was the winning player.");
         broadcastToAllPlayers(winningTeam + " was the winning team.");
         try {
             statsFile.saveConfig();
@@ -545,4 +531,84 @@ public class SimpleGameController implements GameContext {
     public void debugInfo(String message) {
         getCowNet().debugInfo(message);
     }
+
+    //---------------------------------------------------------------------
+    // module used to gather players for the games
+
+    public class GatheringModule implements GameModule {
+        private GameContext context;
+
+        public GatheringModule() {
+        }
+
+        @Override
+        public String getName() {
+            return "Waiting...";
+        }
+
+        @Override
+        public int getLoungeDuration() {
+            // we'll sit and lounge until we find a game that we can run
+            // we lounge so previous scores are still available.
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
+        public int getGameDuration() {
+            return 0;
+        }
+
+        @Override
+        public int getMinPlayers() {
+            return 0;
+        }
+
+        @Override
+        public boolean isTeamGame() {
+            return true;
+        }
+
+        @Override
+        public void startup(GameContext context) {
+            this.context = context;
+        }
+
+        @Override
+        public void shutdown() {
+        }
+
+        @Override
+        public void loungeStarted() {
+        }
+
+        @Override
+        public void playerEnteredLounge(String playerName) {
+            context.endGame();
+        }
+
+        @Override
+        public void playerLeftLounge(String playerName) {
+        }
+
+        @Override
+        public void loungeEnded() {
+        }
+
+        @Override
+        public void gameStarted() {
+        }
+
+        @Override
+        public void playerEnteredGame(String playerName) {
+        }
+
+        @Override
+        public void playerLeftGame(String playerName) {
+        }
+
+        @Override
+        public void gameEnded() {
+        }
+    }
+
 }
