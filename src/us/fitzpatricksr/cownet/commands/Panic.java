@@ -14,7 +14,7 @@ import us.fitzpatricksr.cownet.commands.games.GameStatsFile;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
 import us.fitzpatricksr.cownet.commands.games.framework.SimpleGameController;
 import us.fitzpatricksr.cownet.commands.games.gamemodules.TestModule;
-import us.fitzpatricksr.cownet.commands.games.utils.StatusBoard.Team;
+import us.fitzpatricksr.cownet.commands.games.utils.Team;
 
 import java.io.IOException;
 import java.util.HashMap;

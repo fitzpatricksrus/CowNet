@@ -9,7 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.GameStatsFile;
 import us.fitzpatricksr.cownet.commands.games.utils.StatusBoard;
-import us.fitzpatricksr.cownet.commands.games.utils.StatusBoard.Team;
+import us.fitzpatricksr.cownet.commands.games.utils.Team;
 
 import java.io.IOException;
 import java.util.*;

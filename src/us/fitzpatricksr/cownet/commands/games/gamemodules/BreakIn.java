@@ -13,7 +13,7 @@ import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
 import us.fitzpatricksr.cownet.commands.games.utils.SpawnAndLoungeUtils;
-import us.fitzpatricksr.cownet.commands.games.utils.StatusBoard.Team;
+import us.fitzpatricksr.cownet.commands.games.utils.Team;
 
 import java.util.Random;
 

@@ -1,11 +1,6 @@
 package us.fitzpatricksr.cownet.commands.games.utils;
 
-import org.bukkit.ChatColor;
-import org.bukkit.DyeColor;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.Wool;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.utils.StringUtils;
@@ -13,42 +8,6 @@ import us.fitzpatricksr.cownet.utils.StringUtils;
 import java.util.*;
 
 public class StatusBoard {
-    public enum Team {
-        RED,
-        BLUE;
-
-        public Team otherTeam() {
-            if (this == RED) {
-                return BLUE;
-            } else {
-                return RED;
-            }
-        }
-
-        public Material getMaterial() {
-            if (this == RED) {
-                return Material.LAPIS_BLOCK;
-            } else {
-                return Material.REDSTONE;
-            }
-        }
-
-        public ItemStack getWool() {
-            if (this == RED) {
-                return new ItemStack(Material.WOOL, 1, new Wool(DyeColor.RED).getData());
-            } else {
-                return new ItemStack(Material.WOOL, 1, new Wool(DyeColor.BLUE).getData());
-            }
-        }
-
-        public ChatColor getChatColor() {
-            if (this == RED) {
-                return ChatColor.RED;
-            } else {
-                return ChatColor.BLUE;
-            }
-        }
-    }
 
     public interface StatusSource {
         public CowNetThingy getCowNet();
@@ -78,14 +37,6 @@ public class StatusBoard {
     private String redTeam;
     private String blueTeam;
     private int gameStatusTaskId;
-
-    /*
-                "> %s:   Team: %-4s   Score: %d",
-                "> Red  Team: %s",
-                "> Blue Team: %s");
-            status.format(1, StringUtils.flatten(getPlayersOnTeam(Team.RED)));
-            status.format(2, StringUtils.flatten(getPlayersOnTeam(Team.BLUE)));
-     */
 
     @CowNetThingy.Setting
     private int statusUpdateFrequency = 60;
