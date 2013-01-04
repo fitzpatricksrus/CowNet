@@ -44,7 +44,7 @@ public class SimpleGameController implements GameContext {
 
     public void startup(GameStatsFile statsFile) {
         this.statsFile = statsFile;
-        GameModule module = this.modules[currentModule];
+        GameModule module = this.getCurrentModule();
         module.startup(newDebugWrapper(this, module.getName()));
         module.loungeStarted();
         status.enable();
@@ -52,7 +52,7 @@ public class SimpleGameController implements GameContext {
     }
 
     public void shutdown() {
-        GameModule module = this.modules[currentModule];
+        GameModule module = this.getCurrentModule();
         stopTimerTask();
         status.disable();
         endLounging();
@@ -169,34 +169,12 @@ public class SimpleGameController implements GameContext {
 
     @Override
     public String getGameName() {
-        return modules[currentModule].getName();
+        return getCurrentModule().getName();
     }
 
     @Override
     public boolean isLounging() {
         return isLounging;
-    }
-
-    @Override
-    public void endLounging() {
-        dumpDebugInfo("endLounging");
-        stopTimerTask();
-        if (isLounging) {
-            if (getPlayers().size() >= minPlayers) {
-                modules[currentModule].loungeEnded();
-                setLounging(false);
-                balanceTeams();
-                modules[currentModule].gameStarted();
-            } else {
-                dumpDebugInfo("  - not enough players.  continue lounging. (1)");
-                // not enough players.  continue to lounge
-            }
-        } else {
-            dumpDebugInfo("  - Hmm....not lounging");
-            // lounging already over, so nothing to do
-        }
-        clearScores();
-        startTimerTask();
     }
 
     @Override
@@ -210,33 +188,57 @@ public class SimpleGameController implements GameContext {
     }
 
     @Override
+    public void endLounging() {
+        dumpDebugInfo("endLounging");
+
+        if (!isLounging) {
+            dumpDebugInfo("  - Hmm....not lounging");
+            // lounging already over, so nothing to do
+        } else {
+            stopTimerTask();
+            GameModule module = getCurrentModule();
+            module.loungeEnded();
+            if (players.size() < module.getMinPlayers()) {
+                // leave it lounging. go to the next game and lounge again.
+                dumpDebugInfo("  - Not enough players.  Moving to next game.");
+                moveToNextGame();
+            } else {
+                setLounging(false);
+                clearScores();
+                balanceTeams();
+                getCurrentModule().gameStarted();
+            }
+            startTimerTask();
+        }
+    }
+
+    @Override
     public void endGame() {
         dumpDebugInfo("endGame");
         stopTimerTask();
         if (isLounging) {
-            if (getPlayers().size() < minPlayers) {
-                // hey jf - Do we care about this case?  Why not just let it cycle
-                // through games?
-                // OK, we're lounging and still don't have enough people
-                // to have a real game.  No point in stopping lounging.
-                dumpDebugInfo("  - not enough players to start a new game. (2)");
-                startTimerTask();   //start lounge timer
-                return;
-            } else {
-                // to end the game, we must cleanly end the lounge first
-                modules[currentModule].loungeEnded();
-                setLounging(false);
-                modules[currentModule].gameStarted();
-            }
+            // if we're lounging, clean it up before we move to next game
+            // skip gameStarted/gameEnded phases
+            getCurrentModule().loungeEnded();
+            dumpDebugInfo("  - was lounging, so just moving to next game.");
+        } else {
+            getCurrentModule().gameEnded();
+            awardPoints();
+            setLounging(true);
         }
-        modules[currentModule].gameEnded();
-        modules[currentModule].shutdown();
-        awardPoints();
-        setLounging(true);
-        currentModule = (currentModule + 1) % modules.length;
-        modules[currentModule].startup(newDebugWrapper(this, modules[currentModule].getName()));
-        modules[currentModule].loungeStarted();
+        moveToNextGame();
+        getCurrentModule().loungeStarted();
         startTimerTask();   //start lounge timer
+    }
+
+    private void moveToNextGame() {
+        getCurrentModule().shutdown();
+        currentModule = (currentModule + 1) % modules.length;
+        getCurrentModule().startup(newDebugWrapper(this, getCurrentModule().getName()));
+    }
+
+    private GameModule getCurrentModule() {
+        return modules[currentModule];
     }
 
     private void stopTimerTask() {
@@ -249,24 +251,32 @@ public class SimpleGameController implements GameContext {
 
     private void startTimerTask() {
         stopTimerTask();
-        long maxTime = isLounging ? modules[currentModule].getLoungeDuration() * 20 : modules[currentModule].getGameDuration() * 20;
-        if (maxTime > 0) {
-            debugInfo("startTimerTask: " + maxTime);
-            JavaPlugin plugin = getCowNet().getPlugin();
-            if (isLounging) {
+        long maxTime = isLounging ? getCurrentModule().getLoungeDuration() * 20 : getCurrentModule().getGameDuration() * 20;
+
+        debugInfo("startTimerTask: " + maxTime);
+        JavaPlugin plugin = getCowNet().getPlugin();
+        if (isLounging) {
+            if (maxTime > 0) {
                 gameTimerTaskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                     public void run() {
                         endLounging();
                     }
                 }, maxTime);
             } else {
+                endLounging();
+            }
+        } else {
+            if (maxTime > 0) {
                 gameTimerTaskId = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
                     public void run() {
                         endGame();
                     }
                 }, maxTime);
+            } else {
+                endGame();
             }
         }
+
     }
 
     //---------------------------------------------------------------------
@@ -346,10 +356,10 @@ public class SimpleGameController implements GameContext {
     private void playerEntered(String playerName) {
         if (isLounging()) {
             dumpDebugInfo("playerEntered(" + playerName + ") lounge");
-            modules[currentModule].playerEnteredLounge(playerName);
+            getCurrentModule().playerEnteredLounge(playerName);
         } else {
             dumpDebugInfo("playerEntered(" + playerName + ") game");
-            modules[currentModule].playerEnteredGame(playerName);
+            getCurrentModule().playerEnteredGame(playerName);
         }
 
         // add a hat
@@ -359,10 +369,10 @@ public class SimpleGameController implements GameContext {
     private void playerLeft(String playerName) {
         if (isLounging()) {
             dumpDebugInfo("playerLeft(" + playerName + ") lounge");
-            modules[currentModule].playerLeftLounge(playerName);
+            getCurrentModule().playerLeftLounge(playerName);
         } else {
             dumpDebugInfo("playerLeft(" + playerName + ") game");
-            modules[currentModule].playerLeftGame(playerName);
+            getCurrentModule().playerLeftGame(playerName);
         }
 
         // remove the hat.
@@ -438,7 +448,7 @@ public class SimpleGameController implements GameContext {
     }
 
     private void fixTeamSuits() {
-        if (modules[currentModule].isTeamGame()) {
+        if (getCurrentModule().isTeamGame()) {
             for (String playerName : players.keySet()) {
                 // someone is now carrying the flag
                 Player player = getPlayer(playerName);
@@ -532,7 +542,7 @@ public class SimpleGameController implements GameContext {
 
     public void dumpDebugInfo(String message) {
         debugInfo(message);
-        debugInfo(" - module:" + modules[currentModule].getName());
+        debugInfo(" - module:" + getCurrentModule().getName());
     }
 
     @Override

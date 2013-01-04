@@ -34,6 +34,11 @@ public class TestModule implements GameModule {
     }
 
     @Override
+    public int getMinPlayers() {
+        return 1;
+    }
+
+    @Override
     public boolean isTeamGame() {
         return true;
     }

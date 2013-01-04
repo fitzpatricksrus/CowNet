@@ -48,6 +48,8 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     private int tntWarsLoungeDuration = 30; // 30 second loung
     @CowNetThingy.Setting
     private int tntWarsGameDuration = 60 * 3; // 3 minutes max game length
+    @CowNetThingy.Setting
+    private int tntWarsMinPlayers = 2; // 3 minutes max game length
     // manual setting
     private Material explosiveBlockType = Material.TNT;
 
@@ -64,6 +66,11 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     @Override
     public int getGameDuration() {
         return tntWarsGameDuration;
+    }
+
+    @Override
+    public int getMinPlayers() {
+        return tntWarsMinPlayers;
     }
 
     @Override

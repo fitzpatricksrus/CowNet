@@ -40,6 +40,8 @@ public class BreakIn implements Listener, GameModule {
     private int breakInLoungeDuration = 30; // 30 second loung
     @CowNetThingy.Setting
     private int breakInGameDuration = 60 * 3; // 3 minutes max game length
+    @CowNetThingy.Setting
+    private int breakInMinPlayers = 2; // 3 minutes max game length
 
     @Override
     public String getName() {
@@ -54,6 +56,11 @@ public class BreakIn implements Listener, GameModule {
     @Override
     public int getGameDuration() {
         return breakInGameDuration;
+    }
+
+    @Override
+    public int getMinPlayers() {
+        return breakInMinPlayers;
     }
 
     @Override

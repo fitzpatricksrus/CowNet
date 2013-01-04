@@ -44,6 +44,8 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     private int snowWarsGameDuration = 60 * 3; // 3 minutes max game length
     @CowNetThingy.Setting
     private int snowWarsFireTicks = 10;  // 1/2 second when you get hit
+    @CowNetThingy.Setting
+    private int snowWarsMinPlayers = 2;  // 1/2 second when you get hit
 
     @Override
     public String getName() {
@@ -58,6 +60,11 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     @Override
     public int getGameDuration() {
         return snowWarsGameDuration;
+    }
+
+    @Override
+    public int getMinPlayers() {
+        return snowWarsMinPlayers;
     }
 
     @Override

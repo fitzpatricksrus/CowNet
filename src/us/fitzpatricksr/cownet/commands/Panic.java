@@ -107,6 +107,12 @@ public class Panic extends CowNetThingy implements Listener {
     //
 
     @CowCommand
+    protected boolean doJoin(Player player) {
+        controller.addPlayer(player.getName());
+        return true;
+    }
+
+    @CowCommand
     protected boolean doBattle(Player player) {
         controller.addPlayer(player.getName());
         return true;
@@ -122,6 +128,11 @@ public class Panic extends CowNetThingy implements Listener {
         Team team = controller.getPlayerTeam(playerName);
         sender.sendMessage(playerName + " is on the " + team + " team.");
         return true;
+    }
+
+    @CowCommand
+    protected boolean doChangeTeam(Player player) {
+        return doChangeteam(player, player.getName());
     }
 
     @CowCommand

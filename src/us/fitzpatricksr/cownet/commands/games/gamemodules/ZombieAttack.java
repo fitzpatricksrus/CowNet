@@ -52,6 +52,8 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
     private int zombieAttackGameDuration = 60 * 3; // 3 minutes max game length
     @CowNetThingy.Setting
     private int zombieAttackWaveRate = 15 * 20;    // how often they spawn
+    @CowNetThingy.Setting
+    private int zombieAttackMinPlayers = 2;
 
     @Override
     public String getName() {
@@ -66,6 +68,11 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
     @Override
     public int getGameDuration() {
         return zombieAttackGameDuration;
+    }
+
+    @Override
+    public int getMinPlayers() {
+        return zombieAttackMinPlayers;
     }
 
     @Override
