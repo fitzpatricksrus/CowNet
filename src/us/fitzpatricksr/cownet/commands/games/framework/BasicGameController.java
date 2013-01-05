@@ -96,7 +96,7 @@ public class BasicGameController implements GameContext {
             module.loungeEnded();
             if (players.size() < module.getMinPlayers()) {
                 // leave it lounging. go to the next game and lounge again.
-                dumpDebugInfo("  - Not enough players.  Moving to next game.");
+                broadcastToAllPlayers("Not enough players for " + getCurrentModule().getName() + ".  Game canceled.");
                 selectNewCurrentGameModule();
             } else {
                 setLounging(false);
@@ -486,11 +486,15 @@ public class BasicGameController implements GameContext {
 
         @Override
         public void loungeStarted() {
+            // If this got called, that means that there weren't any schedulable modules.
+            // No point in running the timer if we're not gathering players.
             stopTimerTask();
         }
 
         @Override
         public void playerEnteredLounge(String playerName) {
+            // It looks like we have at least 1 player, so force controller
+            // to pick a module and start a new game.
             context.endGame();
         }
 
