@@ -241,7 +241,6 @@ public class BasicGameController implements GameContext {
 
     public void addPlayer(String playerName) {
         if (!players.containsKey(playerName)) {
-            // if this is the first player, start the timer
             int red = Collections.frequency(players.values(), Team.RED);
             int blue = Collections.frequency(players.values(), Team.BLUE);
             if (red < blue) {
@@ -275,6 +274,8 @@ public class BasicGameController implements GameContext {
 
         // add a hat
         fixTeamSuits();
+        // update status board with new teams
+        status.updateForAll();
     }
 
     private void playerLeft(String playerName) {
@@ -287,8 +288,9 @@ public class BasicGameController implements GameContext {
         }
 
         // remove the hat.
-        PlayerInventory inv = getPlayer(playerName).getInventory();
-        inv.setHelmet(null);
+        fixTeamSuits();
+        // update status board with new teams
+        status.updateForAll();
     }
 
     public boolean playerIsInGame(String playerName) {
