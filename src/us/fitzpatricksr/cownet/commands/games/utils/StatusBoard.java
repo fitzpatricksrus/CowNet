@@ -50,6 +50,10 @@ public class StatusBoard {
         playerMessages = new HashMap<String, String>();
         redChatLines = new LinkedList<String>();
         blueChatLines = new LinkedList<String>();
+        for (int i = 0; i < numChatLines; i++) {
+            appendToChat(Team.RED, "");
+            appendToChat(Team.BLUE, "");
+        }
         redTeam = "";
         blueTeam = "";
         gameStatusTaskId = 0;
