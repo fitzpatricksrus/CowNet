@@ -37,11 +37,13 @@ public class BasicGameController implements GameContext {
         this.currentModule = null;
         this.gameTimerTaskId = 0;
         this.status = new StatusBoard(this);
+        this.wins = new HashMap<String, Integer>();
     }
 
     public void startup(GameStatsFile statsFile) {
         this.statsFile = statsFile;
         currentModule = new GatheringModule();
+        clearScores();
         status.enable();
     }
 
@@ -366,15 +368,42 @@ public class BasicGameController implements GameContext {
                 // someone is now carrying the flag
                 Player player = getPlayer(playerName);
                 PlayerInventory inv = player.getInventory();
-                ItemStack helmet = inv.getArmorContents()[2]; // getHelmet() wouldn't give me non-helmet blocks
+                ItemStack helmet = inv.getArmorContents()[3]; // getHelmet() wouldn't give me non-helmet blocks
                 // if they already have a helmet, remove it and put it in their inventory
-                if (helmet != null && helmet.getType() != Material.AIR) {
+                if (helmet != null && helmet.getType() != Material.AIR && helmet.getType() != Material.WOOL) {
                     inv.addItem(helmet);
                 }
                 Team team = getPlayerTeam(player.getName());
-                inv.setChestplate(team.getWool());
+                inv.setHelmet(team.getWool());
                 player.setDisplayName(
                         (team == Team.BLUE ? ChatColor.BLUE : ChatColor.RED) + playerName);
+            }
+        }
+    }
+
+    /*
+    this routine
+    ItemStack[] armor = player.getInventory().getArmorContents();
+     0 = Helmet
+     1 = ChestPlate
+     2 = Leggings
+     3 = Boots
+     */
+    private void fixTeamSuits2() {
+        final int uniformIndex = 1;
+        if (getCurrentModule().isTeamGame()) {
+            for (String playerName : players.keySet()) {
+                // someone is now carrying the flag
+                Player player = getPlayer(playerName);
+                PlayerInventory inv = player.getInventory();
+                ItemStack[] armor = inv.getArmorContents(); // getHelmet() wouldn't give me non-helmet blocks
+                ItemStack uniform = armor[uniformIndex]; // getHelmet() wouldn't give me non-helmet blocks
+                // if they already have a helmet, remove it and put it in their inventory
+                if (uniform != null && uniform.getType() != Material.AIR) {
+//                    inv.addItem(uniform);
+                }
+                Team team = getPlayerTeam(player.getName());
+                armor[uniformIndex].setType(team.getWool().getType());
             }
         }
     }
@@ -406,13 +435,18 @@ public class BasicGameController implements GameContext {
     private void awardPoints() {
         Team winningTeam = status.getWinningTeam();
         String winningPlayer = status.getWinningPlayer();
+        statsFile.addRecentWinner(winningPlayer);
         statsFile.accumulate(winningPlayer, "wins", 1);
-        for (String playerName : getPlayersOnTeam(winningTeam)) {
-            statsFile.accumulate(playerName, "teamWins", 1);
+        if (getCurrentModule().isTeamGame()) {
+            for (String playerName : getPlayersOnTeam(winningTeam)) {
+                statsFile.accumulate(playerName, "teamWins", 1);
+            }
         }
 
         broadcastToAllPlayers(winningPlayer + " was the winning player.");
-        broadcastToAllPlayers(winningTeam + " was the winning team.");
+        if (getCurrentModule().isTeamGame()) {
+            broadcastToAllPlayers(winningTeam + " was the winning team.");
+        }
         try {
             statsFile.saveConfig();
         } catch (IOException e) {
@@ -445,11 +479,6 @@ public class BasicGameController implements GameContext {
     // that can ignore the gather player phase.
 
     public class GatheringModule implements GameModule {
-        private GameContext context;
-
-        public GatheringModule() {
-        }
-
         @Override
         public String getName() {
             return "Waiting...";
@@ -479,7 +508,6 @@ public class BasicGameController implements GameContext {
 
         @Override
         public void startup(GameContext context) {
-            this.context = context;
         }
 
         @Override
@@ -497,7 +525,7 @@ public class BasicGameController implements GameContext {
         public void playerEnteredLounge(String playerName) {
             // It looks like we have at least 1 player, so force controller
             // to pick a module and start a new game.
-            context.endGame();
+            endGame();
         }
 
         @Override
