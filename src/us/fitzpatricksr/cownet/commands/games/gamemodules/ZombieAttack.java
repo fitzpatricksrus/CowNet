@@ -47,7 +47,7 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
     @CowNetThingy.Setting
     private int zombieAttackSpawnJiggle = 5;
     @CowNetThingy.Setting
-    private int zombieAttackLoungeDuration = 30; // 30 second lounge
+    private int zombieAttackLoungeDuration = 10; // 30 second lounge
     @CowNetThingy.Setting
     private int zombieAttackGameDuration = 60 * 3; // 3 minutes max game length
     @CowNetThingy.Setting
@@ -77,7 +77,7 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public boolean isTeamGame() {
-        return true;
+        return false;
     }
 
     @Override
@@ -97,7 +97,10 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void loungeStarted() {
-        context.broadcastToAllPlayers("A game of SnowWars is gathering.");
+        context.broadcastToAllPlayers("");
+        context.broadcastToAllPlayers("*The Mob Apocalypse is upon us!");
+        context.broadcastToAllPlayers("*Survive longer than the others to get points.");
+        context.broadcastToAllPlayers("");
         for (String playerName : context.getPlayers()) {
             playerEnteredLounge(playerName);
         }

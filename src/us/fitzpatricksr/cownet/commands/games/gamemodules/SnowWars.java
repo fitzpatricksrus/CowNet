@@ -39,13 +39,13 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     @CowNetThingy.Setting
     private int snowWarsRefillSize = 5;     // how many we give them per minute
     @CowNetThingy.Setting
-    private int snowWarsLoungeDuration = 30; // 30 second loung
+    private int snowWarsLoungeDuration = 10; // 30 second lounge
     @CowNetThingy.Setting
     private int snowWarsGameDuration = 60 * 3; // 3 minutes max game length
     @CowNetThingy.Setting
     private int snowWarsFireTicks = 10;  // 1/2 second when you get hit
     @CowNetThingy.Setting
-    private int snowWarsMinPlayers = 2;  // 1/2 second when you get hit
+    private int snowWarsMinPlayers = 1;  // 1/2 second when you get hit
 
     @Override
     public String getName() {
@@ -89,7 +89,12 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void loungeStarted() {
-        context.broadcastToAllPlayers("A game of SnowWars is gathering.");
+        context.broadcastToAllPlayers("");
+        context.broadcastToAllPlayers("*SnowWars is about to begin.");
+        context.broadcastToAllPlayers("*Hit people on the other team for points.");
+        context.broadcastToAllPlayers("*Prepare for battle...");
+        context.broadcastToAllPlayers("");
+
         for (String playerName : context.getPlayers()) {
             playerEnteredLounge(playerName);
         }

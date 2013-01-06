@@ -8,9 +8,9 @@ import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
  */
 public class TestModule implements GameModule {
     @CowNetThingy.Setting
-    private int loungeDuration = 29; // 30 second loung
+    private int loungeDuration = 10; // 30 second loung
     @CowNetThingy.Setting
-    private int gameDuration = 31; // 3 minutes max game length
+    private int gameDuration = 10; // 3 minutes max game length
     private GameContext context;
     private String name;
 
@@ -57,6 +57,10 @@ public class TestModule implements GameModule {
 
     @Override
     public void loungeStarted() {
+        context.broadcastToAllPlayers("");
+        context.broadcastToAllPlayers("*TestModule is about to begin.");
+        context.broadcastToAllPlayers("*Nothing to see here...Move along...");
+        context.broadcastToAllPlayers("");
         dumpContext("loungeStarted");
     }
 

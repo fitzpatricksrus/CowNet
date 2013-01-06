@@ -45,7 +45,7 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     @CowNetThingy.Setting
     private int tntWarsRefillRate = 60;    // how often a player's supply is topped off
     @CowNetThingy.Setting
-    private int tntWarsLoungeDuration = 30; // 30 second loung
+    private int tntWarsLoungeDuration = 10; // 30 second loung
     @CowNetThingy.Setting
     private int tntWarsGameDuration = 60 * 3; // 3 minutes max game length
     @CowNetThingy.Setting
@@ -97,6 +97,11 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void loungeStarted() {
+        context.broadcastToAllPlayers("");
+        context.broadcastToAllPlayers("*Tnt Wars are about to begin.");
+        context.broadcastToAllPlayers("*Place Tnt to blow up the other team.");
+        context.broadcastToAllPlayers("*Prepare for battle...");
+        context.broadcastToAllPlayers("");
         for (String playerName : context.getPlayers()) {
             playerEnteredLounge(playerName);
         }

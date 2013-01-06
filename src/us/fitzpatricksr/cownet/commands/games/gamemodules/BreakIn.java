@@ -37,7 +37,7 @@ public class BreakIn implements Listener, GameModule {
     @CowNetThingy.Setting
     private int breakInSpawnJiggle = 5;
     @CowNetThingy.Setting
-    private int breakInLoungeDuration = 30; // 30 second loung
+    private int breakInLoungeDuration = 10; // 30 second loung
     @CowNetThingy.Setting
     private int breakInGameDuration = 60 * 3; // 3 minutes max game length
     @CowNetThingy.Setting
