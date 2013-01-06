@@ -13,7 +13,10 @@ import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.GameStatsFile;
 import us.fitzpatricksr.cownet.commands.games.framework.BasicGameController;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
+import us.fitzpatricksr.cownet.commands.games.gamemodules.SnowWars;
 import us.fitzpatricksr.cownet.commands.games.gamemodules.TestModule;
+import us.fitzpatricksr.cownet.commands.games.gamemodules.TntWars;
+import us.fitzpatricksr.cownet.commands.games.gamemodules.ZombieAttack;
 import us.fitzpatricksr.cownet.commands.games.utils.Team;
 
 import java.io.IOException;
@@ -37,9 +40,9 @@ public class Panic extends CowNetThingy implements Listener {
     private BasicGameController controller;
     private GameModule[] modules = new GameModule[]{
             new TestModule("TestModule1"),
-            new us.fitzpatricksr.cownet.commands.games.gamemodules.SnowWars(),
-//            new ZombieAttack(),
-//            new TntWars(),
+            new SnowWars(),
+            new ZombieAttack(),
+            new TntWars(),
 //            new BreakIn(),
 //            new TestModule("TestModule2"),
 //            new TestModule("TestModule3"),
@@ -107,13 +110,17 @@ public class Panic extends CowNetThingy implements Listener {
     //
 
     @CowCommand
-    protected boolean doJoin(Player player) {
-        controller.addPlayer(player.getName());
+    protected boolean doPanic(Player player) {
+        if (controller.playerIsInGame(player.getName())) {
+            controller.addPlayer(player.getName());
+        } else {
+            controller.removePlayer(player.getName());
+        }
         return true;
     }
 
     @CowCommand
-    protected boolean doBattle(Player player) {
+    protected boolean doJoin(Player player) {
         controller.addPlayer(player.getName());
         return true;
     }
@@ -184,13 +191,7 @@ public class Panic extends CowNetThingy implements Listener {
             if (toWorld.equalsIgnoreCase(panicWorldName)) {
                 controller.addPlayer(player.getName());
             } else if (fromWorld.equalsIgnoreCase(panicWorldName)) {
-                if (controller.isGaming()) {
-                    // you can't leave in the middle of a game
-                    controller.sendToPlayer(player.getName(), "You can't leave a game in progress.");
-                    event.setCancelled(true);
-                } else {
-                    controller.removePlayer(player.getName());
-                }
+                controller.removePlayer(player.getName());
             }
         }
         // this is how you officially leave the game
