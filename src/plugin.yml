@@ -21,6 +21,7 @@ commands:
       description: place a redstone torch under a glass block and step on the block.
       usage: flingportal
   plot:
+      aliases: [ plotme ]
       description: claim a plot of land for building
       usage: Use "/plot help" for help.
   hide:

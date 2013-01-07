@@ -3,11 +3,11 @@ package us.fitzpatricksr.cownet.commands.games.framework;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.GameStatsFile;
+import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
 import us.fitzpatricksr.cownet.commands.games.utils.StatusBoard;
 import us.fitzpatricksr.cownet.commands.games.utils.Team;
 
@@ -361,8 +361,8 @@ public class BasicGameController implements GameContext {
         fixTeamSuits();
         status.updateForAll();
     }
-
-    private void fixTeamSuits() {
+/*
+    private void fixTeamSuits2() {
         if (getCurrentModule().isTeamGame()) {
             for (String playerName : players.keySet()) {
                 // someone is now carrying the flag
@@ -380,30 +380,22 @@ public class BasicGameController implements GameContext {
             }
         }
     }
+    */
 
-    /*
-    this routine
-    ItemStack[] armor = player.getInventory().getArmorContents();
-     0 = Helmet
-     1 = ChestPlate
-     2 = Leggings
-     3 = Boots
-     */
-    private void fixTeamSuits2() {
-        final int uniformIndex = 1;
+    private void fixTeamSuits() {
         if (getCurrentModule().isTeamGame()) {
             for (String playerName : players.keySet()) {
-                // someone is now carrying the flag
                 Player player = getPlayer(playerName);
-                PlayerInventory inv = player.getInventory();
-                ItemStack[] armor = inv.getArmorContents(); // getHelmet() wouldn't give me non-helmet blocks
-                ItemStack uniform = armor[uniformIndex]; // getHelmet() wouldn't give me non-helmet blocks
-                // if they already have a helmet, remove it and put it in their inventory
-                if (uniform != null && uniform.getType() != Material.AIR) {
-//                    inv.addItem(uniform);
-                }
                 Team team = getPlayerTeam(player.getName());
-                armor[uniformIndex].setType(team.getWool().getType());
+                PlayerInventory inv = player.getInventory();
+
+                inv.setHelmet(InventoryUtils.createColoredStack(Material.LEATHER_HELMET, team));
+//                inv.setChestplate(InventoryUtils.createColoredStack(Material.LEATHER_CHESTPLATE, team));
+//                inv.setLeggings(InventoryUtils.createColoredStack(Material.LEATHER_LEGGINGS, team));
+                inv.setBoots(InventoryUtils.createColoredStack(Material.LEATHER_BOOTS, team));
+
+                player.setDisplayName(
+                        (team == Team.BLUE ? ChatColor.BLUE : ChatColor.RED) + playerName);
             }
         }
     }

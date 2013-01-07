@@ -16,6 +16,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
+import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
 import us.fitzpatricksr.cownet.commands.games.utils.SpawnAndLoungeUtils;
 
 import java.util.HashMap;
@@ -97,11 +98,6 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void loungeStarted() {
-        context.broadcastToAllPlayers("");
-        context.broadcastToAllPlayers("*Tnt Wars are about to begin.");
-        context.broadcastToAllPlayers("*Place Tnt to blow up the other team.");
-        context.broadcastToAllPlayers("*Prepare for battle...");
-        context.broadcastToAllPlayers("");
         for (String playerName : context.getPlayers()) {
             playerEnteredLounge(playerName);
         }
@@ -109,9 +105,18 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void playerEnteredLounge(String playerName) {
+        Player player = context.getPlayer(playerName);
+        player.getInventory().clear();
+        player.getInventory().addItem(InventoryUtils.createBook(
+                "TNT War Rules", "Master Blaster", new String[]{
+                "Blow up players on the other team and you score a point.\n\n" +
+                        "Blow up your team members and you loose a point.",
+                "TNT replenishes 5 at a time every few seconds.\n\n" +
+                        "Games are 3 minutes long."
+        }));
+
         Location lounge = spawnUtils.getPlayerLoungePoint();
         if (lounge != null) {
-            Player player = context.getPlayer(playerName);
             player.teleport(lounge);
         } else {
             context.debugInfo("Could not find lounge");

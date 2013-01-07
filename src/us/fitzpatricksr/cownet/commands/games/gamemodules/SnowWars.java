@@ -20,6 +20,7 @@ import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
+import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
 import us.fitzpatricksr.cownet.commands.games.utils.SpawnAndLoungeUtils;
 
 import java.util.Random;
@@ -89,12 +90,6 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void loungeStarted() {
-        context.broadcastToAllPlayers("");
-        context.broadcastToAllPlayers("*SnowWars is about to begin.");
-        context.broadcastToAllPlayers("*Hit people on the other team for points.");
-        context.broadcastToAllPlayers("*Prepare for battle...");
-        context.broadcastToAllPlayers("");
-
         for (String playerName : context.getPlayers()) {
             playerEnteredLounge(playerName);
         }
@@ -102,9 +97,17 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void playerEnteredLounge(String playerName) {
+        Player player = context.getPlayer(playerName);
+        player.getInventory().clear();
+        player.getInventory().addItem(InventoryUtils.createBook(
+                "SnowWars Rules", "Frosty", new String[]{
+                "Hit a player on the other team with snowballs and you score a point.\n\n" +
+                        "Hit your team members and you loose a point.",
+                "Snowballs replenish 5 at a time every few seconds.\n\n" +
+                        "Games are 3 minutes long."
+        }));
         Location lounge = spawnUtils.getPlayerLoungePoint();
         if (lounge != null) {
-            Player player = context.getPlayer(playerName);
             player.teleport(lounge);
         } else {
             context.debugInfo("Could not find lounge.");
@@ -177,11 +180,18 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
                         Player shooter = (Player) snowSource;
                         if (playerIsInGame(shooter.getName())) {
                             // OK, someone got plastered.  Accumulate stats.  Play effect.
+                            if (context.getPlayerTeam(shooter.getName()) == context.getPlayerTeam(victim.getName())) {
+                                // Oops!  You hit someone on your team
+                                context.sendToPlayer(shooter.getName(), "Oops!  You hit " + victim.getName() + " who is on your team!");
+                                context.addLoss(shooter.getName());
+                            } else {
+                                context.sendToPlayer(shooter.getName(), "Direct hit on " + victim.getName());
+                                context.addWin(shooter.getName());
+                                context.addLoss(victim.getName());
+                            }
                             event.setDamage(0);
                             smokeScreenEffect(victim.getLocation());
                             victim.setFireTicks(snowWarsFireTicks);
-                            context.addWin(shooter.getName());
-                            context.addLoss(victim.getName());
                         }
                     }
                 }

@@ -12,6 +12,7 @@ import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
+import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
 import us.fitzpatricksr.cownet.commands.games.utils.SpawnAndLoungeUtils;
 
 import java.util.Random;
@@ -97,10 +98,6 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void loungeStarted() {
-        context.broadcastToAllPlayers("");
-        context.broadcastToAllPlayers("*The Mob Apocalypse is upon us!");
-        context.broadcastToAllPlayers("*Survive longer than the others to get points.");
-        context.broadcastToAllPlayers("");
         for (String playerName : context.getPlayers()) {
             playerEnteredLounge(playerName);
         }
@@ -108,9 +105,15 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void playerEnteredLounge(String playerName) {
+        Player player = context.getPlayer(playerName);
+        player.getInventory().clear();
+        player.getInventory().addItem(InventoryUtils.createBook(
+                "The Mobs are Coming", "Master Mob", new String[]{
+                "Mobs will drop out of the sky.  Stay alive longer than other and you will score a Win."
+        }));
+
         Location lounge = spawnUtils.getPlayerLoungePoint();
         if (lounge != null) {
-            Player player = context.getPlayer(playerName);
             player.teleport(lounge);
         } else {
             context.debugInfo("Could not find lounge");
