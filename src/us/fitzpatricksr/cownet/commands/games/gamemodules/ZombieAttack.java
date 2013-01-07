@@ -105,13 +105,8 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void playerEnteredLounge(String playerName) {
+        setupPlayerInventory(playerName);
         Player player = context.getPlayer(playerName);
-        player.getInventory().clear();
-        player.getInventory().addItem(InventoryUtils.createBook(
-                "The Mobs are Coming", "Master Mob", new String[]{
-                "Mobs will drop out of the sky.  Stay alive longer than other and you will score a Win."
-        }));
-
         Location lounge = spawnUtils.getPlayerLoungePoint();
         if (lounge != null) {
             player.teleport(lounge);
@@ -141,6 +136,7 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void playerEnteredGame(String playerName) {
+        setupPlayerInventory(playerName);
         Location spawn = spawnUtils.getPlayerSpawnPoint();
         if (spawn != null) {
             Player player = context.getPlayer(playerName);
@@ -196,6 +192,15 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
 
             ent.remove();
         }
+    }
+
+    private void setupPlayerInventory(String playerName) {
+        Player player = context.getPlayer(playerName);
+        player.getInventory().clear();
+        player.getInventory().addItem(InventoryUtils.createBook(
+                "The Mobs are Coming", "Master Mob", new String[]{
+                "Mobs will drop out of the sky.  Stay alive longer than other and you will score a Win."
+        }));
     }
 
     // --------------------------------------------------------------

@@ -105,16 +105,8 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void playerEnteredLounge(String playerName) {
+        setupPlayerInventory(playerName);
         Player player = context.getPlayer(playerName);
-        player.getInventory().clear();
-        player.getInventory().addItem(InventoryUtils.createBook(
-                "TNT War Rules", "Master Blaster", new String[]{
-                "Blow up players on the other team and you score a point.\n\n" +
-                        "Blow up your team members and you loose a point.",
-                "TNT replenishes 5 at a time every few seconds.\n\n" +
-                        "Games are 3 minutes long."
-        }));
-
         Location lounge = spawnUtils.getPlayerLoungePoint();
         if (lounge != null) {
             player.teleport(lounge);
@@ -141,6 +133,7 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void playerEnteredGame(String playerName) {
+        setupPlayerInventory(playerName);
         Location spawn = spawnUtils.getPlayerSpawnPoint();
         if (spawn != null) {
             Player player = context.getPlayer(playerName);
@@ -162,6 +155,18 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
         for (String player : context.getPlayers()) {
             removeTnt(player);
         }
+    }
+
+    private void setupPlayerInventory(String playerName) {
+        Player player = context.getPlayer(playerName);
+        player.getInventory().clear();
+        player.getInventory().addItem(InventoryUtils.createBook(
+                "TNT War Rules", "Master Blaster", new String[]{
+                "Blow up players on the other team and you score a point.\n\n" +
+                        "Blow up your team members and you loose a point.",
+                "TNT replenishes 5 at a time every few seconds.\n\n" +
+                        "Games are 3 minutes long."
+        }));
     }
 
     // --------------------------------------------------------------
