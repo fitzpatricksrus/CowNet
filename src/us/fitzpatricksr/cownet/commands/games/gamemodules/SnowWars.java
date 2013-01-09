@@ -8,33 +8,20 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.HandlerList;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.CowNetThingy;
-import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
-import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
 import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
-import us.fitzpatricksr.cownet.commands.games.utils.SpawnAndLoungeUtils;
-
-import java.util.Random;
 
 /**
  */
-public class SnowWars implements org.bukkit.event.Listener, GameModule {
-    private Random rand = new Random();
-    private GameContext context;
-    private SpawnAndLoungeUtils spawnUtils;
+public class SnowWars extends BasicGame {
     private int gameTaskId = 0;
 
-    @CowNetThingy.Setting
-    private int snowWarsSpawnJiggle = 5;
     @CowNetThingy.Setting
     private int snowWarsRefillRate = 60;    // how often a player's supply is topped off
     @CowNetThingy.Setting
@@ -74,85 +61,44 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
     }
 
     @Override
-    public void startup(GameContext context) {
-        this.context = context;
-        CowNetMod plugin = context.getCowNet().getPlugin();
-        spawnUtils = new SpawnAndLoungeUtils(plugin, getName(), snowWarsSpawnJiggle);
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
-    }
-
-    @Override
-    public void shutdown() {
-        HandlerList.unregisterAll(this);
-        this.context = null;
-        spawnUtils = null;
-    }
-
-    @Override
-    public void loungeStarted() {
-        for (String playerName : context.getPlayers()) {
-            playerEnteredLounge(playerName);
-        }
-    }
-
-    @Override
     public void playerEnteredLounge(String playerName) {
         setupPlayerInventory(playerName);
-        Player player = context.getPlayer(playerName);
-        Location lounge = spawnUtils.getPlayerLoungePoint();
-        if (lounge != null) {
-            player.teleport(lounge);
-        } else {
-            context.debugInfo("Could not find lounge.");
-        }
-        context.broadcastToAllPlayers(playerName + " is on the " + context.getPlayerTeam(playerName) + " team.");
+        super.playerEnteredLounge(playerName);
     }
 
     @Override
     public void playerLeftLounge(String playerName) {
-        context.broadcastToAllPlayers(playerName + " left the game.");
-    }
-
-    @Override
-    public void loungeEnded() {
+        clearPlayerInventory(playerName);
+        super.playerLeftLounge(playerName);
     }
 
     @Override
     public void gameStarted() {
-        context.broadcastToAllPlayers("SnowWars has begun.");
-        for (String player : context.getPlayers()) {
-            playerEnteredGame(player);
-        }
+        super.gameStarted();
         startRefillTask();
     }
 
     @Override
     public void playerEnteredGame(String playerName) {
         setupPlayerInventory(playerName);
-        Location spawn = spawnUtils.getPlayerSpawnPoint();
-        if (spawn != null) {
-            Player player = context.getPlayer(playerName);
-            player.teleport(spawn);
-        } else {
-            context.debugInfo("Could not find spawn");
-        }
+        super.playerEnteredGame(playerName);
         giveSnow(playerName);
-        context.broadcastToAllPlayers(playerName + " is on the " + context.getPlayerTeam(playerName) + " team.");
     }
 
     @Override
     public void playerLeftGame(String playerName) {
         removeSnow(playerName);
-        context.broadcastToAllPlayers(playerName + " has left the game.");
+        clearPlayerInventory(playerName);
+        super.playerLeftGame(playerName);
     }
 
     @Override
     public void gameEnded() {
-        context.broadcastToAllPlayers("SnowWars has eneded.");
         stopRefillTask();
         for (String player : context.getPlayers()) {
             removeSnow(player);
         }
+        super.gameEnded();
     }
 
     private void setupPlayerInventory(String playerName) {
@@ -165,6 +111,11 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
                 "Snowballs replenish 5 at a time every few seconds.\n\n" +
                         "Games are 3 minutes long."
         }));
+    }
+
+    private void clearPlayerInventory(String playerName) {
+        Player player = context.getPlayer(playerName);
+        player.getInventory().clear();
     }
 
     // --------------------------------------------------------------
@@ -201,23 +152,6 @@ public class SnowWars implements org.bukkit.event.Listener, GameModule {
                         }
                     }
                 }
-            }
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onPlayerRespawn(PlayerRespawnEvent event) {
-        // register a loss and teleport back to spawn point
-        Player player = event.getPlayer();
-        String playerName = player.getName();
-        if (playerIsInGame(playerName)) {
-            // Just teleport the person back to spawn here.
-            // losses and announcements are done when the player is killed.
-            Location loc = (context.isLounging()) ? spawnUtils.getPlayerLoungePoint() : spawnUtils.getPlayerSpawnPoint();
-            if (loc != null) {
-                // hey jf - you need to jiggle this a bit or everyone will be on top of each other
-                // have the player respawn in the game spawn
-                event.setRespawnLocation(loc);
             }
         }
     }
