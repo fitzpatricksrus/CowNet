@@ -35,6 +35,7 @@ public class StatusBoard {
     private Random rand = new Random();
     private StatusSource context;
     private HashMap<String, String> playerMessages;
+    private HashMap<String, Long> playerMessagesAge;
     private Queue<String> blueChatLines;
     private Queue<String> redChatLines;
     private String redTeam;
@@ -42,7 +43,10 @@ public class StatusBoard {
     private int gameStatusTaskId;
 
     @CowNetThingy.Setting
-    private int statusUpdateFrequency = 60;
+    private int statusUpdateFrequencyTicks = 60;    // 3 seconds
+
+    @CowNetThingy.Setting
+    private int maxPlayerMessageAge = 60 * 1000;    // 1 minute
 
     public StatusBoard(StatusSource context) {
         this.context = context;
@@ -50,6 +54,7 @@ public class StatusBoard {
 
     public void enable() {
         playerMessages = new HashMap<String, String>();
+        playerMessagesAge = new HashMap<String, Long>();
         redChatLines = new LinkedList<String>();
         blueChatLines = new LinkedList<String>();
         for (int i = 0; i < numChatLines; i++) {
@@ -74,6 +79,7 @@ public class StatusBoard {
 
     public void sendMessageToPlayer(String playerName, String message) {
         playerMessages.put(playerName, message);
+        playerMessagesAge.put(playerName, System.currentTimeMillis());
         updateFor(playerName);
     }
 
@@ -104,8 +110,19 @@ public class StatusBoard {
         player.sendMessage(line1);
         player.sendMessage(redTeam);
         player.sendMessage(blueTeam);
+
         String playerMessage = playerMessages.get(playerName);
-        playerMessage = (playerMessage != null) ? playerMessage : "";
+        if (playerMessage != null) {
+            long messageAge = System.currentTimeMillis() - playerMessagesAge.get(playerName);
+            if (messageAge > maxPlayerMessageAge) {
+                // message has expired
+                playerMessage = "";
+                playerMessages.put(playerName, null);
+                playerMessagesAge.put(playerName, null);
+            }
+        } else {
+            playerMessage = "";
+        }
         player.sendMessage(">-------" + playerMessage + "-------------------------------------------".substring(40));
         if (Team.RED == context.getPlayerTeam(playerName)) {
             for (String line : redChatLines) {
@@ -180,6 +197,6 @@ public class StatusBoard {
             public void run() {
                 updateForAll();
             }
-        }, 0, statusUpdateFrequency);
+        }, 0, statusUpdateFrequencyTicks);
     }
 }

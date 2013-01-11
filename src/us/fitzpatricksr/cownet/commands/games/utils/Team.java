@@ -3,8 +3,6 @@ package us.fitzpatricksr.cownet.commands.games.utils;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.Wool;
 
 public enum Team {
     RED,
@@ -26,19 +24,19 @@ public enum Team {
         }
     }
 
-    public ItemStack getWool() {
-        if (this == RED) {
-            return new ItemStack(Material.WOOL, 1, new Wool(DyeColor.RED).getData());
-        } else {
-            return new ItemStack(Material.WOOL, 1, new Wool(DyeColor.BLUE).getData());
-        }
-    }
-
     public ChatColor getChatColor() {
         if (this == RED) {
             return ChatColor.RED;
         } else {
             return ChatColor.BLUE;
+        }
+    }
+
+    public DyeColor getDyeColor() {
+        if (this == RED) {
+            return DyeColor.RED;
+        } else {
+            return DyeColor.BLUE;
         }
     }
 }
