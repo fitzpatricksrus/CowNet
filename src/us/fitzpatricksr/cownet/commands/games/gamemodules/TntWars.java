@@ -6,31 +6,21 @@ import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.HandlerList;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
-import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
 import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
-import us.fitzpatricksr.cownet.commands.games.utils.SpawnAndLoungeUtils;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Random;
 
 /**
  */
-public class TntWars implements org.bukkit.event.Listener, GameModule {
+public class TntWars extends BasicGame {
     private static final long GAME_FREQUENCY = 4;  // 5 times a second?
-    private final Random rand = new Random();
     private int gameTaskId = 0;
-    private GameContext context;
-    private SpawnAndLoungeUtils spawnUtils;
     private HashMap<String, LinkedList<BombPlacement>> placements;
 
     @CowNetThingy.Setting
@@ -81,19 +71,16 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void startup(GameContext context) {
-        this.context = context;
-        spawnUtils = new SpawnAndLoungeUtils(context.getCowNet().getPlugin(), getName(), tntWarsSpawnJiggle);
+        super.startup(context);
         placements = new HashMap<String, LinkedList<BombPlacement>>();
         gameTaskId = 0;
-        JavaPlugin plugin = context.getCowNet().getPlugin();
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
     @Override
     public void shutdown() {
-        HandlerList.unregisterAll(this);
-        this.context = null;
-        spawnUtils = null;
+        super.shutdown();
+        stopBombWatcher();
+        placements = null;
     }
 
     @Override
@@ -106,17 +93,13 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
     @Override
     public void playerEnteredLounge(String playerName) {
         setupPlayerInventory(playerName);
-        Player player = context.getPlayer(playerName);
-        Location lounge = spawnUtils.getPlayerLoungePoint();
-        if (lounge != null) {
-            player.teleport(lounge);
-        } else {
-            context.debugInfo("Could not find lounge");
-        }
+        super.playerEnteredLounge(playerName);
     }
 
     @Override
     public void playerLeftLounge(String playerName) {
+        super.playerLeftLounge(playerName);
+        removeTnt(playerName);
     }
 
     @Override
@@ -125,27 +108,20 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void gameStarted() {
-        for (String player : context.getPlayers()) {
-            playerEnteredGame(player);
-        }
+        super.gameStarted();
         startRefillTask();
     }
 
     @Override
     public void playerEnteredGame(String playerName) {
         setupPlayerInventory(playerName);
-        Location spawn = spawnUtils.getPlayerSpawnPoint();
-        if (spawn != null) {
-            Player player = context.getPlayer(playerName);
-            player.teleport(spawn);
-        } else {
-            context.debugInfo("Could not find spawn");
-        }
+        super.playerEnteredGame(playerName);
         giveTnt(playerName);
     }
 
     @Override
     public void playerLeftGame(String playerName) {
+        super.playerLeftGame(playerName);
         removeTnt(playerName);
     }
 
@@ -155,6 +131,7 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
         for (String player : context.getPlayers()) {
             removeTnt(player);
         }
+        super.gameEnded();
     }
 
     private void setupPlayerInventory(String playerName) {
@@ -193,34 +170,6 @@ public class TntWars implements org.bukkit.event.Listener, GameModule {
                 event.setCancelled(true);
             }
         }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onPlayerRespawn(PlayerRespawnEvent event) {
-        // register a loss and teleport back to spawn point
-        Player player = event.getPlayer();
-        String playerName = player.getName();
-        if (playerIsInGame(playerName)) {
-            // Just teleport the person back to spawn here.
-            // losses and announcements are done when the player is killed.
-            Location loc = (context.isLounging()) ? spawnUtils.getPlayerLoungePoint() : spawnUtils.getPlayerSpawnPoint();
-            if (loc != null) {
-                // hey jf - you need to jiggle this a bit or everyone will be on top of each other
-                // have the player respawn in the game spawn
-                event.setRespawnLocation(loc);
-            }
-        }
-    }
-
-    @EventHandler(ignoreCancelled = true)
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        context.debugInfo("PlayerQuitEvent");
-        String playerName = event.getPlayer().getName();
-        removeTnt(playerName);
-    }
-
-    private boolean playerIsInGame(String playerName) {
-        return context.getPlayers().contains(playerName);
     }
 
     // --------------------------------------------------------------

@@ -4,14 +4,12 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
-import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
 import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
 import us.fitzpatricksr.cownet.commands.games.utils.SpawnAndLoungeUtils;
 
@@ -19,7 +17,7 @@ import java.util.Random;
 
 /**
  */
-public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
+public class ZombieAttack extends BasicGame {
     private Random rand = new Random();
     private GameContext context;
     private SpawnAndLoungeUtils spawnUtils;
@@ -45,8 +43,6 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
             EntityType.SNOWMAN,
     };
 
-    @CowNetThingy.Setting
-    private int zombieAttackSpawnJiggle = 5;
     @CowNetThingy.Setting
     private int zombieAttackLoungeDuration = 10; // 30 second lounge
     @CowNetThingy.Setting
@@ -82,21 +78,6 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
     }
 
     @Override
-    public void startup(GameContext context) {
-        this.context = context;
-        CowNetMod plugin = context.getCowNet().getPlugin();
-        spawnUtils = new SpawnAndLoungeUtils(plugin, getName(), zombieAttackSpawnJiggle);
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
-    }
-
-    @Override
-    public void shutdown() {
-        HandlerList.unregisterAll(this);
-        this.context = null;
-        spawnUtils = null;
-    }
-
-    @Override
     public void loungeStarted() {
         for (String playerName : context.getPlayers()) {
             playerEnteredLounge(playerName);
@@ -127,24 +108,14 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void gameStarted() {
-        context.broadcastToAllPlayers("SnowWars has begun.");
-        for (String player : context.getPlayers()) {
-            playerEnteredGame(player);
-        }
-        startRefillTask();
+        super.gameStarted();
+        startSpawnTask();
     }
 
     @Override
     public void playerEnteredGame(String playerName) {
         setupPlayerInventory(playerName);
-        Location spawn = spawnUtils.getPlayerSpawnPoint();
-        if (spawn != null) {
-            Player player = context.getPlayer(playerName);
-            player.teleport(spawn);
-        } else {
-            context.debugInfo("Could not find spawn");
-        }
-        context.broadcastToAllPlayers(playerName + " is on the " + context.getPlayerTeam(playerName) + " team.");
+        super.playerEnteredGame(playerName);
     }
 
     @Override
@@ -154,8 +125,8 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
 
     @Override
     public void gameEnded() {
-        context.broadcastToAllPlayers("SnowWars has eneded.");
-        stopRefillTask();
+        super.gameEnded();
+        stopSpawnTask();
         // we should remove all the mobs
         Location spawn = spawnUtils.getPlayerSpawnPoint();
         World world = spawn.getWorld();
@@ -206,38 +177,55 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
     // --------------------------------------------------------------
     // ---- Event handlers
 
-    @EventHandler(ignoreCancelled = true)
-    public void onPlayerRespawn(PlayerRespawnEvent event) {
-        // register a loss and teleport back to spawn point
-        Player player = event.getPlayer();
-        String playerName = player.getName();
-        if (playerIsInGame(playerName)) {
-            // Just teleport the person back to spawn here.
-            // losses and announcements are done when the player is killed.
-            Location loc = (context.isLounging()) ? spawnUtils.getPlayerLoungePoint() : spawnUtils.getPlayerSpawnPoint();
-            if (loc != null) {
-                // hey jf - you need to jiggle this a bit or everyone will be on top of each other
-                // have the player respawn in the game spawn
-                event.setRespawnLocation(loc);
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    private void onEntityDamage(EntityDamageEvent event) {
+        Entity entityDamaged = event.getEntity();
+        if (!(entityDamaged instanceof LivingEntity)) return;
+        LivingEntity victim = (LivingEntity) entityDamaged;
+        LivingEntity killer = getAttacker(event);
+        if (killer instanceof Player) {
+            int victimHealth = victim.getHealth();
+            int damage = event.getDamage();
+            if (damage >= victimHealth) {
+                // OK, this will finish them off.  Award a kill...or not
+                Player player = (Player) killer;
+                String playerName = player.getName();
+                if (victim instanceof Player) {
+                    //Oh my god!  They killed Kenny!
+                    context.addLoss(playerName);
+                    context.sendToPlayer(playerName, "You killed one of the good guys.  1 demerit.");
+                } else {
+                    //Good job.
+                    context.addWin(playerName);
+                }
             }
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        context.debugInfo("PlayerQuitEvent");
+    private LivingEntity getAttacker(EntityDamageEvent event) {
+        //check for damage by entity (and arrow)
+        if (event instanceof EntityDamageByEntityEvent) {
+            EntityDamageByEntityEvent nEvent = (EntityDamageByEntityEvent) event;
+            if ((nEvent.getDamager() instanceof Arrow)) {
+                //This will retrieve the arrow object
+                Arrow a = (Arrow) nEvent.getDamager();
+                //This will retrieve the person who shot the arrow
+                return a.getShooter();
+            } else {
+                if (nEvent.getDamager() instanceof LivingEntity) {
+                    return (LivingEntity) nEvent.getDamager();
+                } else {
+                    return null;
+                }
+            }
+
+        }
+        return null;
     }
 
-    private boolean playerIsInGame(String playerName) {
-        return context.getPlayers().contains(playerName);
-    }
-
-    // --------------------------------------------------------------
-    // ---- Event handlers
-
-    private void startRefillTask() {
+    private void startSpawnTask() {
         if (gameTaskId == 0) {
-            context.debugInfo("startRefillTask");
+            context.debugInfo("startSpawnTask");
             nextEntityCount = 1;
             JavaPlugin plugin = context.getCowNet().getPlugin();
             gameTaskId = plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
@@ -258,9 +246,9 @@ public class ZombieAttack implements org.bukkit.event.Listener, GameModule {
         }
     }
 
-    private void stopRefillTask() {
+    private void stopSpawnTask() {
         if (gameTaskId != 0) {
-            context.debugInfo("stopRefillTask");
+            context.debugInfo("stopSpawnTask");
             context.getCowNet().getPlugin().getServer().getScheduler().cancelTask(gameTaskId);
             gameTaskId = 0;
         }

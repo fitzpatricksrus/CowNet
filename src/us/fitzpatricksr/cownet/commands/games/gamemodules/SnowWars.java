@@ -163,10 +163,6 @@ public class SnowWars extends BasicGame {
         removeSnow(playerName);
     }
 
-    private boolean playerIsInGame(String playerName) {
-        return context.getPlayers().contains(playerName);
-    }
-
     // --------------------------------------------------------------
     // ---- Event handlers
 

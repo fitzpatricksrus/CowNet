@@ -151,7 +151,7 @@ public class BasicGame implements Listener, GameModule {
         }
     }
 
-    private boolean playerIsInGame(String playerName) {
+    protected boolean playerIsInGame(String playerName) {
         return context.getPlayers().contains(playerName);
     }
 }
