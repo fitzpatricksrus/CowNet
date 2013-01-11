@@ -10,6 +10,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import us.fitzpatricksr.cownet.CowNetThingy;
+import us.fitzpatricksr.cownet.commands.games.framework.BasicGameModule;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
 
@@ -18,7 +19,7 @@ import java.util.LinkedList;
 
 /**
  */
-public class TntWars extends BasicGame {
+public class TntWars extends BasicGameModule {
     private static final long GAME_FREQUENCY = 4;  // 5 times a second?
     private int gameTaskId = 0;
     private HashMap<String, LinkedList<BombPlacement>> placements;

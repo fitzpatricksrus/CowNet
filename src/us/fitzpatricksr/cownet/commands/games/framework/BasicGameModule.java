@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet.commands.games.gamemodules;
+package us.fitzpatricksr.cownet.commands.games.framework;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -8,8 +8,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.CowNetThingy;
-import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
-import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
 import us.fitzpatricksr.cownet.commands.games.utils.SpawnAndLoungeUtils;
 
 import java.util.Random;
@@ -18,7 +16,7 @@ import java.util.Random;
  * Basic game that does nothing but more players to spawn etc.
  */
 
-public class BasicGame implements Listener, GameModule {
+public class BasicGameModule implements Listener, GameModule {
     protected Random rand = new Random();
     protected GameContext context;
     protected SpawnAndLoungeUtils spawnUtils;

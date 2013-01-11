@@ -50,4 +50,7 @@ public interface GameContext extends StatusBoard.StatusSource {
 
     @Override
     public void debugInfo(String message);
+
+    @Override
+    public boolean isDebug();
 }

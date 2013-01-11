@@ -15,11 +15,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
+import us.fitzpatricksr.cownet.commands.games.framework.BasicGameModule;
 import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
 
 /**
  */
-public class SnowWars extends BasicGame {
+public class SnowWars extends BasicGameModule {
     private int gameTaskId = 0;
 
     @CowNetThingy.Setting

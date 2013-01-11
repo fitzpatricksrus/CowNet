@@ -27,6 +27,8 @@ public class StatusBoard {
         public Collection<String> getPlayers();
 
         public void debugInfo(String message);
+
+        public boolean isDebug();
     }
 
     private static final int numChatLines = 6;

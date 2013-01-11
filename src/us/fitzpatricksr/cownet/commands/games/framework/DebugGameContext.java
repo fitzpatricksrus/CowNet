@@ -110,4 +110,9 @@ public class DebugGameContext implements GameContext {
     public void debugInfo(String message) {
         context.debugInfo(tag + ": " + message);
     }
+
+    @Override
+    public boolean isDebug() {
+        return context.isDebug();
+    }
 }

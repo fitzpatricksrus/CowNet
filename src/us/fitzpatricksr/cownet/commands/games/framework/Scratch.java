@@ -5,8 +5,9 @@ public class Scratch {
 
     tnt wars
     snow wars
-    prison
     mob arena
+    the hidden
+    prison
     trash the other teams city / blocks
     tower defense
     minesweeper
@@ -14,7 +15,6 @@ public class Scratch {
     spy vs. spy
     economy/trading game
     hunger games
-    the hidden
 
 
 

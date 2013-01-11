@@ -148,10 +148,9 @@ public class BasicGameController implements GameContext {
             }
             // we didn't find a runnable module.  So, return the GatheringModule
             currentModule = new GatheringModule();
-            return currentModule;
-        } else {
-            return currentModule;
         }
+        currentModule = new DebugGameModule(this, currentModule);
+        return currentModule;
     }
 
     private void stopTimerTask() {
@@ -457,6 +456,11 @@ public class BasicGameController implements GameContext {
     @Override
     public void debugInfo(String message) {
         getCowNet().debugInfo(message);
+    }
+
+    @Override
+    public boolean isDebug() {
+        return getCowNet().isDebug();
     }
 
     //---------------------------------------------------------------------

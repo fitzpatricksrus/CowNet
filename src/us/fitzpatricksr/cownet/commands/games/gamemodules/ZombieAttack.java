@@ -9,6 +9,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
+import us.fitzpatricksr.cownet.commands.games.framework.BasicGameModule;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
 import us.fitzpatricksr.cownet.commands.games.utils.SpawnAndLoungeUtils;
@@ -17,7 +18,7 @@ import java.util.Random;
 
 /**
  */
-public class ZombieAttack extends BasicGame {
+public class ZombieAttack extends BasicGameModule {
     private Random rand = new Random();
     private GameContext context;
     private SpawnAndLoungeUtils spawnUtils;
