@@ -1,15 +1,17 @@
 package us.fitzpatricksr.cownet.commands.games.framework;
 
 import org.bukkit.ChatColor;
+import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.GameStatsFile;
-import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
 import us.fitzpatricksr.cownet.commands.games.utils.StatusBoard;
 import us.fitzpatricksr.cownet.commands.games.utils.Team;
+import us.fitzpatricksr.cownet.commands.games.utils.inventory.BookUtils;
+import us.fitzpatricksr.cownet.commands.games.utils.inventory.InventoryLocker;
 
 import java.io.IOException;
 import java.util.*;
@@ -253,6 +255,9 @@ public class BasicGameController implements GameContext {
             }
             dumpDebugInfo("addPlayer(" + playerName + ") : " + players.get(playerName));
         }
+        Player player = getPlayer(playerName);
+        InventoryLocker.storeInventory(player);
+        player.setGameMode(GameMode.SURVIVAL);
         playerEntered(playerName);
     }
 
@@ -261,9 +266,11 @@ public class BasicGameController implements GameContext {
             dumpDebugInfo("removePlayer(" + playerName + ")");
             players.remove(playerName);
             playerLeft(playerName);
+            InventoryLocker.restoreInventory(getPlayer(playerName));
         }
     }
 
+    // this is called when a player enters the game or changes teams
     private void playerEntered(String playerName) {
         if (isLounging()) {
             dumpDebugInfo("playerEntered(" + playerName + ") lounge");
@@ -279,6 +286,7 @@ public class BasicGameController implements GameContext {
         status.updateForAll();
     }
 
+    // this is called when a player leaves the game or changes teams
     private void playerLeft(String playerName) {
         if (isLounging()) {
             dumpDebugInfo("playerLeft(" + playerName + ") lounge");
@@ -388,10 +396,10 @@ public class BasicGameController implements GameContext {
                 Team team = getPlayerTeam(player.getName());
                 PlayerInventory inv = player.getInventory();
 
-                inv.setHelmet(InventoryUtils.createColoredStack(Material.LEATHER_HELMET, team));
-//                inv.setChestplate(InventoryUtils.createColoredStack(Material.LEATHER_CHESTPLATE, team));
-//                inv.setLeggings(InventoryUtils.createColoredStack(Material.LEATHER_LEGGINGS, team));
-                inv.setBoots(InventoryUtils.createColoredStack(Material.LEATHER_BOOTS, team));
+                inv.setHelmet(BookUtils.createColoredStack(Material.LEATHER_HELMET, team));
+//                inv.setChestplate(BookUtils.createColoredStack(Material.LEATHER_CHESTPLATE, team));
+//                inv.setLeggings(BookUtils.createColoredStack(Material.LEATHER_LEGGINGS, team));
+                inv.setBoots(BookUtils.createColoredStack(Material.LEATHER_BOOTS, team));
 
                 player.setDisplayName(
                         (team == Team.BLUE ? ChatColor.BLUE : ChatColor.RED) + playerName);

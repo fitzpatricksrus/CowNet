@@ -11,8 +11,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.BasicGameModule;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
-import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
 import us.fitzpatricksr.cownet.commands.games.utils.SpawnAndLoungeUtils;
+import us.fitzpatricksr.cownet.commands.games.utils.inventory.BookUtils;
 
 import java.util.Random;
 
@@ -169,7 +169,7 @@ public class ZombieAttack extends BasicGameModule {
     private void setupPlayerInventory(String playerName) {
         Player player = context.getPlayer(playerName);
         player.getInventory().clear();
-        player.getInventory().addItem(InventoryUtils.createBook(
+        player.getInventory().addItem(BookUtils.createBook(
                 "The Mobs are Coming", "Master Mob", new String[]{
                 "Mobs will drop out of the sky.  Stay alive longer than other and you will score a Win."
         }));

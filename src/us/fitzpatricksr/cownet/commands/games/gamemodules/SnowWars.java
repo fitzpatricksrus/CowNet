@@ -16,7 +16,7 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.BasicGameModule;
-import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
+import us.fitzpatricksr.cownet.commands.games.utils.inventory.BookUtils;
 
 /**
  */
@@ -105,7 +105,7 @@ public class SnowWars extends BasicGameModule {
     private void setupPlayerInventory(String playerName) {
         Player player = context.getPlayer(playerName);
         player.getInventory().clear();
-        player.getInventory().addItem(InventoryUtils.createBook(
+        player.getInventory().addItem(BookUtils.createBook(
                 "SnowWars Rules", "Frosty", new String[]{
                 "Hit a player on the other team with snowballs and you score a point.\n\n" +
                         "Hit your team members and you loose a point.",

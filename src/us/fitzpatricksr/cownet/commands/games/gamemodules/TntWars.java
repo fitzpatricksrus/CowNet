@@ -12,7 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.BasicGameModule;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
-import us.fitzpatricksr.cownet.commands.games.utils.InventoryUtils;
+import us.fitzpatricksr.cownet.commands.games.utils.inventory.BookUtils;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -138,7 +138,7 @@ public class TntWars extends BasicGameModule {
     private void setupPlayerInventory(String playerName) {
         Player player = context.getPlayer(playerName);
         player.getInventory().clear();
-        player.getInventory().addItem(InventoryUtils.createBook(
+        player.getInventory().addItem(BookUtils.createBook(
                 "TNT War Rules", "Master Blaster", new String[]{
                 "Blow up players on the other team and you score a point.\n\n" +
                         "Blow up your team members and you loose a point.",

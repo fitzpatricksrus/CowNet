@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet.commands.Kits;
+package us.fitzpatricksr.cownet.commands.games.utils.inventory;
 
 import org.bukkit.entity.Player;
 

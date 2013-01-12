@@ -104,7 +104,7 @@ public class StatusBoard {
         String gameName = context.getGameName();
 
         String line1 = "> %s:   Team: %-4s   Score: %d".format(
-                context.isGaming() ? "Playing " + gameName : "Gathering " + gameName,
+                context.isGaming() ? "Playing " + gameName : "Lounging " + gameName,
                 team,
                 context.getScore(playerName));
         player.sendMessage(line1);

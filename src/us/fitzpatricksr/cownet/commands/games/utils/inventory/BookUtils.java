@@ -1,4 +1,4 @@
-package us.fitzpatricksr.cownet.commands.games.utils;
+package us.fitzpatricksr.cownet.commands.games.utils.inventory;
 
 import org.bukkit.Color;
 import org.bukkit.Material;
@@ -6,8 +6,9 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import us.fitzpatricksr.cownet.commands.games.utils.Team;
 
-public class InventoryUtils {
+public class BookUtils {
     public static ItemStack createColoredStack(Material material, Team team) {
         if (material == Material.LEATHER_CHESTPLATE ||
                 material == Material.LEATHER_BOOTS ||
