@@ -4,38 +4,19 @@ import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
-import us.fitzpatricksr.cownet.CowNetMod;
 import us.fitzpatricksr.cownet.CowNetThingy;
-import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
-import us.fitzpatricksr.cownet.commands.games.framework.GameModule;
-import us.fitzpatricksr.cownet.commands.games.utils.SpawnAndLoungeUtils;
+import us.fitzpatricksr.cownet.commands.games.framework.BasicGameModule;
 import us.fitzpatricksr.cownet.commands.games.utils.Team;
-
-import java.util.Random;
 
 /**
  * Two teams.
  * Each team has a "bell" at their spawn.
  * The other player has to get to the other teams spawn and ring the bell to gain a point.
  * The team at the end with the most points wins.
- * <p/>
- * BreakIn-lounge-blue
- * BreakIn-lounge-read
- * BreakIn-spawn-blue
- * BreakIn-spawn-red
  */
 
-public class BreakIn implements Listener, GameModule {
-    private Random rand = new Random();
-    private GameContext context;
-    private SpawnAndLoungeUtils spawnUtils;
-
-    @CowNetThingy.Setting
-    private int breakInSpawnJiggle = 5;
+public class BreakIn extends BasicGameModule {
     @CowNetThingy.Setting
     private int breakInLoungeDuration = 10; // 30 second loung
     @CowNetThingy.Setting
@@ -69,99 +50,19 @@ public class BreakIn implements Listener, GameModule {
     }
 
     @Override
-    public void startup(GameContext context) {
-        this.context = context;
-        CowNetMod plugin = context.getCowNet().getPlugin();
-        spawnUtils = new SpawnAndLoungeUtils(plugin, getName(), breakInSpawnJiggle);
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
-    }
-
-    @Override
-    public void shutdown() {
-        HandlerList.unregisterAll(this);
-        this.context = null;
-        spawnUtils = null;
-    }
-
-    @Override
-    public void loungeStarted() {
-        context.broadcastToAllPlayers("A game of Break In is gathering.");
-        for (String playerName : context.getPlayers()) {
-            playerEnteredLounge(playerName);
-        }
-    }
-
-    @Override
-    public void playerEnteredLounge(String playerName) {
-        Location lounge = spawnUtils.getPlayerLoungePoint();
-        if (lounge != null) {
-            Player player = context.getPlayer(playerName);
-            player.teleport(lounge);
-        } else {
-            context.debugInfo("Could not find lounge");
-        }
-        context.broadcastToAllPlayers(playerName + " is on the " + context.getPlayerTeam(playerName) + " team.");
-    }
-
-    @Override
-    public void playerLeftLounge(String playerName) {
-        context.broadcastToAllPlayers(playerName + " left the game.");
-    }
-
-    @Override
-    public void loungeEnded() {
-    }
-
-    @Override
     public void gameStarted() {
-        context.broadcastToAllPlayers("Break In has begun.");
-        for (String player : context.getPlayers()) {
-            playerEnteredGame(player);
-        }
         buildBases();
-    }
-
-    @Override
-    public void playerEnteredGame(String playerName) {
-        Location spawn = spawnUtils.getPlayerSpawnPoint();
-        if (spawn != null) {
-            Player player = context.getPlayer(playerName);
-            player.teleport(spawn);
-        } else {
-            context.debugInfo("Could not find spawn");
-        }
-        context.broadcastToAllPlayers(playerName + " is on the " + context.getPlayerTeam(playerName) + " team.");
+        super.gameStarted();
     }
 
     @Override
     public void playerLeftGame(String playerName) {
-        context.broadcastToAllPlayers(playerName + " has left the game.");
-    }
-
-    @Override
-    public void gameEnded() {
-        context.broadcastToAllPlayers("Break In has eneded.");
+        //check to see if the player is the flag carrier
+        super.playerLeftGame(playerName);
     }
 
     // --------------------------------------------------------------
     // ---- Event handlers
-
-    @EventHandler(ignoreCancelled = true)
-    public void onPlayerRespawn(PlayerRespawnEvent event) {
-        // register a loss and teleport back to spawn point
-        Player player = event.getPlayer();
-        String playerName = player.getName();
-        if (playerIsInGame(playerName)) {
-            // Just teleport the person back to spawn here.
-            // losses and announcements are done when the player is killed.
-            Location loc = (context.isLounging()) ? spawnUtils.getPlayerLoungePoint() : spawnUtils.getPlayerSpawnPoint();
-            if (loc != null) {
-                // hey jf - you need to jiggle this a bit or everyone will be on top of each other
-                // have the player respawn in the game spawn
-                event.setRespawnLocation(loc);
-            }
-        }
-    }
 
     @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
@@ -183,11 +84,6 @@ public class BreakIn implements Listener, GameModule {
                 context.addLoss(player.getName());
             }
         }
-    }
-
-
-    private boolean playerIsInGame(String playerName) {
-        return context.getPlayers().contains(playerName);
     }
 
     // --------------------------------------------------------------

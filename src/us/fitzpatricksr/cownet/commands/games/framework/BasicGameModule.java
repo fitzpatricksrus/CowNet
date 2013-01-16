@@ -3,6 +3,7 @@ package us.fitzpatricksr.cownet.commands.games.framework;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -14,46 +15,29 @@ import java.util.Random;
 
 /**
  * Basic game that does nothing but more players to spawn etc.
+ * <p/>
+ * The main behavior this provides is managing spawn and lounge
+ * locations.  It also provides some convenient status messages
+ * to players.
  */
 
-public class BasicGameModule implements Listener, GameModule {
-    protected Random rand = new Random();
+public abstract class BasicGameModule implements Listener, GameModule {
+    protected final Random rand = new Random();
     protected GameContext context;
     protected SpawnAndLoungeUtils spawnUtils;
 
     @CowNetThingy.Setting
     private int genericSpawnJiggle = 5;
-    @CowNetThingy.Setting
-    private int genericLoungeDuration = 10; // 30 second loung
-    @CowNetThingy.Setting
-    private int genericGameDuration = 60 * 3; // 3 minutes max game length
-    @CowNetThingy.Setting
-    private int genericMinPlayers = 2; // 3 minutes max game length
 
-    @Override
-    public String getName() {
-        return "generic";
-    }
+    /*
+    The following must be implemented by the subclass
 
-    @Override
-    public int getLoungeDuration() {
-        return genericLoungeDuration;
-    }
-
-    @Override
-    public int getGameDuration() {
-        return genericGameDuration;
-    }
-
-    @Override
-    public int getMinPlayers() {
-        return genericMinPlayers;
-    }
-
-    @Override
-    public boolean isTeamGame() {
-        return true;
-    }
+    public String getName()
+    public int getLoungeDuration()
+    public int getGameDuration()
+    public int getMinPlayers()
+    public boolean isTeamGame()
+   */
 
     @Override
     public void startup(GameContext context) {
@@ -132,7 +116,7 @@ public class BasicGameModule implements Listener, GameModule {
     // --------------------------------------------------------------
     // ---- Event handlers
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         // register a loss and teleport back to spawn point
         Player player = event.getPlayer();
