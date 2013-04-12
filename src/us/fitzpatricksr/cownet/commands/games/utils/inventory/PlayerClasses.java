@@ -31,17 +31,36 @@ public class PlayerClasses {
         return classes.get(name).kitItems;
     }
 
-    public void setClass(Player player, String className) {
+
+    public void unsetClass(Player player, boolean clearKit) {
+        setClass(player, null, clearKit);
+    }
+
+    /*
+    Set the new class for a player.  If new class is null, the players class is
+    cleared as it unsetClass had been called.  If enforceInventory is true,
+    the player's inventory will be cleared before they are given the default
+    kit for their class.
+    */
+    public void setClass(Player player, String className, boolean enforceInventory) {
         String playerName = player.getName();
         ClassKit oldPlayerClass = playerClasses.get(playerName);
-        if (oldPlayerClass != null) {
-            oldPlayerClass.removeKit(player);
-        }
         ClassKit newPlayerClass = classes.get(className);
-        if (newPlayerClass != null) {
-            playerClasses.put(playerName, newPlayerClass);
-        } else {
-            playerClasses.remove(playerName);
+
+        if (oldPlayerClass != newPlayerClass) {
+            if (oldPlayerClass != null && enforceInventory) {
+                oldPlayerClass.removeKit(player);
+            }
+            if (newPlayerClass != null) {
+                playerClasses.put(playerName, newPlayerClass);
+                if (enforceInventory) {
+                    newPlayerClass.enforceKit(player);
+                } else {
+                    newPlayerClass.refreshKit(player);
+                }
+            } else {
+                playerClasses.remove(playerName);
+            }
         }
     }
 

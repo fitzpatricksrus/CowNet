@@ -7,12 +7,12 @@ import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.BasicGameModule;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
 import us.fitzpatricksr.cownet.commands.games.utils.inventory.BookUtils;
+import us.fitzpatricksr.cownet.commands.games.utils.inventory.PlayerClasses;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -21,8 +21,11 @@ import java.util.LinkedList;
  */
 public class TntWars extends BasicGameModule {
     private static final long GAME_FREQUENCY = 4;  // 5 times a second?
+    private static final String CLASS_KIT_NAME = "Bomber";
+    private static final boolean ALLOW_OTHER_INVENTORY = false;
     private int gameTaskId = 0;
     private HashMap<String, LinkedList<BombPlacement>> placements;
+    private PlayerClasses classes;
 
     @CowNetThingy.Setting
     private int tntWarsMaxBlockPlacements = 1;
@@ -74,6 +77,18 @@ public class TntWars extends BasicGameModule {
     public void startup(GameContext context) {
         super.startup(context);
         placements = new HashMap<String, LinkedList<BombPlacement>>();
+        classes = new PlayerClasses();
+        classes.defineClass(CLASS_KIT_NAME,
+                new ItemStack[]{
+                        new ItemStack(explosiveBlockType, 5),
+                        BookUtils.createBook(
+                                "TNT War Rules", "Master Blaster", new String[]{
+                                "Blow up players on the other team and you score a point.\n\n" +
+                                        "Blow up your team members and you loose a point.",
+                                "TNT replenishes 5 at a time every few seconds.\n\n" +
+                                        "Games are 3 minutes long."
+                        })
+                });
         gameTaskId = 0;
     }
 
@@ -93,14 +108,16 @@ public class TntWars extends BasicGameModule {
 
     @Override
     public void playerEnteredLounge(String playerName) {
-        setupPlayerInventory(playerName);
+        Player player = context.getPlayer(playerName);
+        classes.setClass(player, CLASS_KIT_NAME, ALLOW_OTHER_INVENTORY);
         super.playerEnteredLounge(playerName);
     }
 
     @Override
     public void playerLeftLounge(String playerName) {
         super.playerLeftLounge(playerName);
-        removeTnt(playerName);
+        Player player = context.getPlayer(playerName);
+        classes.unsetClass(player, true);
     }
 
     @Override
@@ -115,36 +132,49 @@ public class TntWars extends BasicGameModule {
 
     @Override
     public void playerEnteredGame(String playerName) {
-        setupPlayerInventory(playerName);
+        Player player = context.getPlayer(playerName);
+        classes.setClass(player, CLASS_KIT_NAME, ALLOW_OTHER_INVENTORY);
         super.playerEnteredGame(playerName);
-        giveTnt(playerName);
     }
 
     @Override
     public void playerLeftGame(String playerName) {
         super.playerLeftGame(playerName);
-        removeTnt(playerName);
+        Player player = context.getPlayer(playerName);
+        classes.unsetClass(player, true);
     }
 
     @Override
     public void gameEnded() {
         stopRefillTask();
-        for (String player : context.getPlayers()) {
-            removeTnt(player);
+        for (String playerName : context.getPlayers()) {
+            Player player = context.getPlayer(playerName);
+            classes.unsetClass(player, true);
         }
         super.gameEnded();
     }
 
-    private void setupPlayerInventory(String playerName) {
-        Player player = context.getPlayer(playerName);
-        player.getInventory().clear();
-        player.getInventory().addItem(BookUtils.createBook(
-                "TNT War Rules", "Master Blaster", new String[]{
-                "Blow up players on the other team and you score a point.\n\n" +
-                        "Blow up your team members and you loose a point.",
-                "TNT replenishes 5 at a time every few seconds.\n\n" +
-                        "Games are 3 minutes long."
-        }));
+    private void startRefillTask() {
+        if (gameTaskId == 0) {
+            context.debugInfo("startRefillTask");
+            gameTaskId = context.getCowNet().getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(
+                    context.getCowNet().getPlugin(), new Runnable() {
+                public void run() {
+                    for (String playerName : context.getPlayers()) {
+                        Player player = context.getPlayer(playerName);
+                        classes.refreshKit(player);
+                    }
+                }
+            }, tntWarsRefillRate, tntWarsRefillRate);
+        }
+    }
+
+    private void stopRefillTask() {
+        if (gameTaskId != 0) {
+            context.debugInfo("stopRefillTask");
+            context.getCowNet().getPlugin().getServer().getScheduler().cancelTask(gameTaskId);
+            gameTaskId = 0;
+        }
     }
 
     // --------------------------------------------------------------
@@ -171,51 +201,6 @@ public class TntWars extends BasicGameModule {
                 event.setCancelled(true);
             }
         }
-    }
-
-    // --------------------------------------------------------------
-    // ---- Event handlers
-
-    private void startRefillTask() {
-        if (gameTaskId == 0) {
-            context.debugInfo("startRefillTask");
-            gameTaskId = context.getCowNet().getPlugin().getServer().getScheduler().scheduleSyncRepeatingTask(
-                    context.getCowNet().getPlugin(), new Runnable() {
-                public void run() {
-                    for (String playerName : context.getPlayers()) {
-                        giveTnt(playerName);
-                    }
-                }
-            }, tntWarsRefillRate, tntWarsRefillRate);
-        }
-    }
-
-    private void stopRefillTask() {
-        if (gameTaskId != 0) {
-            context.debugInfo("stopRefillTask");
-            context.getCowNet().getPlugin().getServer().getScheduler().cancelTask(gameTaskId);
-            gameTaskId = 0;
-        }
-    }
-
-    private void giveTnt(String playerName) {
-        //give everyone TNT in hand
-        Player player = context.getPlayer(playerName);
-        ItemStack oldItemInHand = player.getItemInHand();
-        ItemStack itemInHand = new ItemStack(Material.TNT, 1);
-        player.setItemInHand(itemInHand);
-        player.getInventory().addItem(oldItemInHand);
-        player.updateInventory();
-    }
-
-    private void removeTnt(String playerName) {
-        Player player = context.getPlayer(playerName);
-        Inventory inventory = player.getInventory();
-        int slot = inventory.first(Material.TNT);
-        ItemStack stack = inventory.getItem(slot);
-        stack.setAmount(stack.getAmount() - 1);
-        inventory.setItem(slot, stack);
-        player.updateInventory();
     }
 
     // --------------------------------------------------------------
