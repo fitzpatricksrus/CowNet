@@ -83,6 +83,9 @@ commands:
       alias: [ panicgames ]
       description: When in danger, when in doubt, run in circles scream and shout!
       usage: Use "/panic help"
+  opme:
+      description: Iz U Op?
+      usage: Use "/opme help"
 
 permissions:
     cownet.starve:
@@ -193,6 +196,9 @@ permissions:
     cownet.panic:
         description: Permission to participate in panic.
         default: true
+    cownet.opme:
+        description: Permission to participate in panic.
+        default: false
 
 
 

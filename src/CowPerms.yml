@@ -997,6 +997,8 @@ singularity:
   commandbook.bans.load: true
   commandbook.bans.save: true
   cownet.hardcore.keepop: true
+  cownet.opme: true
+  cownet.opme.canOp: true
   creeperheal.admin: true
   creeperheal.heal: true
   creeperheal.trap.create: true

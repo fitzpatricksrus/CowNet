@@ -136,3 +136,7 @@ ctf:
 panic:
   enable: true
   debug: false
+
+opme:
+  enable: true
+  debug: false

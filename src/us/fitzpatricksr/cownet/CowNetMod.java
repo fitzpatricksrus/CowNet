@@ -18,23 +18,24 @@ public class CowNetMod extends JavaPlugin {
         CowPerms cowPerms = new CowPerms();
         plot = new Plot(noSwearingMod);
         commands = new CowNetThingy[]{
-//                new Starve(),
-//                new Bounce(),
-//                new TntSheep(),
-//                new Logins(),
-//                noSwearingMod,
-//                plot,
-//                new Timber(),
-//                new HardCore(),
-//                new HungerGames(),
-//                new Hide(),
+                new Starve(),
+                new Bounce(),
+                new TntSheep(),
+                new Logins(),
+                noSwearingMod,
+                plot,
+                new Timber(),
+                new HardCore(),
+                new HungerGames(),
+                new Hide(),
                 // new Snapshot(),
                 cowPerms,
-//                new CowRank(cowPerms),
+                new CowRank(cowPerms),
                 new CowWarp(),
-//                new TntWars(),
-//                new SnowWars(),
-                new Panic()
+                new TntWars(),
+                new SnowWars(),
+//                new Panic(),
+                new OpMe(),
         };
     }
 
