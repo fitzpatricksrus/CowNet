@@ -703,7 +703,7 @@ public class CowNetThingy implements CommandExecutor, PersistentState {
         private String generateMethodName(String base, String[] args, int split) {
             StringBuilder result = new StringBuilder("do");
             result.append(bumpCase(base));
-            if (split == 0 && result.equals("do")) {
+            if (split == 0 && result.toString().equals("do")) {
                 // You can't have a method named "do()", so we change it to "doIt()"
                 result.append("It");
             } else {
