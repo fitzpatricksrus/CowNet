@@ -185,8 +185,8 @@ public class ZombieAttack extends BasicGameModule {
         LivingEntity victim = (LivingEntity) entityDamaged;
         LivingEntity killer = getAttacker(event);
         if (killer instanceof Player) {
-            int victimHealth = victim.getHealth();
-            int damage = event.getDamage();
+            double victimHealth = victim.getHealth();
+            double damage = event.getDamage();
             if (damage >= victimHealth) {
                 // OK, this will finish them off.  Award a kill...or not
                 Player player = (Player) killer;
@@ -211,7 +211,7 @@ public class ZombieAttack extends BasicGameModule {
                 //This will retrieve the arrow object
                 Arrow a = (Arrow) nEvent.getDamager();
                 //This will retrieve the person who shot the arrow
-                return a.getShooter();
+                return a._INVALID_getShooter();
             } else {
                 if (nEvent.getDamager() instanceof LivingEntity) {
                     return (LivingEntity) nEvent.getDamager();

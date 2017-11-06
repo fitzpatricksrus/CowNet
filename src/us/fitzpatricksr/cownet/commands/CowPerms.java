@@ -1,9 +1,9 @@
 package us.fitzpatricksr.cownet.commands;
 
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+//import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+//import com.sk89q.worldguard.protection.ApplicableRegionSet;
+//import com.sk89q.worldguard.protection.managers.RegionManager;
+//import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
@@ -299,14 +299,14 @@ public class CowPerms extends CowNetThingy implements Listener {
 		} else {
 			// it's the same world, but maybe different regions
 
-			Set<ProtectedRegion> fromRegions = findRegionsFor(from);
+/*			Set<ProtectedRegion> fromRegions = findRegionsFor(from);
 			Set<ProtectedRegion> toRegions = findRegionsFor(to);
 
 			if (!toRegions.equals(fromRegions)) {
 				//fix region permissions if they changed
 				debugInfo("Recalculating permission due to region change.");
 				refreshPermissions(event.getPlayer());
-			}
+			} */
 		}
 	}
 
@@ -433,9 +433,9 @@ public class CowPerms extends CowNetThingy implements Listener {
 	private Map<String, String> getRegionPerms(Player player) {
 		// override with region constraints if worldGuard is present
 		Map<String, String> result = new HashMap<String, String>();
-		for (ProtectedRegion region : findRegionsFor(player.getLocation())) {
-			result.putAll(getRawPermTree(regionPrefix + region.getId().toLowerCase()));
-		}
+//		for (ProtectedRegion region : findRegionsFor(player.getLocation())) {
+//			result.putAll(getRawPermTree(regionPrefix + region.getId().toLowerCase()));
+//		}
 		return result;
 	}
 
@@ -487,7 +487,7 @@ public class CowPerms extends CowNetThingy implements Listener {
 		return inheritTag.equalsIgnoreCase(key);
 	}
 
-	private Set<ProtectedRegion> findRegionsFor(Location loc) {
+/*	private Set<ProtectedRegion> findRegionsFor(Location loc) {
 		if (getWorldGuard() != null) {
 			RegionManager regionManager = getWorldGuard().getRegionManager(loc.getWorld());
 			ApplicableRegionSet regions = regionManager.getApplicableRegions(loc);
@@ -504,7 +504,7 @@ public class CowPerms extends CowNetThingy implements Listener {
 
 	private WorldGuardPlugin getWorldGuard() {
 		return (WorldGuardPlugin) getPlugin().getServer().getPluginManager().getPlugin("WorldGuard");
-	}
+	} */
 }
 
 

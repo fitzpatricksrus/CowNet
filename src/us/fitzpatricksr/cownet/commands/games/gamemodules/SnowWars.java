@@ -133,7 +133,7 @@ public class SnowWars extends BasicGameModule {
             if (hitBySnowball instanceof Player) {
                 Player victim = (Player) hitBySnowball;
                 if (playerIsInGame(victim.getName())) {
-                    LivingEntity snowSource = snowball.getShooter();
+                    LivingEntity snowSource = snowball._INVALID_getShooter();
                     if (snowSource instanceof Player) {
                         Player shooter = (Player) snowSource;
                         if (playerIsInGame(shooter.getName())) {

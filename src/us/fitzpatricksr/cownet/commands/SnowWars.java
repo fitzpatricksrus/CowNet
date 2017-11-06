@@ -338,7 +338,7 @@ public class SnowWars extends GatheredGame implements org.bukkit.event.Listener 
 			if (hitBySnowball instanceof Player) {
 				Player victim = (Player) hitBySnowball;
 				if (isPlayerAlive(victim.getName())) {
-					LivingEntity snowSource = snowball.getShooter();
+					LivingEntity snowSource = snowball._INVALID_getShooter();
 					if (snowSource instanceof Player) {
 						Player shooter = (Player) snowSource;
 						if (isPlayerAlive(shooter.getName())) {
@@ -357,7 +357,7 @@ public class SnowWars extends GatheredGame implements org.bukkit.event.Listener 
 	@EventHandler(ignoreCancelled = true)
 	public void onProjectileHit(ProjectileHitEvent event) {
 		Projectile entity = event.getEntity();
-		Entity shooter = entity.getShooter();
+		Entity shooter = entity._INVALID_getShooter();
 		if (entity instanceof Snowball && shooter instanceof Player) {
 			Player source = (Player) shooter;
 			if (isPlayerAlive(source.getName())) {

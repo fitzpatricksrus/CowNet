@@ -115,7 +115,7 @@ public class TntSheep extends CowNetThingy implements Listener {
 				//This will retrieve the arrow object
 				Arrow a = (Arrow) nEvent.getDamager();
 				//This will retrieve the person who shot the arrow
-				return a.getShooter();
+				return a._INVALID_getShooter();
 			} else {
 				if (nEvent.getDamager() instanceof LivingEntity) {
 					return (LivingEntity) nEvent.getDamager();
