@@ -5,7 +5,6 @@ import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Snowball;
@@ -16,6 +15,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.projectiles.ProjectileSource;
 import us.fitzpatricksr.cownet.commands.games.GameStats;
 import us.fitzpatricksr.cownet.commands.games.GameStatsMemory;
 import us.fitzpatricksr.cownet.commands.games.GatheredGame;
@@ -338,7 +338,7 @@ public class SnowWars extends GatheredGame implements org.bukkit.event.Listener 
 			if (hitBySnowball instanceof Player) {
 				Player victim = (Player) hitBySnowball;
 				if (isPlayerAlive(victim.getName())) {
-					LivingEntity snowSource = snowball._INVALID_getShooter();
+					ProjectileSource snowSource = snowball.getShooter();
 					if (snowSource instanceof Player) {
 						Player shooter = (Player) snowSource;
 						if (isPlayerAlive(shooter.getName())) {
@@ -357,7 +357,7 @@ public class SnowWars extends GatheredGame implements org.bukkit.event.Listener 
 	@EventHandler(ignoreCancelled = true)
 	public void onProjectileHit(ProjectileHitEvent event) {
 		Projectile entity = event.getEntity();
-		Entity shooter = entity._INVALID_getShooter();
+		ProjectileSource shooter = entity.getShooter();
 		if (entity instanceof Snowball && shooter instanceof Player) {
 			Player source = (Player) shooter;
 			if (isPlayerAlive(source.getName())) {

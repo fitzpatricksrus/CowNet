@@ -4,7 +4,6 @@ import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
@@ -14,6 +13,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.projectiles.ProjectileSource;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.BasicGameModule;
 import us.fitzpatricksr.cownet.commands.games.utils.inventory.BookUtils;
@@ -133,8 +133,8 @@ public class SnowWars extends BasicGameModule {
             if (hitBySnowball instanceof Player) {
                 Player victim = (Player) hitBySnowball;
                 if (playerIsInGame(victim.getName())) {
-                    LivingEntity snowSource = snowball._INVALID_getShooter();
-                    if (snowSource instanceof Player) {
+	                ProjectileSource snowSource = snowball.getShooter();
+	                if (snowSource instanceof Player) {
                         Player shooter = (Player) snowSource;
                         if (playerIsInGame(shooter.getName())) {
                             // OK, someone got plastered.  Accumulate stats.  Play effect.

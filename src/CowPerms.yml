@@ -1314,11 +1314,9 @@ warlor456:
 bubble1000:
   inherit: engineer
 fr0tz:
-  inherit: default
-  vanish.*: true
-  cownet.hardcore.keepop: true
-  cownet.cowperms: true
-  worldedit.tool.tree: true
+  inherit: singularity
+  cownet.hardcore.twiddle: true
+  cownet.hungergames.gamemaker: true
 loldwu6:
   inherit: default
 chadhubbard:

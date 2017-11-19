@@ -3,7 +3,7 @@ main: us.fitzpatricksr.cownet.CowNetMod
 author: minecraft@fitzpatricksr.us
 version: 3.1415
 load: startup
-softdepend: [Multiverse-Core, WorldEdit, BOSEconomy]
+softdepend: [Multiverse-Core, WorldEdit, WorldGuard]
 softdepend_OLD: [Multiverse-Core, WorldGuard, WorldEdit, BOSEconomy]
 commands:
   starve:

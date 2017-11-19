@@ -8,6 +8,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.projectiles.ProjectileSource;
 import us.fitzpatricksr.cownet.CowNetThingy;
 import us.fitzpatricksr.cownet.commands.games.framework.BasicGameModule;
 import us.fitzpatricksr.cownet.commands.games.framework.GameContext;
@@ -183,8 +184,8 @@ public class ZombieAttack extends BasicGameModule {
         Entity entityDamaged = event.getEntity();
         if (!(entityDamaged instanceof LivingEntity)) return;
         LivingEntity victim = (LivingEntity) entityDamaged;
-        LivingEntity killer = getAttacker(event);
-        if (killer instanceof Player) {
+	    ProjectileSource killer = getAttacker(event);
+	    if (killer instanceof Player) {
             double victimHealth = victim.getHealth();
             double damage = event.getDamage();
             if (damage >= victimHealth) {
@@ -203,15 +204,15 @@ public class ZombieAttack extends BasicGameModule {
         }
     }
 
-    private LivingEntity getAttacker(EntityDamageEvent event) {
-        //check for damage by entity (and arrow)
+	private ProjectileSource getAttacker(EntityDamageEvent event) {
+		//check for damage by entity (and arrow)
         if (event instanceof EntityDamageByEntityEvent) {
             EntityDamageByEntityEvent nEvent = (EntityDamageByEntityEvent) event;
             if ((nEvent.getDamager() instanceof Arrow)) {
                 //This will retrieve the arrow object
                 Arrow a = (Arrow) nEvent.getDamager();
                 //This will retrieve the person who shot the arrow
-                return a._INVALID_getShooter();
+	            return a.getShooter();
             } else {
                 if (nEvent.getDamager() instanceof LivingEntity) {
                     return (LivingEntity) nEvent.getDamager();

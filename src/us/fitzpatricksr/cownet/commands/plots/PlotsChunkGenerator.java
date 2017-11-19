@@ -172,14 +172,14 @@ public class PlotsChunkGenerator extends ChunkGenerator {
 	private static HashMap<Biome, BiomeContents> biomeContents = new HashMap<Biome, BiomeContents>();
 
 	static {
-		contentsFor(biomeContents, Material.GRASS, Biome.EXTREME_HILLS, Biome.FOREST_HILLS, Biome.TAIGA_HILLS, Biome.SMALL_MOUNTAINS).add(Material.STONE, 2.0);
+		contentsFor(biomeContents, Material.GRASS, Biome.EXTREME_HILLS, Biome.FOREST_HILLS, Biome.TAIGA_HILLS, Biome.SMALLER_EXTREME_HILLS).add(Material.STONE, 2.0);
 		contentsFor(biomeContents, Material.GRASS, Biome.PLAINS, Biome.FOREST, Biome.TAIGA, Biome.JUNGLE, Biome.JUNGLE_HILLS);
-		contentsFor(biomeContents, Material.SAND, Biome.DESERT, Biome.BEACH).add(Material.SANDSTONE, 10).add(Material.GRAVEL, 2);
-		contentsFor(biomeContents, Material.SNOW_BLOCK, Biome.ICE_PLAINS, Biome.ICE_MOUNTAINS);
+		contentsFor(biomeContents, Material.SAND, Biome.DESERT, Biome.BEACHES).add(Material.SANDSTONE, 10).add(Material.GRAVEL, 2);
+		contentsFor(biomeContents, Material.SNOW_BLOCK, Biome.ICE_FLATS, Biome.ICE_MOUNTAINS);
 		contentsFor(biomeContents, Material.WATER, Biome.OCEAN, Biome.RIVER, Biome.FROZEN_OCEAN, Biome.FROZEN_RIVER);
 		contentsFor(biomeContents, Material.AIR, Biome.SKY);
 		contentsFor(biomeContents, Material.NETHERRACK, Biome.HELL).add(Material.SOUL_SAND, 20);
-		contentsFor(biomeContents, Material.GRASS, Biome.SWAMPLAND, Biome.MUSHROOM_ISLAND, Biome.MUSHROOM_SHORE);
+		contentsFor(biomeContents, Material.GRASS, Biome.SWAMPLAND, Biome.MUSHROOM_ISLAND, Biome.MUSHROOM_ISLAND_SHORE);
 	}
 
 	private static HashMap<Biome, BiomeContents> biomeDecorations = new HashMap<Biome, BiomeContents>();
@@ -195,9 +195,9 @@ public class PlotsChunkGenerator extends ChunkGenerator {
 		//		contentsFor(biomeDecorations, Material.AIR, Biome.TUNDRA).add(Material.SNOW, 20).add(Material.ICE, 2);
 		contentsFor(biomeDecorations, Material.ICE, Biome.FROZEN_OCEAN, Biome.FROZEN_RIVER).add(Material.SNOW, 2).add(Material.AIR, 2);
 		//		contentsFor(biomeDecorations, Material.AIR, Biome.ICE_DESERT, Biome.ICE_PLAINS, Biome.ICE_MOUNTAINS).add(Material.SNOW, 50).add(Material.ICE, 25);
-		contentsFor(biomeDecorations, Material.AIR, Biome.MUSHROOM_ISLAND, Biome.MUSHROOM_SHORE).add(Material.RED_MUSHROOM, 0.2);
+		contentsFor(biomeDecorations, Material.AIR, Biome.MUSHROOM_ISLAND, Biome.MUSHROOM_ISLAND_SHORE).add(Material.RED_MUSHROOM, 0.2);
 		contentsFor(biomeDecorations, Material.AIR, Biome.RIVER).add(Material.WATER_LILY, 1);
-		contentsFor(biomeDecorations, Material.AIR, Biome.BEACH, Biome.HELL, Biome.SKY, Biome.OCEAN);
+		contentsFor(biomeDecorations, Material.AIR, Biome.BEACHES, Biome.HELL, Biome.SKY, Biome.OCEAN);
 	}
 
 	private static BiomeContents contentsFor(HashMap<Biome, BiomeContents> map, Material fill, Biome... biomes) {

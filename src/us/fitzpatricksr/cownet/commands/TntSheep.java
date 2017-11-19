@@ -1,18 +1,14 @@
 package us.fitzpatricksr.cownet.commands;
 
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Arrow;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Wolf;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.projectiles.ProjectileSource;
 import us.fitzpatricksr.cownet.CowNetThingy;
 
 import java.util.Random;
@@ -60,7 +56,7 @@ public class TntSheep extends CowNetThingy implements Listener {
 		if ((sheepExplode && event.getEntity() instanceof org.bukkit.entity.Sheep) || (cowsExplode && event.getEntity() instanceof org.bukkit.entity.Cow)) {
 			// As if any sheep are victims. They all deserve what they get coming to them
 			Entity victim = event.getEntity();
-			LivingEntity killer = GetKiller(event);
+			ProjectileSource killer = GetKiller(event);
 
 			// Make sure a killer is found, and make sure it isn't a wolf
 			if (killer != null && !(killer instanceof Wolf)) {
@@ -85,7 +81,10 @@ public class TntSheep extends CowNetThingy implements Listener {
 						victim.getWorld().createExplosion(victim.getLocation(), getExplosionRadius(), false);
 
 						// Damage the killer
-						killer.damage(explosionDamage, victim);
+						if (killer instanceof LivingEntity) {
+							LivingEntity e = (LivingEntity) killer;
+							e.damage(explosionDamage, victim);
+						}
 
 						// Make sure the sheep goes away in the explosion.
 						victim.remove();
@@ -107,7 +106,7 @@ public class TntSheep extends CowNetThingy implements Listener {
 	 * @param event the event.
 	 * @return The killer of the sheep.
 	 */
-	private LivingEntity GetKiller(EntityDamageEvent event) {
+	private ProjectileSource GetKiller(EntityDamageEvent event) {
 		//check for damage by entity (and arrow)
 		if (event instanceof EntityDamageByEntityEvent) {
 			EntityDamageByEntityEvent nEvent = (EntityDamageByEntityEvent) event;
@@ -115,7 +114,7 @@ public class TntSheep extends CowNetThingy implements Listener {
 				//This will retrieve the arrow object
 				Arrow a = (Arrow) nEvent.getDamager();
 				//This will retrieve the person who shot the arrow
-				return a._INVALID_getShooter();
+				return a.getShooter();
 			} else {
 				if (nEvent.getDamager() instanceof LivingEntity) {
 					return (LivingEntity) nEvent.getDamager();
@@ -128,9 +127,6 @@ public class TntSheep extends CowNetThingy implements Listener {
 		return null;
 	}
 
-	private void buildWreckage(LivingEntity killer, Location loc) {
-		for (int i = 0; i < wreckage; i++) {
-			World world = killer.getWorld();
-		}
+	private void buildWreckage(ProjectileSource killer, Location loc) {
 	}
 }
